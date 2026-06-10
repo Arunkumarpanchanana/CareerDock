@@ -1,5 +1,6 @@
 'use client'
 
+import { ProfileSection } from '@/components/resume/ProfileSection'
 import { ResumePreview } from '@/components/resume/ResumePreview'
 import { SummarySection } from '@/components/resume/SummarySection'
 import { ExperienceSection } from '@/components/resume/ExperienceSection'
@@ -14,9 +15,10 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import type { Profile, Resume } from '@/types/database'
 
-type Tab = 'summary' | 'experience' | 'education' | 'projects' | 'skills' | 'certificates'
+type Tab = 'profile' | 'summary' | 'experience' | 'education' | 'projects' | 'skills' | 'certificates'
 
 const tabs: { id: Tab; label: string }[] = [
+  { id: 'profile', label: 'Profile' },
   { id: 'summary', label: 'Summary' },
   { id: 'experience', label: 'Experience' },
   { id: 'education', label: 'Education' },
@@ -326,6 +328,7 @@ export function ResumeClient({
             </div>
 
             <div className="flex-1 overflow-y-auto pr-4">
+              {activeTab === 'profile' && <ProfileSection profile={profile} />}
               {activeTab === 'summary' && (
                 <SummarySection summary={data.summary} onChange={(v) => updateField('summary', v)} />
               )}
