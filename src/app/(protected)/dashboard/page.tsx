@@ -1,13 +1,21 @@
-import { getProfile } from '@/lib/supabase/server'
+import { createClient, getProfile } from '@/lib/supabase/server'
 import { Briefcase, FileText, TrendingUp, Users } from 'lucide-react'
 
 export default async function DashboardPage() {
+  const supabase = await createClient()
   const profile = await getProfile()
+  const userId = profile?.id
+
+  const [{ count: appCount }, { count: interviewCount }, { count: resumeCount }] = await Promise.all([
+    supabase.from('job_applications').select('*', { count: 'exact', head: true }).eq('user_id', userId ?? ''),
+    supabase.from('job_applications').select('*', { count: 'exact', head: true }).eq('user_id', userId ?? '').eq('status', 'Interviewing'),
+    supabase.from('resumes').select('*', { count: 'exact', head: true }).eq('user_id', userId ?? ''),
+  ])
 
   const stats = [
-    { label: 'Applications', value: '0', icon: Briefcase, color: 'text-blue-600 bg-blue-50' },
-    { label: 'Active Interviews', value: '0', icon: TrendingUp, color: 'text-green-600 bg-green-50' },
-    { label: 'Resumes', value: '0', icon: FileText, color: 'text-purple-600 bg-purple-50' },
+    { label: 'Applications', value: String(appCount ?? 0), icon: Briefcase, color: 'text-blue-600 bg-blue-50' },
+    { label: 'Active Interviews', value: String(interviewCount ?? 0), icon: TrendingUp, color: 'text-green-600 bg-green-50' },
+    { label: 'Resumes', value: String(resumeCount ?? 0), icon: FileText, color: 'text-purple-600 bg-purple-50' },
     { label: 'Expert Sessions', value: '0', icon: Users, color: 'text-orange-600 bg-orange-50' },
   ]
 
