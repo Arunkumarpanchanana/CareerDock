@@ -23,22 +23,6 @@ export async function signOutAndClear() {
     console.error('signOut client error:', e)
   }
 
-  // Clear all Supabase cookies from the browser
-  const cookies = document.cookie.split('; ')
-  for (const cookie of cookies) {
-    const name = cookie.split('=')[0]
-    if (name.includes('sb-') || name.includes('supabase')) {
-      document.cookie = `${name}=; max-age=0; path=/; domain=${window.location.hostname}`
-      document.cookie = `${name}=; max-age=0; path=/`
-    }
-  }
-
-  // Hit the server to clear cookies server-side as well
-  try {
-    await fetch('/api/auth/signout', { method: 'POST', credentials: 'include' })
-  } catch (e) {
-    console.error('signOut server error:', e)
-  }
-
-  window.location.href = '/auth/login'
+  // Navigate to signout endpoint — it clears server cookies and redirects to login
+  window.location.href = '/api/auth/signout'
 }
