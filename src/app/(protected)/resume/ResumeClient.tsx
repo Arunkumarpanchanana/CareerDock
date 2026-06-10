@@ -10,7 +10,7 @@ import { CertificatesSection } from '@/components/resume/CertificatesSection'
 import { Button } from '@/components/ui'
 import { createClient } from '@/lib/supabase/client'
 import { resumeToFormData, type ResumeFormData } from '@/lib/resume'
-import { FileDown } from 'lucide-react'
+import { FileDown, Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import type { Profile, Resume } from '@/types/database'
@@ -28,16 +28,23 @@ const tabs: { id: Tab; label: string }[] = [
 
 export function ResumeClient({
   profile,
-  initialResume,
+  initialResumes,
 }: {
   profile: Profile | null
-  initialResume: Resume | null
+  initialResumes: Resume[]
 }) {
-  const [data, setData] = useState<ResumeFormData>(() => resumeToFormData(initialResume))
+  const [resumes, setResumes] = useState<Resume[]>(initialResumes)
+  const [activeId, setActiveId] = useState<string | null>(initialResumes[0]?.id ?? null)
+  const [data, setData] = useState<ResumeFormData>(() =>
+    activeId ? resumeToFormData(initialResumes.find((r) => r.id === activeId)!) : resumeToFormData(null)
+  )
   const [activeTab, setActiveTab] = useState<Tab>('summary')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [renaming, setRenaming] = useState<string | null>(null)
   const router = useRouter()
+
+  const activeResume = resumes.find((r) => r.id === activeId) ?? null
 
   useEffect(() => {
     if (saved) {
@@ -45,6 +52,15 @@ export function ResumeClient({
       return () => clearTimeout(timer)
     }
   }, [saved])
+
+  const switchResume = (id: string) => {
+    const r = resumes.find((res) => res.id === id)
+    if (r) {
+      setActiveId(id)
+      setData(resumeToFormData(r))
+      setActiveTab('summary')
+    }
+  }
 
   async function save() {
     setSaving(true)
@@ -63,10 +79,18 @@ export function ResumeClient({
       skills: data.skills,
     }
 
-    if (initialResume?.id) {
-      await supabase.from('resumes').update(payload).eq('id', initialResume.id)
+    if (activeResume?.id) {
+      const { data: updated } = await supabase.from('resumes').update(payload).eq('id', activeResume.id).select().single()
+      if (updated) {
+        setResumes((prev) => prev.map((r) => (r.id === activeResume.id ? (updated as Resume) : r)))
+      }
     } else {
-      await supabase.from('resumes').insert(payload)
+      const { data: created } = await supabase.from('resumes').insert(payload).select().single()
+      if (created) {
+        const createdResume = created as Resume
+        setResumes((prev) => [createdResume, ...prev])
+        setActiveId(createdResume.id)
+      }
     }
 
     setSaving(false)
@@ -74,12 +98,56 @@ export function ResumeClient({
     router.refresh()
   }
 
+  async function createNew() {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data: created } = await supabase
+      .from('resumes')
+      .insert({ user_id: user.id, title: 'Untitled Resume' })
+      .select()
+      .single()
+
+    if (created) {
+      const newResume = created as Resume
+      setResumes((prev) => [newResume, ...prev])
+      setActiveId(newResume.id)
+      setData(resumeToFormData(newResume))
+      setActiveTab('summary')
+    }
+  }
+
+  async function deleteResume(id: string) {
+    if (!confirm('Delete this resume? This cannot be undone.')) return
+    const supabase = createClient()
+    await supabase.from('resumes').delete().eq('id', id)
+    setResumes((prev) => prev.filter((r) => r.id !== id))
+    if (activeId === id) {
+      const next = resumes.find((r) => r.id !== id)
+      if (next) {
+        setActiveId(next.id)
+        setData(resumeToFormData(next))
+      } else {
+        setActiveId(null)
+        setData(resumeToFormData(null))
+      }
+    }
+  }
+
+  async function renameResume(id: string, newTitle: string) {
+    if (!newTitle.trim()) return
+    const supabase = createClient()
+    await supabase.from('resumes').update({ title: newTitle.trim() }).eq('id', id)
+    setResumes((prev) => prev.map((r) => (r.id === id ? { ...r, title: newTitle.trim() } : r)))
+    setRenaming(null)
+  }
+
   const downloadPDF = () => {
     const printWindow = window.open('', '_blank')
     if (!printWindow) return
 
     const name = profile?.full_name || 'Resume'
-
     const sectionsHtml = buildPreviewSections(profile, data)
 
     printWindow.document.write(`
@@ -96,32 +164,14 @@ export function ResumeClient({
             line-height: 1.5;
             color: #1a1a1a;
           }
-          .header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #ccc;
-          }
+          .header { text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #ccc; }
           .header h1 { font-size: 18pt; font-weight: 700; }
           .header .meta { font-size: 10pt; color: #555; margin-top: 4px; }
-          .header .meta span + span:before { content: " | "; }
           section { margin-bottom: 16px; }
-          section h2 {
-            font-size: 10pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            padding-bottom: 3px;
-            border-bottom: 1px solid #ddd;
-          }
+          section h2 { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 3px; border-bottom: 1px solid #ddd; }
           .exp-item, .edu-item, .proj-item, .cert-item { margin-bottom: 12px; }
-          .exp-header, .edu-header, .cert-header {
-            display: flex; justify-content: space-between; align-items: baseline;
-          }
-          .exp-header h3, .edu-header h3, .proj-header h3, .cert-header h3 {
-            font-size: 11pt; font-weight: 700;
-          }
+          .exp-header, .edu-header, .cert-header { display: flex; justify-content: space-between; align-items: baseline; }
+          .exp-header h3, .edu-header h3, .proj-header h3, .cert-header h3 { font-size: 11pt; font-weight: 700; }
           .exp-company, .cert-issuer { font-size: 10pt; color: #333; }
           .date { font-size: 9pt; color: #666; white-space: nowrap; margin-left: 16px; }
           ul { margin-top: 4px; padding-left: 16px; }
@@ -129,9 +179,7 @@ export function ResumeClient({
           .desc { font-size: 10pt; margin-top: 2px; }
           .tech { font-size: 9pt; color: #555; margin-top: 2px; }
           .skills-line { font-size: 10pt; }
-          @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          }
+          @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
         </style>
       </head>
       <body>
@@ -143,9 +191,7 @@ export function ResumeClient({
           </div>
         </div>
         ${sectionsHtml}
-        <script>
-          window.onload = function() { window.print(); window.close(); }
-        <\/script>
+        <script>window.onload = function() { window.print(); window.close(); }<\/script>
       </body>
       </html>
     `)
@@ -159,9 +205,45 @@ export function ResumeClient({
   return (
     <div className="flex gap-6 h-[calc(100vh-4rem)]">
       <div className="flex-1 flex flex-col">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Resume Builder</h1>
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            {renaming === activeId ? (
+              <input
+                autoFocus
+                defaultValue={activeResume?.title ?? ''}
+                onBlur={(e) => renameResume(activeId!, e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') renameResume(activeId!, (e.target as HTMLInputElement).value)
+                  if (e.key === 'Escape') setRenaming(null)
+                }}
+                className="rounded-lg border border-blue-500 px-2 py-1 text-lg font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            ) : (
+              <div className="flex items-center gap-2 min-w-0">
+                <select
+                  value={activeId ?? ''}
+                  onChange={(e) => switchResume(e.target.value)}
+                  className="text-2xl font-bold text-gray-900 bg-transparent border-none focus:outline-none cursor-pointer"
+                >
+                  {resumes.length === 0 && <option value="">No resumes</option>}
+                  {resumes.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.title}
+                    </option>
+                  ))}
+                </select>
+                {activeResume && (
+                  <button
+                    onClick={() => setRenaming(activeId)}
+                    className="text-xs text-gray-400 hover:text-gray-600"
+                  >
+                    Rename
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
             {saved && <span className="text-sm text-green-600">Saved!</span>}
             <Button variant="secondary" size="sm" onClick={downloadPDF}>
               <FileDown className="h-4 w-4 mr-1.5" />
@@ -173,42 +255,68 @@ export function ResumeClient({
           </div>
         </div>
 
-        <div className="flex gap-1 border-b border-gray-200 mb-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {resumes.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center border-2 border-dashed border-gray-200 rounded-xl">
+            <p className="text-gray-500 mb-4">You haven&apos;t created any resumes yet.</p>
+            <Button onClick={createNew}>
+              <Plus className="h-4 w-4 mr-1.5" /> Create Your First Resume
+            </Button>
+          </div>
+        ) : activeResume ? (
+          <>
+            <div className="flex items-center justify-between border-b border-gray-200 mb-6">
+              <div className="flex gap-1">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                      activeTab === tab.id
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => deleteResume(activeResume.id)}
+                className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                title="Delete resume"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
 
-        <div className="flex-1 overflow-y-auto pr-4">
-          {activeTab === 'summary' && (
-            <SummarySection summary={data.summary} onChange={(v) => updateField('summary', v)} />
-          )}
-          {activeTab === 'experience' && (
-            <ExperienceSection items={data.experience} onChange={(v) => updateField('experience', v)} />
-          )}
-          {activeTab === 'education' && (
-            <EducationSection items={data.education} onChange={(v) => updateField('education', v)} />
-          )}
-          {activeTab === 'projects' && (
-            <ProjectsSection items={data.projects} onChange={(v) => updateField('projects', v)} />
-          )}
-          {activeTab === 'skills' && (
-            <SkillsSection items={data.skills} onChange={(v) => updateField('skills', v)} />
-          )}
-          {activeTab === 'certificates' && (
-            <CertificatesSection items={data.certificates} onChange={(v) => updateField('certificates', v)} />
-          )}
-        </div>
+            <div className="flex items-center gap-2 mb-4">
+              <Button variant="ghost" size="sm" onClick={createNew}>
+                <Plus className="h-4 w-4 mr-1" /> New Resume
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-4">
+              {activeTab === 'summary' && (
+                <SummarySection summary={data.summary} onChange={(v) => updateField('summary', v)} />
+              )}
+              {activeTab === 'experience' && (
+                <ExperienceSection items={data.experience} onChange={(v) => updateField('experience', v)} />
+              )}
+              {activeTab === 'education' && (
+                <EducationSection items={data.education} onChange={(v) => updateField('education', v)} />
+              )}
+              {activeTab === 'projects' && (
+                <ProjectsSection items={data.projects} onChange={(v) => updateField('projects', v)} />
+              )}
+              {activeTab === 'skills' && (
+                <SkillsSection items={data.skills} onChange={(v) => updateField('skills', v)} />
+              )}
+              {activeTab === 'certificates' && (
+                <CertificatesSection items={data.certificates} onChange={(v) => updateField('certificates', v)} />
+              )}
+            </div>
+          </>
+        ) : null}
       </div>
 
       <div className="w-[500px] flex-shrink-0 hidden xl:block">
@@ -219,7 +327,7 @@ export function ResumeClient({
 }
 
 function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 function buildPreviewSections(profile: Profile | null, data: ResumeFormData): string {
@@ -269,9 +377,7 @@ function buildPreviewSections(profile: Profile | null, data: ResumeFormData): st
     html += '<section><h2>Projects</h2>'
     for (const proj of data.projects) {
       html += `<div class="proj-item">
-        <div class="proj-header">
-          <h3>${escapeHtml(proj.name)}</h3>
-        </div>
+        <div class="proj-header"><h3>${escapeHtml(proj.name)}</h3></div>
         ${proj.description ? `<p class="desc">${escapeHtml(proj.description)}</p>` : ''}
         ${proj.tech_stack ? `<p class="tech"><strong>Technologies:</strong> ${escapeHtml(proj.tech_stack)}</p>` : ''}
       </div>`
