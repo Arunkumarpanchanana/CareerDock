@@ -22,11 +22,23 @@ export async function signOutAndClear() {
   } catch (e) {
     console.error('signOut client error:', e)
   }
-  // Also hit the server-side signout endpoint to clear cookies
+
+  // Clear all Supabase cookies from the browser
+  const cookies = document.cookie.split('; ')
+  for (const cookie of cookies) {
+    const name = cookie.split('=')[0]
+    if (name.includes('sb-') || name.includes('supabase')) {
+      document.cookie = `${name}=; max-age=0; path=/; domain=${window.location.hostname}`
+      document.cookie = `${name}=; max-age=0; path=/`
+    }
+  }
+
+  // Hit the server to clear cookies server-side as well
   try {
-    await fetch('/api/auth/signout', { method: 'POST' })
+    await fetch('/api/auth/signout', { method: 'POST', credentials: 'include' })
   } catch (e) {
     console.error('signOut server error:', e)
   }
+
   window.location.href = '/auth/login'
 }
