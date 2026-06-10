@@ -6,25 +6,32 @@ import type { ResumeFormData } from '@/lib/resume'
 export function ResumePreview({
   profile,
   data,
+  id = 'resume-preview',
 }: {
   profile: Profile | null
   data: ResumeFormData
+  id?: string
 }) {
   return (
-    <div className="h-full overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-sm">
+    <div id={id} className="h-full overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-sm">
       <div className="p-8" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+        {/* Header */}
         <div className="text-center mb-6 pb-4 border-b border-gray-300">
           <h1 className="text-xl font-bold text-gray-900">
             {profile?.full_name || 'Your Name'}
           </h1>
-          {profile?.location && (
-            <p className="text-sm text-gray-600 mt-1">{profile.location}</p>
-          )}
-          {profile?.role_title && (
-            <p className="text-sm text-gray-500 mt-0.5">{profile.role_title}</p>
-          )}
+          <div className="text-sm text-gray-600 mt-1 space-x-2">
+            {profile?.location && <span>{profile.location}</span>}
+            {profile?.role_title && (
+              <>
+                {profile?.location && <span>|</span>}
+                <span>{profile.role_title}</span>
+              </>
+            )}
+          </div>
         </div>
 
+        {/* Summary */}
         {data.summary && (
           <section className="mb-5">
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2">
@@ -34,6 +41,7 @@ export function ResumePreview({
           </section>
         )}
 
+        {/* Experience */}
         {data.experience.length > 0 && (
           <section className="mb-5">
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 border-b border-gray-200 pb-1">
@@ -65,6 +73,7 @@ export function ResumePreview({
           </section>
         )}
 
+        {/* Education */}
         {data.education.length > 0 && (
           <section className="mb-5">
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 border-b border-gray-200 pb-1">
@@ -87,6 +96,7 @@ export function ResumePreview({
           </section>
         )}
 
+        {/* Projects */}
         {data.projects.length > 0 && (
           <section className="mb-5">
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 border-b border-gray-200 pb-1">
@@ -97,14 +107,9 @@ export function ResumePreview({
                 <div className="flex justify-between items-baseline">
                   <h3 className="text-sm font-bold text-gray-900">{proj.name}</h3>
                   {proj.url && (
-                    <a
-                      href={proj.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-700 hover:underline"
-                    >
+                    <span className="text-xs text-blue-700">
                       {proj.url.replace(/^https?:\/\//, '')}
-                    </a>
+                    </span>
                   )}
                 </div>
                 {proj.description && (
@@ -120,6 +125,7 @@ export function ResumePreview({
           </section>
         )}
 
+        {/* Skills */}
         {data.skills.length > 0 && (
           <section className="mb-5">
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2 border-b border-gray-200 pb-1">
@@ -131,6 +137,7 @@ export function ResumePreview({
           </section>
         )}
 
+        {/* Certificates */}
         {data.certificates.length > 0 && (
           <section className="mb-5">
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 border-b border-gray-200 pb-1">
@@ -146,14 +153,7 @@ export function ResumePreview({
                   <div className="text-right">
                     {cert.date && <p className="text-xs text-gray-500">{cert.date}</p>}
                     {cert.url && (
-                      <a
-                        href={cert.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-700 hover:underline"
-                      >
-                        Credential
-                      </a>
+                      <span className="text-xs text-blue-700">Credential</span>
                     )}
                   </div>
                 </div>
@@ -162,6 +162,7 @@ export function ResumePreview({
           </section>
         )}
 
+        {/* Empty state */}
         {!data.summary &&
           data.experience.length === 0 &&
           data.education.length === 0 &&
