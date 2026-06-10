@@ -38,7 +38,7 @@ export interface Database {
 export interface Profile {
   id: string
   full_name: string
-  current_role: string | null
+  role_title: string | null
   location: string | null
   updated_at: string
 }

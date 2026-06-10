@@ -102,9 +102,9 @@ export function Sidebar() {
                 <p className="truncate text-sm font-medium text-gray-900">
                   {profile.full_name}
                 </p>
-                {profile.current_role && (
+                {profile.role_title && (
                   <p className="truncate text-xs text-gray-500">
-                    {profile.current_role}
+                    {profile.role_title}
                   </p>
                 )}
               </div>
