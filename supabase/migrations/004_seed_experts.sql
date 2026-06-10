@@ -1,0 +1,16 @@
+INSERT INTO expert_consultants (name, domain_expertise, bio, scheduling_url) VALUES
+  ('Sarah Chen', 'Resume Strategy & ATS Optimization',
+   'Former tech recruiter at Google and Meta. 8+ years helping 500+ candidates land interviews at FAANG companies. Specializes in ATS-friendly resume rewriting, keyword optimization, and career pivots.',
+   'https://calendly.com/sarah-chen-careerdock/30min'),
+  ('Marcus Johnson', 'Interview Prep & Behavioral Coaching',
+   'Senior Engineering Manager at Amazon with 12+ years of experience. Conducted 300+ technical interviews. Helps candidates master STAR method, system design interviews, and negotiation.',
+   'https://calendly.com/marcus-johnson-careerdock/30min'),
+  ('Priya Patel', 'Career Transition & Growth Planning',
+   'Certified career coach with background in HR at Microsoft and LinkedIn. Experts in career pivots, personal branding, and creating 90-day impact plans for new roles.',
+   'https://calendly.com/priya-patel-careerdock/30min'),
+  ('James Wilson', 'Technical Interview Coaching',
+   'Staff Software Engineer at Stripe. Specializes in LeetCode-style algorithms, system design, and coding interview prep. Has mentored 100+ engineers into FAANG+ roles.',
+   'https://calendly.com/james-wilson-careerdock/30min'),
+  ('Aisha Mohammed', 'Product Management & PM Interviews',
+   'Group Product Manager at Airbnb. Previously PM at Uber and Yelp. Helps aspiring PMs craft strong resumes, ace product sense interviews, and build product portfolios.',
+   'https://calendly.com/aisha-mohammed-careerdock/30min');

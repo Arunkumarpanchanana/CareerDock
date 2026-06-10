@@ -3,7 +3,7 @@
 import { useAuth } from '@/components/auth/AuthProvider'
 import { Button, Input, Card } from '@/components/ui'
 import { createClient } from '@/lib/supabase/client'
-import { Mail, MapPin, Phone, Briefcase, Globe, Linkedin, User } from 'lucide-react'
+import { Mail, MapPin, Phone, Briefcase, Globe, ExternalLink, User } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface FormFields {
@@ -90,7 +90,7 @@ export default function ProfilePage() {
     { key: 'location', label: 'Location', icon: MapPin, placeholder: 'e.g. San Francisco, CA' },
     { key: 'email', label: 'Email', icon: Mail, placeholder: 'your@email.com', type: 'email' },
     { key: 'phone', label: 'Phone', icon: Phone, placeholder: '+1 (555) 123-4567', type: 'tel' },
-    { key: 'linkedin', label: 'LinkedIn URL', icon: Linkedin, placeholder: 'https://linkedin.com/in/your-profile' },
+    { key: 'linkedin', label: 'LinkedIn URL', icon: ExternalLink, placeholder: 'https://linkedin.com/in/your-profile' },
     { key: 'website', label: 'Website / Portfolio', icon: Globe, placeholder: 'https://your-site.com' },
   ]
 
