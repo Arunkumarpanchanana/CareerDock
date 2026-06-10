@@ -7,7 +7,8 @@ export async function middleware(request: NextRequest) {
   const { pathname } = new URL(request.url)
   const isAuthPage = pathname.startsWith('/auth')
   const isApiRoute = pathname.startsWith('/api')
-  const isPublicPath = isAuthPage || isApiRoute
+  const isLandingPage = pathname === '/'
+  const isPublicPath = isAuthPage || isApiRoute || isLandingPage
 
   if (!user && !isPublicPath) {
     const url = new URL('/auth/login', request.url)
