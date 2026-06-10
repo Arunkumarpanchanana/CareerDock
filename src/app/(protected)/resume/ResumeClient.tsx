@@ -8,7 +8,6 @@ import { ProjectsSection } from '@/components/resume/ProjectsSection'
 import { SkillsSection } from '@/components/resume/SkillsSection'
 import { CertificatesSection } from '@/components/resume/CertificatesSection'
 import { Button } from '@/components/ui'
-import { createClient } from '@/lib/supabase/client'
 import { resumeToFormData, type ResumeFormData } from '@/lib/resume'
 import { FileDown, Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -64,55 +63,58 @@ export function ResumeClient({
 
   async function save() {
     setSaving(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const payload = {
-      user_id: user.id,
-      title: data.title,
-      summary: data.summary,
-      experience: data.experience,
-      education: data.education,
-      projects: data.projects,
-      certificates: data.certificates,
-      skills: data.skills,
-    }
-
-    if (activeResume?.id) {
-      const { data: updated } = await supabase.from('resumes').update(payload).eq('id', activeResume.id).select().single()
-      if (updated) {
-        setResumes((prev) => prev.map((r) => (r.id === activeResume.id ? (updated as Resume) : r)))
+    try {
+      const payload = {
+        id: activeResume?.id,
+        title: data.title,
+        summary: data.summary,
+        experience: data.experience,
+        education: data.education,
+        projects: data.projects,
+        certificates: data.certificates,
+        skills: data.skills,
       }
-    } else {
-      const { data: created } = await supabase.from('resumes').insert(payload).select().single()
-      if (created) {
-        const createdResume = created as Resume
-        setResumes((prev) => [createdResume, ...prev])
-        setActiveId(createdResume.id)
-      }
-    }
 
-    setSaving(false)
-    setSaved(true)
-    router.refresh()
+      const res = await fetch('/api/resume', {
+        method: activeResume?.id ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        console.error('Save failed:', err)
+        return
+      }
+
+      const saved = await res.json()
+      const savedResume = saved as Resume
+      setResumes((prev) => {
+        const exists = prev.find((r) => r.id === savedResume.id)
+        if (exists) {
+          return prev.map((r) => (r.id === savedResume.id ? savedResume : r))
+        }
+        return [savedResume, ...prev]
+      })
+      if (!activeResume?.id) setActiveId(savedResume.id)
+      setSaved(true)
+    } catch (err) {
+      console.error('Save error:', err)
+    } finally {
+      setSaving(false)
+      router.refresh()
+    }
   }
 
   async function createNew() {
     try {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) return
-
-      const { data: created, error } = await supabase
-        .from('resumes')
-        .insert({ user_id: session.user.id, title: 'Untitled Resume' })
-        .select()
-        .single()
-
-      if (error) throw error
-      if (!created) return
-
+      const res = await fetch('/api/resume', { method: 'POST' })
+      if (!res.ok) {
+        const err = await res.json()
+        console.error('Failed to create resume:', err)
+        return
+      }
+      const created = await res.json()
       const newResume = created as Resume
       setResumes((prev) => [newResume, ...prev])
       setActiveId(newResume.id)
@@ -125,27 +127,38 @@ export function ResumeClient({
 
   async function deleteResume(id: string) {
     if (!confirm('Delete this resume? This cannot be undone.')) return
-    const supabase = createClient()
-    await supabase.from('resumes').delete().eq('id', id)
-    setResumes((prev) => prev.filter((r) => r.id !== id))
-    if (activeId === id) {
-      const next = resumes.find((r) => r.id !== id)
-      if (next) {
-        setActiveId(next.id)
-        setData(resumeToFormData(next))
-      } else {
-        setActiveId(null)
-        setData(resumeToFormData(null))
+    try {
+      const res = await fetch(`/api/resume?id=${id}`, { method: 'DELETE' })
+      if (!res.ok) return
+      setResumes((prev) => prev.filter((r) => r.id !== id))
+      if (activeId === id) {
+        const next = resumes.find((r) => r.id !== id)
+        if (next) {
+          setActiveId(next.id)
+          setData(resumeToFormData(next))
+        } else {
+          setActiveId(null)
+          setData(resumeToFormData(null))
+        }
       }
+    } catch (err) {
+      console.error('Delete error:', err)
     }
   }
 
   async function renameResume(id: string, newTitle: string) {
     if (!newTitle.trim()) return
-    const supabase = createClient()
-    await supabase.from('resumes').update({ title: newTitle.trim() }).eq('id', id)
-    setResumes((prev) => prev.map((r) => (r.id === id ? { ...r, title: newTitle.trim() } : r)))
-    setRenaming(null)
+    try {
+      await fetch('/api/resume', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, title: newTitle.trim() }),
+      })
+      setResumes((prev) => prev.map((r) => (r.id === id ? { ...r, title: newTitle.trim() } : r)))
+      setRenaming(null)
+    } catch (err) {
+      console.error('Rename error:', err)
+    }
   }
 
   const downloadPDF = () => {

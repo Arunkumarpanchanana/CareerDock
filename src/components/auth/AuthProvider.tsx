@@ -1,7 +1,6 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { createClient, signOutAndClear } from '@/lib/supabase/client'
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Profile } from '@/types/database'
 import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js'
@@ -26,7 +25,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
 
   const getSupabase = () => {
@@ -68,7 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null)
         }
-        router.refresh()
       }
     )
 
@@ -81,9 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
-    const supabase = getSupabase()
-    await supabase.auth.signOut()
-    router.push('/auth/login')
+    await signOutAndClear()
   }
 
   return (
