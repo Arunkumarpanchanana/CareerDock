@@ -1,6 +1,7 @@
 'use client'
 
 import { Button, Input } from '@/components/ui'
+import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types/database'
 import { Shield, ShieldOff, UserPlus, X } from 'lucide-react'
 import { useState } from 'react'
@@ -39,9 +40,12 @@ export default function AdminAdminsPage() {
     setCreating(true)
     setCreateError('')
     try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
       const res = await fetch('/api/admin/users', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(form),
       })
       const data = await res.json()

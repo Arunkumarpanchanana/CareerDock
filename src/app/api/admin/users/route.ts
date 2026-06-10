@@ -1,20 +1,26 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
     const adminClient = createAdminClient()
     if (!adminClient) {
-      return NextResponse.json({ error: 'Admin client not configured. Add SUPABASE_SERVICE_ROLE_KEY to .env.local' }, { status: 500 })
+      return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
     }
+
+    const authHeader = request.headers.get('Authorization') || ''
+    const token = authHeader.replace('Bearer ', '')
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: { user }, error: userError } = await adminClient.auth.getUser(token)
+    if (userError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { email, password, full_name, role } = await request.json()
     if (!email || !password || !full_name) {
@@ -32,7 +38,7 @@ export async function POST(request: Request) {
     if (!authUser.user) throw new Error('User creation returned no user')
 
     if (role === 'admin') {
-      const { error: updateError } = await supabase
+      const { error: updateError } = await adminClient
         .from('profiles')
         .update({ role: 'admin', full_name })
         .eq('id', authUser.user.id)
