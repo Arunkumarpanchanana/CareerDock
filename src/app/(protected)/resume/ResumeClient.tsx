@@ -99,22 +99,27 @@ export function ResumeClient({
   }
 
   async function createNew() {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
 
-    const { data: created } = await supabase
-      .from('resumes')
-      .insert({ user_id: user.id, title: 'Untitled Resume' })
-      .select()
-      .single()
+      const { data: created, error } = await supabase
+        .from('resumes')
+        .insert({ user_id: session.user.id, title: 'Untitled Resume' })
+        .select()
+        .single()
 
-    if (created) {
+      if (error) throw error
+      if (!created) return
+
       const newResume = created as Resume
       setResumes((prev) => [newResume, ...prev])
       setActiveId(newResume.id)
       setData(resumeToFormData(newResume))
       setActiveTab('summary')
+    } catch (err) {
+      console.error('Failed to create resume:', err)
     }
   }
 
