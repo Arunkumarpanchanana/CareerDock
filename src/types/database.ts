@@ -50,6 +50,8 @@ export interface Resume {
   summary: string | null
   experience: Json
   education: Json
+  projects: Json
+  certificates: Json
   skills: string[]
   created_at: string
 }
@@ -67,6 +69,20 @@ export interface Education {
   degree: string
   field: string
   year: string
+}
+
+export interface Project {
+  name: string
+  description: string
+  tech_stack: string
+  url: string
+}
+
+export interface Certificate {
+  name: string
+  issuer: string
+  date: string
+  url: string
 }
 
 export interface JobApplication {
