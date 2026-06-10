@@ -44,6 +44,7 @@ export interface Profile {
   phone: string | null
   linkedin: string | null
   website: string | null
+  role: 'user' | 'admin'
   updated_at: string
 }
 
@@ -109,4 +110,14 @@ export interface ExpertConsultant {
   bio: string | null
   scheduling_url: string
   is_active: boolean
+}
+
+export interface Booking {
+  id: string
+  user_id: string
+  expert_id: string
+  scheduled_at: string
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  notes: string | null
+  created_at: string
 }

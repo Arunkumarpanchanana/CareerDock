@@ -9,6 +9,7 @@ export default function ExpertsPage() {
   const [experts, setExperts] = useState<ExpertConsultant[]>([])
 
   useState(() => {
+    if (typeof window === 'undefined') return true
     fetch('/api/experts')
       .then((res) => res.json())
       .then((data) => setExperts(data))

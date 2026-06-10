@@ -10,6 +10,7 @@ import {
   Menu,
   ScrollText,
   Settings,
+  Shield,
   Users,
   X,
 } from 'lucide-react'
@@ -17,19 +18,20 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/resume', label: 'Resume Builder', icon: ScrollText },
-  { href: '/tracker', label: 'Job Tracker', icon: Briefcase },
-  { href: '/experts', label: 'Experts', icon: Users },
-  { href: '/profile', label: 'Profile', icon: Settings },
-]
-
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
   const { profile, signOut } = useAuth()
+
+  const navItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/resume', label: 'Resume Builder', icon: ScrollText },
+    { href: '/tracker', label: 'Job Tracker', icon: Briefcase },
+    { href: '/experts', label: 'Experts', icon: Users },
+    { href: '/profile', label: 'Profile', icon: Settings },
+    ...(profile?.role === 'admin' ? [{ href: '/admin', label: 'Admin', icon: Shield }] : []),
+  ]
 
   return (
     <>
