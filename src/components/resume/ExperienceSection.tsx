@@ -12,6 +12,9 @@ const BULLET_CATEGORIES = [
   { key: 'frontend', label: 'Frontend' },
   { key: 'backend', label: 'Backend' },
   { key: 'fullstack', label: 'Full Stack' },
+  { key: 'leadership', label: 'Leadership' },
+  { key: 'management', label: 'Management' },
+  { key: 'strategy', label: 'Strategy' },
 ]
 
 export function ExperienceSection({
