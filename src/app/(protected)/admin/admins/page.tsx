@@ -1,13 +1,17 @@
 'use client'
 
-import { Button } from '@/components/ui'
+import { Button, Input } from '@/components/ui'
 import type { Profile } from '@/types/database'
-import { Shield, ShieldOff } from 'lucide-react'
+import { Shield, ShieldOff, UserPlus, X } from 'lucide-react'
 import { useState } from 'react'
 
 export default function AdminAdminsPage() {
   const [users, setUsers] = useState<Profile[]>([])
   const [updating, setUpdating] = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ email: '', password: '', full_name: '', role: 'user' as 'user' | 'admin' })
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState('')
 
   useState(() => {
     if (typeof window === 'undefined') return true
@@ -31,15 +35,43 @@ export default function AdminAdminsPage() {
     finally { setUpdating(null) }
   }
 
+  const handleCreate = async () => {
+    setCreating(true)
+    setCreateError('')
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Creation failed')
+      setShowForm(false)
+      setForm({ email: '', password: '', full_name: '', role: 'user' })
+      const refresh = await fetch('/api/admin/admins')
+      const updated = await refresh.json()
+      if (Array.isArray(updated)) setUsers(updated)
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : 'Failed to create user')
+    } finally {
+      setCreating(false)
+    }
+  }
+
   const admins = users.filter((u) => u.role === 'admin')
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Manage Admins</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          {admins.length} admin{admins.length !== 1 ? 's' : ''} · {users.length} total users
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Manage Users</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            {admins.length} admin{admins.length !== 1 ? 's' : ''} · {users.length} total users
+          </p>
+        </div>
+        <Button onClick={() => setShowForm(true)}>
+          <UserPlus className="h-4 w-4 mr-1.5" /> Create User
+        </Button>
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
@@ -89,6 +121,54 @@ export default function AdminAdminsPage() {
           </tbody>
         </table>
       </div>
+
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowForm(false)}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 space-y-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Create User</h2>
+              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="John Doe" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="user@example.com" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 6 characters" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <select
+                  value={form.role}
+                  onChange={(e) => setForm({ ...form, role: e.target.value as 'user' | 'admin' })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+
+            {createError && <p className="text-sm text-red-600">{createError}</p>}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button onClick={handleCreate} disabled={creating || !form.email || !form.password || !form.full_name}>
+                {creating ? 'Creating...' : 'Create Account'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
