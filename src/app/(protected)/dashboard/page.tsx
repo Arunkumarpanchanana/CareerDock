@@ -1,0 +1,55 @@
+import { getProfile } from '@/lib/supabase/server'
+import { Briefcase, FileText, TrendingUp, Users } from 'lucide-react'
+
+export default async function DashboardPage() {
+  const profile = await getProfile()
+
+  const stats = [
+    { label: 'Applications', value: '0', icon: Briefcase, color: 'text-blue-600 bg-blue-50' },
+    { label: 'Active Interviews', value: '0', icon: TrendingUp, color: 'text-green-600 bg-green-50' },
+    { label: 'Resumes', value: '0', icon: FileText, color: 'text-purple-600 bg-purple-50' },
+    { label: 'Expert Sessions', value: '0', icon: Users, color: 'text-orange-600 bg-orange-50' },
+  ]
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Welcome{profile?.full_name ? `, ${profile.full_name}` : ''}!
+        </h1>
+        <p className="mt-1 text-gray-600">
+          Here&apos;s an overview of your career journey.
+        </p>
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => {
+          const Icon = stat.icon
+          return (
+            <div
+              key={stat.label}
+              className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`rounded-lg p-3 ${stat.color}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-sm text-gray-600">{stat.label}</p>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm text-center">
+        <h2 className="text-lg font-semibold text-gray-900">Get Started</h2>
+        <p className="mt-2 text-gray-600 max-w-md mx-auto">
+          Use the sidebar to build your resume, track job applications, and connect with career experts.
+        </p>
+      </div>
+    </div>
+  )
+}
