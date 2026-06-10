@@ -3,18 +3,19 @@
 import { Button, Card } from '@/components/ui'
 import type { ExpertConsultant } from '@/types/database'
 import { Calendar, ExternalLink, GraduationCap } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function ExpertsPage() {
   const [experts, setExperts] = useState<ExpertConsultant[]>([])
+  const [error] = useState<string | null>(null)
 
-  useState(() => {
-    if (typeof window === 'undefined') return true
+  useEffect(() => {
+    if (typeof window === 'undefined') return
     fetch('/api/experts')
       .then((res) => res.json())
       .then((data) => setExperts(data))
       .catch(console.error)
-  })
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -63,7 +64,13 @@ export default function ExpertsPage() {
         ))}
       </div>
 
-      {experts.length === 0 && (
+      {error && (
+        <div className="text-center py-8">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
+      {!error && experts.length === 0 && (
         <div className="text-center py-16 text-gray-400">
           <GraduationCap className="h-12 w-12 mx-auto mb-3 opacity-50" />
           <p className="font-medium">No experts available yet</p>

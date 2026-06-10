@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { resumeSchema } from '@/lib/validation'
 
 export async function POST() {
   try {
@@ -33,12 +34,11 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json()
-    const { id, ...payload } = body
-
-    if (!id) {
-      return NextResponse.json({ error: 'Missing resume id' }, { status: 400 })
+    const parsed = resumeSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
     }
-
+    const { id, ...payload } = parsed.data
     const { data, error } = await supabase
       .from('resumes')
       .update(payload)

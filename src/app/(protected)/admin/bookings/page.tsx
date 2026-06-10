@@ -1,7 +1,7 @@
 'use client'
 
 import type { Booking, ExpertConsultant, Profile } from '@/types/database'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type BookingRow = Booking & { expert_consultants: Pick<ExpertConsultant, 'name' | 'domain_expertise'>; profiles: Pick<Profile, 'full_name' | 'email'> }
 
@@ -15,16 +15,19 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<BookingRow[]>([])
   const [updating, setUpdating] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  useState(() => {
-    if (typeof window === 'undefined') return true
+  useEffect(() => {
+    if (typeof window === 'undefined') return
     fetch('/api/admin/bookings').then(r => r.json()).then(data => {
       if (Array.isArray(data)) setBookings(data)
+      else console.error('Unexpected response format')
     }).catch(console.error)
-  })
+  }, [])
 
   const updateStatus = async (id: string, status: string) => {
     setUpdating(id)
+    setError(null)
     try {
       const res = await fetch('/api/admin/bookings', {
         method: 'PUT',
@@ -33,7 +36,7 @@ export default function AdminBookingsPage() {
       })
       if (!res.ok) throw new Error('Update failed')
       setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: status as Booking['status'] } : b)))
-    } catch (e) { console.error(e) }
+    } catch { setError('Failed to update booking status') }
     finally { setUpdating(null) }
   }
 
@@ -43,6 +46,8 @@ export default function AdminBookingsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
         <p className="mt-1 text-sm text-gray-600">{bookings.length} session{bookings.length !== 1 ? 's' : ''}</p>
       </div>
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
         <table className="w-full text-sm">

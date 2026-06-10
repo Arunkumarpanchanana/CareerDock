@@ -12,14 +12,19 @@ export type ResumeFormData = {
   certificates: Certificate[]
 }
 
+function safeJsonArray<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[]
+  return []
+}
+
 export function resumeToFormData(resume: Resume | null): ResumeFormData {
   return {
     title: resume?.title ?? 'My Resume',
     summary: resume?.summary ?? '',
-    experience: (resume?.experience as unknown as Experience[]) ?? [],
-    education: (resume?.education as unknown as Education[]) ?? [],
-    projects: (resume?.projects as unknown as Project[]) ?? [],
+    experience: safeJsonArray<Experience>(resume?.experience),
+    education: safeJsonArray<Education>(resume?.education),
+    projects: safeJsonArray<Project>(resume?.projects),
     skills: resume?.skills ?? [],
-    certificates: (resume?.certificates as unknown as Certificate[]) ?? [],
+    certificates: safeJsonArray<Certificate>(resume?.certificates),
   }
 }

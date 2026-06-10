@@ -34,6 +34,15 @@ export function SummarySection({
       {showTemplates && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-2">
           <p className="text-xs font-medium text-blue-700">Choose a template to get started:</p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { onChange(''); setShowTemplates(false) }}
+              className="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-lg transition-colors"
+            >
+              Clear Summary
+            </button>
+            <p className="text-xs text-gray-500">or pick a template below:</p>
+          </div>
           <div className="grid gap-2">
             {SUMMARY_TEMPLATES.map((tpl) => (
               <button

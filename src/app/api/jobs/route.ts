@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { jobApplicationSchema, jobApplicationUpdateSchema } from '@/lib/validation'
 
 export async function GET() {
   try {
@@ -32,9 +33,13 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
+    const parsed = jobApplicationSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+    }
     const { data, error } = await supabase
       .from('job_applications')
-      .insert({ user_id: user.id, ...body })
+      .insert({ user_id: user.id, ...parsed.data })
       .select()
       .single()
 
@@ -55,11 +60,11 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json()
-    const { id, ...payload } = body
-    if (!id) {
-      return NextResponse.json({ error: 'Missing job id' }, { status: 400 })
+    const parsed = jobApplicationUpdateSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
     }
-
+    const { id, ...payload } = parsed.data
     const { data, error } = await supabase
       .from('job_applications')
       .update(payload)

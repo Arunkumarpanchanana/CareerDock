@@ -3,7 +3,7 @@
 import { Button, Input } from '@/components/ui'
 import type { JobApplication } from '@/types/database'
 import { Briefcase, DollarSign, ExternalLink, Plus, Trash2 } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 type Status = 'Wishlist' | 'Applied' | 'Interviewing' | 'Offered' | 'Rejected'
 
@@ -33,16 +33,16 @@ export default function TrackerPage() {
   const [form, setForm] = useState(INITIAL_FORM)
   const [saving, setSaving] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [submitAttempted, setSubmitAttempted] = useState(false)
   const [draggedJob, setDraggedJob] = useState<string | null>(null)
   const [dragOverCol, setDragOverCol] = useState<Status | null>(null)
 
-  useState(() => {
+  useEffect(() => {
     fetch('/api/jobs')
       .then((res) => res.json())
       .then((data) => { setJobs(data); setLoading(false) })
       .catch(() => setLoading(false))
-    return true
-  })
+  }, [])
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -61,6 +61,7 @@ export default function TrackerPage() {
   const openNew = () => {
     setEditing(null)
     setForm(INITIAL_FORM)
+    setSubmitAttempted(false)
     setShowForm(true)
   }
 
@@ -74,10 +75,13 @@ export default function TrackerPage() {
       notes: job.notes || '',
       status: job.status,
     })
+    setSubmitAttempted(false)
     setShowForm(true)
   }
 
   const handleSave = async () => {
+    setSubmitAttempted(true)
+    if (!form.company_name || !form.job_title) return
     setSaving(true)
     try {
       const method = editing ? 'PUT' : 'POST'
@@ -260,6 +264,7 @@ export default function TrackerPage() {
                     placeholder="Company name"
                     value={form.company_name}
                     onChange={(e) => setForm({ ...form, company_name: e.target.value })}
+                    error={submitAttempted && !form.company_name ? 'Company name is required' : undefined}
                   />
                 </div>
                 <div>
@@ -268,6 +273,7 @@ export default function TrackerPage() {
                     placeholder="Job title"
                     value={form.job_title}
                     onChange={(e) => setForm({ ...form, job_title: e.target.value })}
+                    error={submitAttempted && !form.job_title ? 'Job title is required' : undefined}
                   />
                 </div>
               </div>
@@ -320,7 +326,7 @@ export default function TrackerPage() {
               <Button variant="ghost" onClick={() => setShowForm(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={saving || !form.company_name || !form.job_title}>
+              <Button onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : editing ? 'Save Changes' : 'Add Job'}
               </Button>
             </div>

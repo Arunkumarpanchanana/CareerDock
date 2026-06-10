@@ -79,6 +79,16 @@ export default function LoginPage() {
             required
           />
 
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => alert('Password reset not yet implemented. Contact support.')}
+              className="text-sm text-blue-600 hover:text-blue-500"
+            >
+              Forgot password?
+            </button>
+          </div>
+
           {error && (
             <p className="text-sm text-red-600">{error}</p>
           )}

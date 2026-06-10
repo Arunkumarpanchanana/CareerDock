@@ -4,7 +4,7 @@ import { Button, Input } from '@/components/ui'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types/database'
 import { Shield, ShieldOff, UserPlus, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function AdminAdminsPage() {
   const [users, setUsers] = useState<Profile[]>([])
@@ -13,17 +13,21 @@ export default function AdminAdminsPage() {
   const [form, setForm] = useState({ email: '', password: '', full_name: '', role: 'user' as 'user' | 'admin' })
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
+  const [fetchError] = useState<string | null>(null)
+  const [toggleError, setToggleError] = useState<string | null>(null)
 
-  useState(() => {
-    if (typeof window === 'undefined') return true
+  useEffect(() => {
+    if (typeof window === 'undefined') return
     fetch('/api/admin/admins').then(r => r.json()).then(data => {
       if (Array.isArray(data)) setUsers(data)
+      else console.error('Unexpected response format')
     }).catch(console.error)
-  })
+  }, [])
 
   const toggleRole = async (user: Profile) => {
     const newRole = user.role === 'admin' ? 'user' : 'admin'
     setUpdating(user.id)
+    setToggleError(null)
     try {
       const res = await fetch('/api/admin/admins', {
         method: 'PUT',
@@ -32,7 +36,7 @@ export default function AdminAdminsPage() {
       })
       if (!res.ok) throw new Error('Update failed')
       setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, role: newRole } : u)))
-    } catch (e) { console.error(e) }
+    } catch (e) { setToggleError(e instanceof Error ? e.message : 'Failed to update role') }
     finally { setUpdating(null) }
   }
 
@@ -77,6 +81,9 @@ export default function AdminAdminsPage() {
           <UserPlus className="h-4 w-4 mr-1.5" /> Create User
         </Button>
       </div>
+
+      {fetchError && <p className="text-sm text-red-600">{fetchError}</p>}
+      {toggleError && <p className="text-sm text-red-600">{toggleError}</p>}
 
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
         <table className="w-full text-sm">

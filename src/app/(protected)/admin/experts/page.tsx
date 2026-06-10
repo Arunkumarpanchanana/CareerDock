@@ -3,7 +3,7 @@
 import { Button, Input } from '@/components/ui'
 import type { ExpertConsultant } from '@/types/database'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface ExpertForm {
   name: string
@@ -21,13 +21,15 @@ export default function AdminExpertsPage() {
   const [form, setForm] = useState<ExpertForm>(EMPTY_FORM)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  useState(() => {
-    if (typeof window === 'undefined') return true
+  useEffect(() => {
+    if (typeof window === 'undefined') return
     fetch('/api/admin/experts').then(r => r.json()).then(data => {
       if (Array.isArray(data)) setExperts(data)
+      else console.error('Unexpected response format')
     }).catch(console.error)
-  })
+  }, [])
 
   const openNew = () => { setEditing(null); setForm(EMPTY_FORM); setShowForm(true) }
 
@@ -39,6 +41,7 @@ export default function AdminExpertsPage() {
 
   const handleSave = async () => {
     setSaving(true)
+    setError(null)
     try {
       const method = editing ? 'PUT' : 'POST'
       const body = editing ? { id: editing.id, ...form, bio: form.bio || null } : { ...form, bio: form.bio || null }
@@ -50,17 +53,18 @@ export default function AdminExpertsPage() {
         return [...prev, saved]
       })
       setShowForm(false)
-    } catch (e) { console.error(e) }
+    } catch { setError('Failed to save expert') }
     finally { setSaving(false) }
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this expert?')) return
+    setError(null)
     try {
       const res = await fetch(`/api/admin/experts?id=${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Delete failed')
       setExperts((prev) => prev.filter((e) => e.id !== id))
-    } catch (e) { console.error(e) }
+    } catch { setError('Failed to delete expert') }
   }
 
   return (
@@ -72,6 +76,8 @@ export default function AdminExpertsPage() {
         </div>
         <Button onClick={openNew}><Plus className="h-4 w-4 mr-1.5" /> Add Expert</Button>
       </div>
+
+      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
         <table className="w-full text-sm">

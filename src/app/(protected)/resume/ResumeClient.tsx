@@ -1,6 +1,5 @@
 'use client'
 
-import { ProfileSection } from '@/components/resume/ProfileSection'
 import { ResumePreview } from '@/components/resume/ResumePreview'
 import { SummarySection } from '@/components/resume/SummarySection'
 import { ExperienceSection } from '@/components/resume/ExperienceSection'
@@ -11,6 +10,7 @@ import { CertificatesSection } from '@/components/resume/CertificatesSection'
 import { Button } from '@/components/ui'
 import { resumeToFormData, type ResumeFormData } from '@/lib/resume'
 import { FileDown, Plus, Trash2 } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import type { Profile, Resume } from '@/types/database'
@@ -43,6 +43,7 @@ export function ResumeClient({
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [renaming, setRenaming] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   const activeResume = resumes.find((r) => r.id === activeId) ?? null
@@ -64,6 +65,7 @@ export function ResumeClient({
   }
 
   async function save() {
+    setError(null)
     setSaving(true)
     try {
       const payload = {
@@ -84,8 +86,7 @@ export function ResumeClient({
       })
 
       if (!res.ok) {
-        const err = await res.json()
-        console.error('Save failed:', err)
+        setError('Failed to save resume')
         return
       }
 
@@ -100,8 +101,8 @@ export function ResumeClient({
       })
       if (!activeResume?.id) setActiveId(savedResume.id)
       setSaved(true)
-    } catch (err) {
-      console.error('Save error:', err)
+    } catch {
+      setError('Failed to save resume')
     } finally {
       setSaving(false)
       router.refresh()
@@ -109,11 +110,11 @@ export function ResumeClient({
   }
 
   async function createNew() {
+    setError(null)
     try {
       const res = await fetch('/api/resume', { method: 'POST' })
       if (!res.ok) {
-        const err = await res.json()
-        console.error('Failed to create resume:', err)
+        setError('Failed to create resume')
         return
       }
       const created = await res.json()
@@ -122,16 +123,20 @@ export function ResumeClient({
       setActiveId(newResume.id)
       setData(resumeToFormData(newResume))
       setActiveTab('summary')
-    } catch (err) {
-      console.error('Failed to create resume:', err)
+    } catch {
+      setError('Failed to create resume')
     }
   }
 
   async function deleteResume(id: string) {
     if (!confirm('Delete this resume? This cannot be undone.')) return
+    setError(null)
     try {
       const res = await fetch(`/api/resume?id=${id}`, { method: 'DELETE' })
-      if (!res.ok) return
+      if (!res.ok) {
+        setError('Failed to delete resume')
+        return
+      }
       setResumes((prev) => prev.filter((r) => r.id !== id))
       if (activeId === id) {
         const next = resumes.find((r) => r.id !== id)
@@ -143,8 +148,8 @@ export function ResumeClient({
           setData(resumeToFormData(null))
         }
       }
-    } catch (err) {
-      console.error('Delete error:', err)
+    } catch {
+      setError('Failed to delete resume')
     }
   }
 
@@ -164,70 +169,18 @@ export function ResumeClient({
   }
 
   const downloadPDF = () => {
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) return
-
     const name = profile?.full_name || 'Resume'
     const sectionsHtml = buildPreviewSections(profile, data)
-
-    const contacts = [
-      profile?.email,
-      profile?.phone,
-      profile?.linkedin?.replace(/^https?:\/\//, ''),
-      profile?.website?.replace(/^https?:\/\//, ''),
-    ].filter(Boolean)
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Resume</title>
-        <style>
-          @page { margin: 0.75in; size: letter; }
-          @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            font-family: Georgia, "Times New Roman", serif;
-            font-size: 11pt;
-            line-height: 1.5;
-            color: #1a1a1a;
-          }
-          .header { text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #ccc; }
-          .header h1 { font-size: 18pt; font-weight: 700; }
-          .header .meta { font-size: 10pt; color: #555; margin-top: 4px; }
-          .header .contacts { font-size: 9pt; color: #666; margin-top: 6px; }
-          .header .contacts span { margin: 0 6px; }
-          section { margin-bottom: 16px; }
-          section h2 { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 3px; border-bottom: 1px solid #ddd; }
-          .exp-item, .edu-item, .proj-item, .cert-item { margin-bottom: 12px; }
-          .exp-header, .edu-header, .cert-header { display: flex; justify-content: space-between; align-items: baseline; }
-          .exp-header h3, .edu-header h3, .proj-header h3, .cert-header h3 { font-size: 11pt; font-weight: 700; }
-          .exp-company, .cert-issuer { font-size: 10pt; color: #333; }
-          .date { font-size: 9pt; color: #666; white-space: nowrap; margin-left: 16px; }
-          ul { margin-top: 4px; padding-left: 16px; }
-          li { font-size: 10pt; margin-bottom: 2px; }
-          .desc { font-size: 10pt; margin-top: 2px; }
-          .tech { font-size: 9pt; color: #555; margin-top: 2px; }
-          .skills-line { font-size: 10pt; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>${escapeHtml(name)}</h1>
-          <div class="meta">
-            ${profile?.location ? escapeHtml(profile.location) : ''}
-            ${profile?.role_title ? (profile?.location ? ' | ' : '') + escapeHtml(profile.role_title) : ''}
-          </div>
-          ${contacts.length ? `<div class="contacts">${contacts.map(c => `<span>${escapeHtml(c!)}</span>`).join('')}</div>` : ''}
-        </div>
-        ${sectionsHtml}
-        <script>window.onload = function() { window.print(); window.close(); }<\/script>
-      </body>
-      </html>
-    `)
-    printWindow.document.close()
+    const html = buildFullHtml(name, profile, sectionsHtml)
+    const blob = new Blob([html], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${name.replace(/\s+/g, '_')}_Resume.html`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   const updateField = useCallback(<K extends keyof ResumeFormData>(key: K, value: ResumeFormData[K]) => {
@@ -277,6 +230,7 @@ export function ResumeClient({
           </div>
           <div className="flex items-center gap-3 flex-shrink-0">
             {saved && <span className="text-sm text-green-600">Saved!</span>}
+            {error && <span className="text-sm text-red-600">{error}</span>}
             <Button variant="secondary" size="sm" onClick={downloadPDF}>
               <FileDown className="h-4 w-4 mr-1.5" />
               Download PDF
@@ -328,7 +282,14 @@ export function ResumeClient({
             </div>
 
             <div className="flex-1 overflow-y-auto pr-4">
-              {activeTab === 'profile' && <ProfileSection profile={profile} />}
+              {activeTab === 'profile' && (
+                <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl">
+                  <p className="text-gray-500 mb-2">Profile details are managed from your Profile page.</p>
+                  <Link href="/profile">
+                    <Button variant="secondary">Edit Profile</Button>
+                  </Link>
+                </div>
+              )}
               {activeTab === 'summary' && (
                 <SummarySection summary={data.summary} onChange={(v) => updateField('summary', v)} />
               )}
@@ -439,4 +400,62 @@ function buildPreviewSections(profile: Profile | null, data: ResumeFormData): st
   }
 
   return html || '<p style="text-align:center;color:#999;padding:40px 0;">No resume content yet.</p>'
+}
+
+function buildFullHtml(name: string, profile: Profile | null, sectionsHtml: string): string {
+  const contacts = [
+    profile?.email,
+    profile?.phone,
+    profile?.linkedin?.replace(/^https?:\/\//, ''),
+    profile?.website?.replace(/^https?:\/\//, ''),
+  ].filter(Boolean)
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Resume</title>
+  <style>
+    @page { margin: 0.75in; size: letter; }
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #1a1a1a;
+    }
+    .header { text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #ccc; }
+    .header h1 { font-size: 18pt; font-weight: 700; }
+    .header .meta { font-size: 10pt; color: #555; margin-top: 4px; }
+    .header .contacts { font-size: 9pt; color: #666; margin-top: 6px; }
+    .header .contacts span { margin: 0 6px; }
+    section { margin-bottom: 16px; }
+    section h2 { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 3px; border-bottom: 1px solid #ddd; }
+    .exp-item, .edu-item, .proj-item, .cert-item { margin-bottom: 12px; }
+    .exp-header, .edu-header, .cert-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .exp-header h3, .edu-header h3, .proj-header h3, .cert-header h3 { font-size: 11pt; font-weight: 700; }
+    .exp-company, .cert-issuer { font-size: 10pt; color: #333; }
+    .date { font-size: 9pt; color: #666; white-space: nowrap; margin-left: 16px; }
+    ul { margin-top: 4px; padding-left: 16px; }
+    li { font-size: 10pt; margin-bottom: 2px; }
+    .desc { font-size: 10pt; margin-top: 2px; }
+    .tech { font-size: 9pt; color: #555; margin-top: 2px; }
+    .skills-line { font-size: 10pt; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>${escapeHtml(name)}</h1>
+    <div class="meta">
+      ${profile?.location ? escapeHtml(profile.location) : ''}
+      ${profile?.role_title ? (profile?.location ? ' | ' : '') + escapeHtml(profile.role_title) : ''}
+    </div>
+    ${contacts.length ? `<div class="contacts">${contacts.map(c => `<span>${escapeHtml(c!)}</span>`).join('')}</div>` : ''}
+  </div>
+  ${sectionsHtml}
+</body>
+</html>`.trim()
 }
