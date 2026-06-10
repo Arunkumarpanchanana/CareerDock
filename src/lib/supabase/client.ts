@@ -1,3 +1,5 @@
+'use client'
+
 import { createBrowserClient } from '@supabase/ssr'
 
 let client: ReturnType<typeof createBrowserClient> | null = null
@@ -23,6 +25,6 @@ export async function signOutAndClear() {
     console.error('signOut client error:', e)
   }
 
-  // Navigate to signout endpoint — it clears server cookies and redirects to login
-  window.location.href = '/api/auth/signout'
+  // Force redirect to login — clears browser state entirely
+  window.location.assign('/auth/login')
 }
