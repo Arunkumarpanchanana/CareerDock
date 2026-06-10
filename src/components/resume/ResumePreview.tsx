@@ -29,6 +29,16 @@ export function ResumePreview({
               </>
             )}
           </div>
+          <div className="text-xs text-gray-500 mt-1.5 space-x-3">
+            {profile?.email && <span>{profile.email}</span>}
+            {profile?.phone && <span>{profile.phone}</span>}
+            {profile?.linkedin && (
+              <span>{profile.linkedin.replace(/^https?:\/\//, '')}</span>
+            )}
+            {profile?.website && (
+              <span>{profile.website.replace(/^https?:\/\//, '')}</span>
+            )}
+          </div>
         </div>
 
         {/* Summary */}

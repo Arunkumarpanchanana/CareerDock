@@ -40,6 +40,10 @@ export interface Profile {
   full_name: string
   role_title: string | null
   location: string | null
+  email: string | null
+  phone: string | null
+  linkedin: string | null
+  website: string | null
   updated_at: string
 }
 

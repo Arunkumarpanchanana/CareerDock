@@ -168,13 +168,23 @@ export function ResumeClient({
     const name = profile?.full_name || 'Resume'
     const sectionsHtml = buildPreviewSections(profile, data)
 
+    const contacts = [
+      profile?.email,
+      profile?.phone,
+      profile?.linkedin?.replace(/^https?:\/\//, ''),
+      profile?.website?.replace(/^https?:\/\//, ''),
+    ].filter(Boolean)
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>${name} - Resume</title>
+        <title>Resume</title>
         <style>
           @page { margin: 0.75in; size: letter; }
+          @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body {
             font-family: Georgia, "Times New Roman", serif;
@@ -185,6 +195,8 @@ export function ResumeClient({
           .header { text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #ccc; }
           .header h1 { font-size: 18pt; font-weight: 700; }
           .header .meta { font-size: 10pt; color: #555; margin-top: 4px; }
+          .header .contacts { font-size: 9pt; color: #666; margin-top: 6px; }
+          .header .contacts span { margin: 0 6px; }
           section { margin-bottom: 16px; }
           section h2 { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 3px; border-bottom: 1px solid #ddd; }
           .exp-item, .edu-item, .proj-item, .cert-item { margin-bottom: 12px; }
@@ -197,16 +209,16 @@ export function ResumeClient({
           .desc { font-size: 10pt; margin-top: 2px; }
           .tech { font-size: 9pt; color: #555; margin-top: 2px; }
           .skills-line { font-size: 10pt; }
-          @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
         </style>
       </head>
       <body>
         <div class="header">
           <h1>${escapeHtml(name)}</h1>
           <div class="meta">
-            ${profile?.location ? `<span>${escapeHtml(profile.location)}</span>` : ''}
-            ${profile?.role_title ? `<span>${escapeHtml(profile.role_title)}</span>` : ''}
+            ${profile?.location ? escapeHtml(profile.location) : ''}
+            ${profile?.role_title ? (profile?.location ? ' | ' : '') + escapeHtml(profile.role_title) : ''}
           </div>
+          ${contacts.length ? `<div class="contacts">${contacts.map(c => `<span>${escapeHtml(c!)}</span>`).join('')}</div>` : ''}
         </div>
         ${sectionsHtml}
         <script>window.onload = function() { window.print(); window.close(); }<\/script>

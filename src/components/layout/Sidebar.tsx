@@ -9,6 +9,7 @@ import {
   LogOut,
   Menu,
   ScrollText,
+  Settings,
   Users,
   X,
 } from 'lucide-react'
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/resume', label: 'Resume Builder', icon: ScrollText },
   { href: '/tracker', label: 'Job Tracker', icon: Briefcase },
   { href: '/experts', label: 'Experts', icon: Users },
+  { href: '/profile', label: 'Profile', icon: Settings },
 ]
 
 export function Sidebar() {

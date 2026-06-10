@@ -1,0 +1,5 @@
+ALTER TABLE profiles
+  ADD COLUMN email VARCHAR(255),
+  ADD COLUMN phone VARCHAR(50),
+  ADD COLUMN linkedin VARCHAR(500),
+  ADD COLUMN website VARCHAR(500);
