@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimitByIp } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
@@ -19,11 +20,22 @@ export async function PUT(request: Request) {
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
     }
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({ id: user.id, ...parsed.data })
 
-    if (error) throw error
+    // Use admin client first (bypasses RLS — no INSERT policy on profiles)
+    const adminClient = createAdminClient()
+    if (adminClient) {
+      const { error } = await adminClient
+        .from('profiles')
+        .upsert({ id: user.id, ...parsed.data })
+      if (error) throw error
+    } else {
+      // Fallback: regular client (needs INSERT policy migration for new users)
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, ...parsed.data })
+      if (error) throw error
+    }
+
     return NextResponse.json({ success: true })
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error'
