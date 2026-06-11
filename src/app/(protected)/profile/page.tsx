@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { Button, Input, Card } from '@/components/ui'
 import type { Profile } from '@/types/database'
-import { Mail, MapPin, Phone, Briefcase, Globe, ExternalLink, User } from 'lucide-react'
+import { Lock, Mail, MapPin, Phone, Briefcase, Globe, ExternalLink, User } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 interface FormFields {
@@ -32,6 +32,12 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [loadingProfile, setLoadingProfile] = useState(!profile)
+  const [pwCurrent, setPwCurrent] = useState('')
+  const [pwNew, setPwNew] = useState('')
+  const [pwConfirm, setPwConfirm] = useState('')
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwError, setPwError] = useState('')
+  const [pwDone, setPwDone] = useState(false)
 
   const populateFields = useCallback((p: Profile) => {
     setFields({
@@ -159,6 +165,81 @@ export default function ProfilePage() {
           </Button>
           {saved && <span className="text-sm text-green-600">Saved successfully!</span>}
           {error && <span className="text-sm text-red-600">{error}</span>}
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Lock className="h-5 w-5 text-gray-400" />
+          Change Password
+        </h2>
+
+        <div className="space-y-4">
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+              Current Password
+            </label>
+            <Input
+              type="password"
+              placeholder="Enter your current password"
+              value={pwCurrent}
+              onChange={(e) => { setPwCurrent(e.target.value); setPwDone(false) }}
+            />
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+              New Password
+            </label>
+            <Input
+              type="password"
+              placeholder="At least 8 characters"
+              value={pwNew}
+              onChange={(e) => { setPwNew(e.target.value); setPwDone(false) }}
+            />
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+              Confirm New Password
+            </label>
+            <Input
+              type="password"
+              placeholder="Re-enter your new password"
+              value={pwConfirm}
+              onChange={(e) => { setPwConfirm(e.target.value); setPwDone(false) }}
+            />
+          </div>
+
+          {pwError && <p className="text-sm text-red-600">{pwError}</p>}
+          {pwDone && <p className="text-sm text-green-600">Password updated successfully!</p>}
+
+          <div className="pt-2">
+            <Button
+              onClick={async () => {
+                setPwError('')
+                setPwDone(false)
+                if (!pwCurrent) { setPwError('Enter your current password'); return }
+                if (pwNew.length < 8) { setPwError('New password must be at least 8 characters'); return }
+                if (pwNew !== pwConfirm) { setPwError('Passwords do not match'); return }
+                setPwSaving(true)
+                try {
+                  const supabase = createClient()
+                  const { error: signInError } = await supabase.auth.signInWithPassword({
+                    email: profile?.email || '',
+                    password: pwCurrent,
+                  })
+                  if (signInError) { setPwError('Current password is incorrect'); setPwSaving(false); return }
+                  const { error: updateError } = await supabase.auth.updateUser({ password: pwNew })
+                  if (updateError) { setPwError(updateError.message); setPwSaving(false); return }
+                  setPwCurrent(''); setPwNew(''); setPwConfirm('')
+                  setPwDone(true)
+                } catch { setPwError('Something went wrong') }
+                finally { setPwSaving(false) }
+              }}
+              disabled={pwSaving}
+            >
+              {pwSaving ? 'Updating...' : 'Update Password'}
+            </Button>
+          </div>
         </div>
       </Card>
     </div>
