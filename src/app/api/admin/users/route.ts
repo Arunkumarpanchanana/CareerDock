@@ -1,7 +1,11 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { rateLimitByIp } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
+  const limit = rateLimitByIp(request, 10, 60_000)
+  if (limit instanceof NextResponse) return limit
+
   try {
     const adminClient = createAdminClient()
     if (!adminClient) {

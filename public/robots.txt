@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /auth/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /admin/
+Disallow: /profile/
+Disallow: /resume/
+Disallow: /tracker/
+Disallow: /experts/

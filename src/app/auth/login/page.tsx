@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui/Input'
 import { createClient } from '@/lib/supabase/client'
+import { useReCaptcha } from '@/lib/captcha'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
+  const { execute: executeCaptcha, enabled: captchaEnabled } = useReCaptcha('login')
 
   const getSupabase = () => {
     if (!supabaseRef.current) {
@@ -27,7 +29,13 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
-    const { error } = await getSupabase().auth.signInWithPassword({ email, password })
+    const captchaToken = await executeCaptcha()
+
+    const { error } = await getSupabase().auth.signInWithPassword({
+      email,
+      password,
+      options: captchaToken ? { captchaToken } : undefined,
+    })
 
     if (error) {
       setError(error.message)

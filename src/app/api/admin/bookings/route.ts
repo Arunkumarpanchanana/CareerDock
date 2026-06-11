@@ -1,7 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitByIp } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const limit = rateLimitByIp(request, 30, 60_000)
+  if (limit instanceof NextResponse) return limit
+
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -24,6 +28,9 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const limit = rateLimitByIp(request, 20, 60_000)
+  if (limit instanceof NextResponse) return limit
+
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
