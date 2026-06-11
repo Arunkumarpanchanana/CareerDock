@@ -2,7 +2,7 @@ import { updateSession } from '@/lib/supabase/proxy'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const nonce = crypto.randomUUID()
   const isDev = process.env.NODE_ENV === 'development'
 
   const cspHeader = [
@@ -19,10 +19,16 @@ export async function middleware(request: NextRequest) {
     "frame-ancestors 'none'",
   ].join('; ')
 
-  const { supabaseResponse, user } = await updateSession(request)
-
   const { pathname } = new URL(request.url)
   const isApiRoute = pathname.startsWith('/api')
+
+  if (!isApiRoute) {
+    request.headers.set('x-nonce', nonce)
+    request.headers.set('Content-Security-Policy', cspHeader)
+  }
+
+  const { supabaseResponse, user } = await updateSession(request)
+
   const isAuthPage = pathname.startsWith('/auth')
   const isLandingPage = pathname === '/'
   const isPublicPath = isAuthPage || isApiRoute || isLandingPage
