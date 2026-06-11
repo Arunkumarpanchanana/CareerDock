@@ -1,5 +1,6 @@
 'use client'
 
+import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import type { Profile } from '@/types/database'
 
@@ -18,14 +19,23 @@ export default function SalesDashboardPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/users')
-      .then(r => r.json())
-      .then(data => {
+    const load = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = {}
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+      try {
+        const res = await fetch('/api/admin/users', { headers })
+        const data = await res.json()
         if (Array.isArray(data)) setUsers(data)
         else setError('Failed to load data')
-      })
-      .catch(() => setError('Failed to load data'))
-      .finally(() => setLoading(false))
+      } catch {
+        setError('Failed to load data')
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
   }, [])
 
   const stats: PlanStats = {

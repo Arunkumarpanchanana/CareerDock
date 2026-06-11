@@ -1,5 +1,6 @@
 'use client'
 
+import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types/database'
 import { useEffect, useState } from 'react'
 
@@ -16,14 +17,23 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    fetch('/api/admin/users')
-      .then(r => r.json())
-      .then(data => {
+    const load = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+      try {
+        const res = await fetch('/api/admin/users', { headers })
+        const data = await res.json()
         if (Array.isArray(data)) setUsers(data)
         else setError('Failed to load users')
-      })
-      .catch(() => setError('Failed to load users'))
-      .finally(() => setLoading(false))
+      } catch {
+        setError('Failed to load users')
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
   }, [])
 
   const togglePlan = async (user: Profile) => {
@@ -31,9 +41,13 @@ export default function AdminUsersPage() {
     setUpdating(user.id)
     setError(null)
     try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
       const res = await fetch('/api/admin/users', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ id: user.id, plan_tier: newTier }),
       })
       if (!res.ok) throw new Error('Update failed')
