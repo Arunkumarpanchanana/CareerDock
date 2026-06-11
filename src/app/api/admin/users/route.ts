@@ -1,6 +1,25 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { rateLimitByIp } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
+
+export async function GET(request: Request) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+    const { data, error } = await supabase.from('profiles').select('*').order('full_name')
+    if (error) throw error
+    return NextResponse.json(data)
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Unknown error'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
 
 export async function POST(request: Request) {
   const limit = rateLimitByIp(request, 10, 60_000)
@@ -50,6 +69,29 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, id: authUser.user.id })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Unknown error'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+    const body = await request.json()
+    const { id, plan_tier } = body
+    if (!id || !plan_tier) return NextResponse.json({ error: 'Missing id or plan_tier' }, { status: 400 })
+    if (!['free', 'premium'].includes(plan_tier)) return NextResponse.json({ error: 'Invalid plan_tier' }, { status: 400 })
+
+    const { error } = await supabase.from('profiles').update({ plan_tier }).eq('id', id)
+    if (error) throw error
+    return NextResponse.json({ success: true })
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error'
     return NextResponse.json({ error: message }, { status: 500 })

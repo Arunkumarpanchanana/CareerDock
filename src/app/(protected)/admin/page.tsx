@@ -40,6 +40,8 @@ export default function AdminDashboard() {
     { label: 'Manage Experts', desc: 'Add, edit, or remove expert consultants', href: '/admin/experts', icon: Briefcase, color: 'border-l-green-500' },
     { label: 'Manage Admins', desc: 'Promote or demote admin users', href: '/admin/admins', icon: Users, color: 'border-l-purple-500' },
     { label: 'View Bookings', desc: 'Track all expert session bookings', href: '/admin/bookings', icon: Calendar, color: 'border-l-orange-500' },
+    { label: 'User Management', desc: 'View and manage all users, plans, and referrals', href: '/admin/users', icon: Users, color: 'border-l-blue-500' },
+    { label: 'Sales Dashboard', desc: 'View plan adoption and revenue metrics', href: '/admin/sales', icon: TrendingUp, color: 'border-l-amber-500' },
   ]
 
   return (
@@ -68,7 +70,7 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map(({ label, desc, href, icon: Icon, color }) => (
           <button
             key={href}
