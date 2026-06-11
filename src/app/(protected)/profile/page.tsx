@@ -2,7 +2,6 @@
 
 import { useAuth } from '@/components/auth/AuthProvider'
 import { Button, Input, Card } from '@/components/ui'
-import { createClient } from '@/lib/supabase/client'
 import { Mail, MapPin, Phone, Briefcase, Globe, ExternalLink, User } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -57,13 +56,10 @@ export default function ProfilePage() {
     setError('')
     setSaved(false)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           full_name: fields.full_name,
           role_title: fields.role_title || null,
           location: fields.location || null,
@@ -71,10 +67,11 @@ export default function ProfilePage() {
           phone: fields.phone || null,
           linkedin: fields.linkedin || null,
           website: fields.website || null,
-        })
-        .eq('id', user.id)
+        }),
+      })
 
-      if (updateError) throw updateError
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to save')
       await refreshProfile()
       setSaved(true)
     } catch (e) {
