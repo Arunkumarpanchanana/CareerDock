@@ -18,6 +18,14 @@ export function createClient() {
 }
 
 export async function signOutAndClear() {
+  // Call server-side API first — it has access to clear HttpOnly cookies
+  try {
+    await fetch('/api/auth/signout', { method: 'POST' })
+  } catch (e) {
+    console.error('signOut server error:', e)
+  }
+
+  // Also clear client-side auth state
   try {
     const supabase = createClient()
     await supabase.auth.signOut()
