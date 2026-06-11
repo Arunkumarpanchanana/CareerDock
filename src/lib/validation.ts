@@ -33,3 +33,39 @@ export const profileUpdateSchema = z.object({
   linkedin: z.string().max(500).nullable().optional(),
   website: z.string().max(500).nullable().optional(),
 })
+
+export const expertSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  domain_expertise: z.string().min(1, 'Domain expertise is required'),
+  bio: z.string().nullable().optional(),
+  scheduling_url: z.string().url('Invalid scheduling URL'),
+  is_active: z.boolean().optional(),
+})
+
+export const expertUpdateSchema = expertSchema.partial().extend({
+  id: z.string().uuid(),
+})
+
+export const bookingUpdateSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(['pending', 'confirmed', 'completed', 'cancelled']),
+  notes: z.string().nullable().optional(),
+  scheduled_at: z.string().optional(),
+})
+
+export const adminRoleUpdateSchema = z.object({
+  id: z.string().uuid(),
+  role: z.enum(['user', 'admin']),
+})
+
+export const adminCreateUserSchema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  full_name: z.string().min(1, 'Full name is required'),
+  role: z.enum(['user', 'admin']).optional(),
+})
+
+export const adminUpdatePlanSchema = z.object({
+  id: z.string().uuid(),
+  plan_tier: z.enum(['free', 'premium']),
+})
