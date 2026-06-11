@@ -28,8 +28,8 @@ export const profileUpdateSchema = z.object({
   full_name: z.string().min(1).optional(),
   role_title: z.string().nullable().optional(),
   location: z.string().nullable().optional(),
-  email: z.string().email().nullable().optional().or(z.literal('')),
-  phone: z.string().nullable().optional(),
-  linkedin: z.string().url().nullable().optional().or(z.literal('')),
-  website: z.string().url().nullable().optional().or(z.literal('')),
+  email: z.string().max(500).nullable().optional(),
+  phone: z.string().max(50).nullable().optional(),
+  linkedin: z.string().max(500).nullable().optional(),
+  website: z.string().max(500).nullable().optional(),
 })
