@@ -14,9 +14,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { count } = await supabase
+      .from('resumes')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
     const { data, error } = await supabase
       .from('resumes')
-      .insert({ user_id: user.id, title: 'Untitled Resume' })
+      .insert({ user_id: user.id, title: `My Resume ${(count ?? 0) + 1}` })
       .select()
       .single()
 
