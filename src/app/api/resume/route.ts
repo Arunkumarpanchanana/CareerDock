@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { rateLimitByIp } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import { resumeSchema } from '@/lib/validation'
+import { checkResumeQuota } from '@/lib/quota'
 
 export async function POST(request: Request) {
   const limit = rateLimitByIp(request, 20, 60_000)
@@ -12,6 +13,14 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const quota = await checkResumeQuota(user.id)
+    if (!quota.allowed) {
+      return NextResponse.json(
+        { error: `Resume limit reached (${quota.current}/${quota.limit}). Upgrade to premium for unlimited resumes.` },
+        { status: 403 }
+      )
     }
 
     const { count } = await supabase

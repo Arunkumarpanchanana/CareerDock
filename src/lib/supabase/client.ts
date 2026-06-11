@@ -18,49 +18,10 @@ export function createClient() {
 }
 
 export async function signOutAndClear() {
-  // Call server-side API first — it has access to clear HttpOnly cookies
   try {
     await fetch('/api/auth/signout', { method: 'POST' })
   } catch (e) {
     console.error('signOut server error:', e)
   }
-
-  // Also clear client-side auth state
-  try {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-  } catch (e) {
-    console.error('signOut client error:', e)
-  }
-
-  // Clear Supabase-related keys from localStorage
-  try {
-    const keysToRemove: string[] = []
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key && (key.includes('sb-') || key.includes('supabase'))) {
-        keysToRemove.push(key)
-      }
-    }
-    keysToRemove.forEach((k) => localStorage.removeItem(k))
-  } catch (e) {
-    console.error('localStorage clear error:', e)
-  }
-
-  // Clear all sb-* cookies at every path and domain level
-  const hostname = window.location.hostname
-  const domains = [hostname, '.' + hostname]
-  const paths = ['/', '/auth']
-
-  document.cookie.split('; ').forEach((cookie) => {
-    const name = cookie.split('=')[0]
-    if (name.includes('sb-') || name.includes('supabase')) {
-      domains.forEach((d) => paths.forEach((p) => {
-        document.cookie = `${name}=; max-age=0; path=${p}; domain=${d}`
-      }))
-      document.cookie = `${name}=; max-age=0; path=/`
-    }
-  })
-
   window.location.assign('/auth/login')
 }

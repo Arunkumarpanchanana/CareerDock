@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { rateLimitByIp } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import { jobApplicationSchema, jobApplicationUpdateSchema } from '@/lib/validation'
+import { checkJobQuota } from '@/lib/quota'
 
 export async function GET(request: Request) {
   const limit = rateLimitByIp(request, 30, 60_000)
@@ -37,6 +38,14 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const quota = await checkJobQuota(user.id)
+    if (!quota.allowed) {
+      return NextResponse.json(
+        { error: `Job application limit reached (${quota.current}/${quota.limit}). Upgrade to premium for unlimited tracking.` },
+        { status: 403 }
+      )
     }
 
     const body = await request.json()

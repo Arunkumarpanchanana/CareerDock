@@ -1,6 +1,8 @@
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner'
 import { createClient, getProfile } from '@/lib/supabase/server'
+import ReferralCard from '@/components/referral/ReferralCard'
 import { Briefcase, FileText, TrendingUp, Users } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -43,6 +45,21 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      {profile?.plan_tier === 'free' && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-amber-800">Free Plan</p>
+            <p className="text-xs text-amber-600">Upgrade to Premium for unlimited resumes and job tracking.</p>
+          </div>
+          <Link
+            href="/upgrade"
+            className="px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors"
+          >
+            Upgrade
+          </Link>
+        </div>
+      )}
+
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon
@@ -71,6 +88,8 @@ export default async function DashboardPage() {
           Use the sidebar to build your resume, track job applications, and connect with career experts.
         </p>
       </div>
+
+      <ReferralCard />
     </div>
   )
 }

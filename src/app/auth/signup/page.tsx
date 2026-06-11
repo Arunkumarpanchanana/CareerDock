@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/Input'
 import { createClient } from '@/lib/supabase/client'
 import { useReCaptcha } from '@/lib/captcha'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useRef, useState, useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useRef, useState, useMemo, useEffect } from 'react'
 
 const PASSWORD_RULES = {
   minLength: 8,
@@ -30,16 +30,25 @@ function getPasswordStrength(password: string): { score: number; label: string; 
   return { score, label: 'Strong', color: 'bg-green-500' }
 }
 
-export default function SignupPage() {
+function SignupForm() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [referralCode, setReferralCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [touched, setTouched] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
   const { execute: executeCaptcha } = useReCaptcha('signup')
+
+  const refFromUrl = searchParams.get('ref')
+  useEffect(() => {
+    if (refFromUrl) {
+      setReferralCode(refFromUrl)
+    }
+  }, [refFromUrl])
 
   const strength = useMemo(() => getPasswordStrength(password), [password])
 
@@ -84,7 +93,7 @@ export default function SignupPage() {
 
     const captchaToken = await executeCaptcha()
 
-    const { error } = await getSupabase().auth.signUp({
+    const { data, error } = await getSupabase().auth.signUp({
       email,
       password,
       options: {
@@ -97,6 +106,30 @@ export default function SignupPage() {
       setError(error.message)
       setLoading(false)
       return
+    }
+
+    const newUserId = data.user?.id
+    if (newUserId) {
+      const supabase = getSupabase()
+
+      if (referralCode) {
+        const { data: referrer } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('referral_code', referralCode)
+          .single()
+
+        if (referrer) {
+          await supabase.from('profiles').update({ referred_by: referrer.id }).eq('id', newUserId)
+          await supabase.from('referrals').insert({
+            referrer_id: referrer.id,
+            referee_id: newUserId,
+          })
+        }
+      }
+
+      const newCode = `ref-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+      await supabase.from('profiles').update({ referral_code: newCode }).eq('id', newUserId)
     }
 
     router.push('/dashboard')
@@ -181,6 +214,14 @@ export default function SignupPage() {
             )}
           </div>
 
+          <Input
+            label="Referral code (optional)"
+            type="text"
+            placeholder="ref-XXXXXXXX"
+            value={referralCode}
+            onChange={(e) => setReferralCode(e.target.value)}
+          />
+
           {error && (
             <p className="text-sm text-red-600">{error}</p>
           )}
@@ -198,5 +239,13 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-gray-500">Loading...</div>}>
+      <SignupForm />
+    </Suspense>
   )
 }

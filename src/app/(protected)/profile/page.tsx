@@ -29,11 +29,9 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
-  const initialized = useRef(false)
 
   useEffect(() => {
-    if (profile && !initialized.current) {
-      initialized.current = true
+    if (profile) {
       setFields({
         full_name: profile.full_name || '',
         role_title: profile.role_title || '',

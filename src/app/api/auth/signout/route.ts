@@ -1,12 +1,30 @@
-import { createClient } from '@/lib/supabase/server'
-import { rateLimitByIp } from '@/lib/rate-limit'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
-  const limit = rateLimitByIp(request, 10, 60_000)
-  if (limit instanceof NextResponse) return limit
+  const response = NextResponse.json({ success: true })
 
-  const supabase = await createClient()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          const cookieHeader = request.headers.get('cookie') || ''
+          return cookieHeader.split('; ').filter(Boolean).map(c => {
+            const [name, ...rest] = c.split('=')
+            return { name, value: decodeURIComponent(rest.join('=')) }
+          })
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
   await supabase.auth.signOut()
-  return NextResponse.json({ success: true })
+  return response
 }

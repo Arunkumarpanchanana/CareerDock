@@ -45,6 +45,9 @@ export interface Profile {
   linkedin: string | null
   website: string | null
   role: 'user' | 'admin'
+  plan_tier: string
+  referral_code: string | null
+  referred_by: string | null
   updated_at: string
 }
 
