@@ -21,8 +21,7 @@ export async function PUT(request: Request) {
     }
     const { error } = await supabase
       .from('profiles')
-      .update(parsed.data)
-      .eq('id', user.id)
+      .upsert({ id: user.id, ...parsed.data })
 
     if (error) throw error
     return NextResponse.json({ success: true })

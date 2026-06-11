@@ -120,7 +120,7 @@ function SignupForm() {
           .single()
 
         if (referrer) {
-          await supabase.from('profiles').update({ referred_by: referrer.id }).eq('id', newUserId)
+          await supabase.from('profiles').upsert({ id: newUserId, referred_by: referrer.id })
           await supabase.from('referrals').insert({
             referrer_id: referrer.id,
             referee_id: newUserId,
@@ -129,7 +129,7 @@ function SignupForm() {
       }
 
       const newCode = `ref-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
-      await supabase.from('profiles').update({ referral_code: newCode }).eq('id', newUserId)
+      await supabase.from('profiles').upsert({ id: newUserId, referral_code: newCode })
     }
 
     router.push('/dashboard')
