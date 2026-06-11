@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 
+// In-memory rate limiter — resets on server restart.
+// Not suitable for serverless deployments (Vercel, Lambda) where
+// each instance has an isolated memory space. For production with
+// multiple instances, replace with Redis or a distributed store.
 const store = new Map<string, { count: number; resetAt: number }>()
 
 function rateLimit(

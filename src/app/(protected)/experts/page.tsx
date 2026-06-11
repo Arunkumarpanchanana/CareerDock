@@ -1,20 +1,24 @@
 'use client'
 
 import { Button, Card } from '@/components/ui'
+import { CardSkeleton } from '@/components/ui/CardSkeleton'
 import type { ExpertConsultant } from '@/types/database'
 import { Calendar, ExternalLink, GraduationCap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export default function ExpertsPage() {
   const [experts, setExperts] = useState<ExpertConsultant[]>([])
+  const [loading, setLoading] = useState(true)
   const [error] = useState<string | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+    setLoading(true)
     fetch('/api/experts')
       .then((res) => res.json())
       .then((data) => setExperts(data))
       .catch(console.error)
+      .finally(() => setLoading(false))
   }, [])
 
   return (
@@ -26,8 +30,11 @@ export default function ExpertsPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {experts.map((expert) => (
+      {loading ? (
+        <CardSkeleton count={3} />
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {experts.map((expert) => (
           <Card key={expert.id} className="p-6 flex flex-col">
             <div className="flex items-start gap-4 mb-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-700 flex-shrink-0">
@@ -63,6 +70,7 @@ export default function ExpertsPage() {
           </Card>
         ))}
       </div>
+      )}
 
       {error && (
         <div className="text-center py-8">

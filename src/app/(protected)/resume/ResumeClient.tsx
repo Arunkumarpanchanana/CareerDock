@@ -1,5 +1,6 @@
 'use client'
 
+import { ResumePDFDocument } from '@/components/resume/ResumePDF'
 import { ResumePreview } from '@/components/resume/ResumePreview'
 import { SummarySection } from '@/components/resume/SummarySection'
 import { ExperienceSection } from '@/components/resume/ExperienceSection'
@@ -8,17 +9,17 @@ import { ProjectsSection } from '@/components/resume/ProjectsSection'
 import { SkillsSection } from '@/components/resume/SkillsSection'
 import { CertificatesSection } from '@/components/resume/CertificatesSection'
 import { Button } from '@/components/ui'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { resumeToFormData, type ResumeFormData } from '@/lib/resume'
-import { FileDown, Plus, Trash2 } from 'lucide-react'
-import Link from 'next/link'
+import { pdf } from '@react-pdf/renderer'
+import { Eye, EyeOff, FileDown, Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Profile, Resume } from '@/types/database'
 
-type Tab = 'profile' | 'summary' | 'experience' | 'education' | 'projects' | 'skills' | 'certificates'
+type Tab = 'summary' | 'experience' | 'education' | 'projects' | 'skills' | 'certificates'
 
 const tabs: { id: Tab; label: string }[] = [
-  { id: 'profile', label: 'Profile' },
   { id: 'summary', label: 'Summary' },
   { id: 'experience', label: 'Experience' },
   { id: 'education', label: 'Education' },
@@ -44,16 +45,41 @@ export function ResumeClient({
   const [saved, setSaved] = useState(false)
   const [renaming, setRenaming] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const router = useRouter()
+  const autosaveRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const isDirtyRef = useRef(false)
 
   const activeResume = resumes.find((r) => r.id === activeId) ?? null
 
   useEffect(() => {
     if (saved) {
-      const timer = setTimeout(() => setSaved(false), 2000)
+      const timer = setTimeout(() => setSaved(false), 5000)
       return () => clearTimeout(timer)
     }
   }, [saved])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        save()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  })
+
+  useEffect(() => {
+    if (autosaveRef.current) clearTimeout(autosaveRef.current)
+    if (isDirtyRef.current) {
+      autosaveRef.current = setTimeout(() => {
+        save()
+      }, 30000)
+    }
+    return () => { if (autosaveRef.current) clearTimeout(autosaveRef.current) }
+  }, [data])
 
   const switchResume = (id: string) => {
     const r = resumes.find((res) => res.id === id)
@@ -65,6 +91,10 @@ export function ResumeClient({
   }
 
   async function save() {
+    if (!activeResume && !activeId) {
+      await createNew()
+      return
+    }
     setError(null)
     setSaving(true)
     try {
@@ -90,8 +120,8 @@ export function ResumeClient({
         return
       }
 
-      const saved = await res.json()
-      const savedResume = saved as Resume
+      const savedRes = await res.json()
+      const savedResume = savedRes as Resume
       setResumes((prev) => {
         const exists = prev.find((r) => r.id === savedResume.id)
         if (exists) {
@@ -101,6 +131,7 @@ export function ResumeClient({
       })
       if (!activeResume?.id) setActiveId(savedResume.id)
       setSaved(true)
+      isDirtyRef.current = false
     } catch {
       setError('Failed to save resume')
     } finally {
@@ -128,18 +159,18 @@ export function ResumeClient({
     }
   }
 
-  async function deleteResume(id: string) {
-    if (!confirm('Delete this resume? This cannot be undone.')) return
+  async function deleteResume() {
+    if (!deleteTarget) return
     setError(null)
     try {
-      const res = await fetch(`/api/resume?id=${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/resume?id=${deleteTarget}`, { method: 'DELETE' })
       if (!res.ok) {
         setError('Failed to delete resume')
         return
       }
-      setResumes((prev) => prev.filter((r) => r.id !== id))
-      if (activeId === id) {
-        const next = resumes.find((r) => r.id !== id)
+      setResumes((prev) => prev.filter((r) => r.id !== deleteTarget))
+      if (activeId === deleteTarget) {
+        const next = resumes.find((r) => r.id !== deleteTarget)
         if (next) {
           setActiveId(next.id)
           setData(resumeToFormData(next))
@@ -150,6 +181,8 @@ export function ResumeClient({
       }
     } catch {
       setError('Failed to delete resume')
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -168,15 +201,13 @@ export function ResumeClient({
     }
   }
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
     const name = profile?.full_name || 'Resume'
-    const sectionsHtml = buildPreviewSections(profile, data)
-    const html = buildFullHtml(name, profile, sectionsHtml)
-    const blob = new Blob([html], { type: 'text/html' })
+    const blob = await pdf(<ResumePDFDocument profile={profile} data={data} />).toBlob()
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${name.replace(/\s+/g, '_')}_Resume.html`
+    a.download = `${name.replace(/\s+/g, '_')}_Resume.pdf`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -185,6 +216,7 @@ export function ResumeClient({
 
   const updateField = useCallback(<K extends keyof ResumeFormData>(key: K, value: ResumeFormData[K]) => {
     setData((prev) => ({ ...prev, [key]: value }))
+    isDirtyRef.current = true
   }, [])
 
   return (
@@ -231,6 +263,13 @@ export function ResumeClient({
           <div className="flex items-center gap-3 flex-shrink-0">
             {saved && <span className="text-sm text-green-600">Saved!</span>}
             {error && <span className="text-sm text-red-600">{error}</span>}
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              className="xl:hidden p-2 text-gray-400 hover:text-gray-600"
+              title={showPreview ? 'Hide preview' : 'Show preview'}
+            >
+              {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
             <Button variant="secondary" size="sm" onClick={downloadPDF}>
               <FileDown className="h-4 w-4 mr-1.5" />
               Download PDF
@@ -267,7 +306,7 @@ export function ResumeClient({
                 ))}
               </div>
               <button
-                onClick={() => deleteResume(activeResume.id)}
+                onClick={() => setDeleteTarget(activeResume.id)}
                 className="text-gray-400 hover:text-red-500 transition-colors p-2"
                 title="Delete resume"
               >
@@ -282,14 +321,6 @@ export function ResumeClient({
             </div>
 
             <div className="flex-1 overflow-y-auto pr-4">
-              {activeTab === 'profile' && (
-                <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl">
-                  <p className="text-gray-500 mb-2">Profile details are managed from your Profile page.</p>
-                  <Link href="/profile">
-                    <Button variant="secondary">Edit Profile</Button>
-                  </Link>
-                </div>
-              )}
               {activeTab === 'summary' && (
                 <SummarySection summary={data.summary} onChange={(v) => updateField('summary', v)} />
               )}
@@ -313,149 +344,23 @@ export function ResumeClient({
         ) : null}
       </div>
 
-      <div className="w-[500px] flex-shrink-0 hidden xl:block">
+      <div className={`w-[500px] flex-shrink-0 ${showPreview ? 'block' : 'hidden xl:block'}`}>
         <ResumePreview profile={profile} data={data} />
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete resume"
+        message="Delete this resume? This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={deleteResume}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
-
-function buildPreviewSections(profile: Profile | null, data: ResumeFormData): string {
-  let html = ''
-
-  if (data.summary) {
-    html += `<section><h2>Professional Summary</h2><p class="desc">${escapeHtml(data.summary)}</p></section>`
-  }
-
-  if (data.experience.length > 0) {
-    html += '<section><h2>Experience</h2>'
-    for (const exp of data.experience) {
-      html += `<div class="exp-item">
-        <div class="exp-header">
-          <div>
-            <h3>${escapeHtml(exp.role)}</h3>
-            <div class="exp-company">${escapeHtml(exp.company)}</div>
-          </div>
-          <div class="date">${escapeHtml(exp.start_date)} – ${escapeHtml(exp.end_date || 'Present')}</div>
-        </div>`
-      const bullets = exp.bullets.filter((b) => b.trim())
-      if (bullets.length > 0) {
-        html += '<ul>' + bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join('') + '</ul>'
-      }
-      html += '</div>'
-    }
-    html += '</section>'
-  }
-
-  if (data.education.length > 0) {
-    html += '<section><h2>Education</h2>'
-    for (const edu of data.education) {
-      html += `<div class="edu-item">
-        <div class="edu-header">
-          <div>
-            <h3>${escapeHtml(edu.institution)}</h3>
-            <div class="desc">${escapeHtml(edu.degree)}${edu.field ? ` in ${escapeHtml(edu.field)}` : ''}</div>
-          </div>
-          <div class="date">${escapeHtml(edu.year)}</div>
-        </div>
-      </div>`
-    }
-    html += '</section>'
-  }
-
-  if (data.projects.length > 0) {
-    html += '<section><h2>Projects</h2>'
-    for (const proj of data.projects) {
-      html += `<div class="proj-item">
-        <div class="proj-header"><h3>${escapeHtml(proj.name)}</h3></div>
-        ${proj.description ? `<p class="desc">${escapeHtml(proj.description)}</p>` : ''}
-        ${proj.tech_stack ? `<p class="tech"><strong>Technologies:</strong> ${escapeHtml(proj.tech_stack)}</p>` : ''}
-      </div>`
-    }
-    html += '</section>'
-  }
-
-  if (data.skills.length > 0) {
-    html += `<section><h2>Skills</h2><p class="skills-line">${escapeHtml(data.skills.join(', '))}</p></section>`
-  }
-
-  if (data.certificates.length > 0) {
-    html += '<section><h2>Certificates</h2>'
-    for (const cert of data.certificates) {
-      html += `<div class="cert-item">
-        <div class="cert-header">
-          <div>
-            <h3>${escapeHtml(cert.name)}</h3>
-            <div class="cert-issuer">${escapeHtml(cert.issuer)}</div>
-          </div>
-          <div class="date">${escapeHtml(cert.date)}</div>
-        </div>
-      </div>`
-    }
-    html += '</section>'
-  }
-
-  return html || '<p style="text-align:center;color:#999;padding:40px 0;">No resume content yet.</p>'
-}
-
-function buildFullHtml(name: string, profile: Profile | null, sectionsHtml: string): string {
-  const contacts = [
-    profile?.email,
-    profile?.phone,
-    profile?.linkedin?.replace(/^https?:\/\//, ''),
-    profile?.website?.replace(/^https?:\/\//, ''),
-  ].filter(Boolean)
-
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Resume</title>
-  <style>
-    @page { margin: 0.75in; size: letter; }
-    @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 11pt;
-      line-height: 1.5;
-      color: #1a1a1a;
-    }
-    .header { text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #ccc; }
-    .header h1 { font-size: 18pt; font-weight: 700; }
-    .header .meta { font-size: 10pt; color: #555; margin-top: 4px; }
-    .header .contacts { font-size: 9pt; color: #666; margin-top: 6px; }
-    .header .contacts span { margin: 0 6px; }
-    section { margin-bottom: 16px; }
-    section h2 { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 3px; border-bottom: 1px solid #ddd; }
-    .exp-item, .edu-item, .proj-item, .cert-item { margin-bottom: 12px; }
-    .exp-header, .edu-header, .cert-header { display: flex; justify-content: space-between; align-items: baseline; }
-    .exp-header h3, .edu-header h3, .proj-header h3, .cert-header h3 { font-size: 11pt; font-weight: 700; }
-    .exp-company, .cert-issuer { font-size: 10pt; color: #333; }
-    .date { font-size: 9pt; color: #666; white-space: nowrap; margin-left: 16px; }
-    ul { margin-top: 4px; padding-left: 16px; }
-    li { font-size: 10pt; margin-bottom: 2px; }
-    .desc { font-size: 10pt; margin-top: 2px; }
-    .tech { font-size: 9pt; color: #555; margin-top: 2px; }
-    .skills-line { font-size: 10pt; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>${escapeHtml(name)}</h1>
-    <div class="meta">
-      ${profile?.location ? escapeHtml(profile.location) : ''}
-      ${profile?.role_title ? (profile?.location ? ' | ' : '') + escapeHtml(profile.role_title) : ''}
-    </div>
-    ${contacts.length ? `<div class="contacts">${contacts.map(c => `<span>${escapeHtml(c!)}</span>`).join('')}</div>` : ''}
-  </div>
-  ${sectionsHtml}
-</body>
-</html>`.trim()
 }

@@ -88,13 +88,9 @@ export default function LoginPage() {
           />
 
           <div className="text-right">
-            <button
-              type="button"
-              onClick={() => alert('Password reset not yet implemented. Contact support.')}
-              className="text-sm text-blue-600 hover:text-blue-500"
-            >
+            <Link href="/auth/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
               Forgot password?
-            </button>
+            </Link>
           </div>
 
           {error && (

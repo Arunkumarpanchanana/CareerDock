@@ -64,6 +64,10 @@ export const SUGGESTED_BULLETS: Record<string, string[]> = {
 
 export const SUMMARY_TEMPLATES: { label: string; text: string }[] = [
   {
+    label: 'Student / Entry Level',
+    text: 'Motivated and detail-oriented recent graduate with a strong foundation in computer science fundamentals and hands-on project experience. Quick learner with excellent problem-solving skills and a passion for building software that makes an impact. Seeking an entry-level position where I can contribute to meaningful projects while growing as an engineer.',
+  },
+  {
     label: 'Software Engineer',
     text: 'Results-driven Software Engineer with 3+ years of experience building scalable web applications. Proficient in React, Node.js, and TypeScript with a strong focus on clean architecture and test-driven development. Passionate about delivering high-quality software that solves real-world problems.',
   },

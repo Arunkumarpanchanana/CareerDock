@@ -1,26 +1,39 @@
+import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner'
 import { createClient, getProfile } from '@/lib/supabase/server'
 import { Briefcase, FileText, TrendingUp, Users } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
   const profile = await getProfile()
+  const { data: { user } } = await supabase.auth.getUser()
   const userId = profile?.id
+  const emailConfirmed = user?.email_confirmed_at
 
-  const [{ count: appCount }, { count: interviewCount }, { count: resumeCount }] = await Promise.all([
+  const [
+    { count: appCount },
+    { count: interviewCount },
+    { count: resumeCount },
+    { count: bookingCount },
+  ] = await Promise.all([
     supabase.from('job_applications').select('*', { count: 'exact', head: true }).eq('user_id', userId ?? ''),
     supabase.from('job_applications').select('*', { count: 'exact', head: true }).eq('user_id', userId ?? '').eq('status', 'Interviewing'),
     supabase.from('resumes').select('*', { count: 'exact', head: true }).eq('user_id', userId ?? ''),
+    supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('user_id', userId ?? ''),
   ])
 
   const stats = [
     { label: 'Applications', value: String(appCount ?? 0), icon: Briefcase, color: 'text-blue-600 bg-blue-50' },
     { label: 'Active Interviews', value: String(interviewCount ?? 0), icon: TrendingUp, color: 'text-green-600 bg-green-50' },
     { label: 'Resumes', value: String(resumeCount ?? 0), icon: FileText, color: 'text-purple-600 bg-purple-50' },
-    { label: 'Expert Sessions', value: '0', icon: Users, color: 'text-orange-600 bg-orange-50' },
+    { label: 'Expert Sessions', value: String(bookingCount ?? 0), icon: Users, color: 'text-orange-600 bg-orange-50' },
   ]
 
   return (
     <div className="space-y-8">
+      {user && !emailConfirmed && (
+        <EmailVerificationBanner email={user.email ?? ''} />
+      )}
+
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
           Welcome{profile?.full_name ? `, ${profile.full_name}` : ''}!

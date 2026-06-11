@@ -1,18 +1,19 @@
 'use client'
 
 import { Button, Input } from '@/components/ui'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import type { JobApplication } from '@/types/database'
-import { Briefcase, DollarSign, ExternalLink, Plus, Trash2 } from 'lucide-react'
+import { Briefcase, DollarSign, ExternalLink, Plus, Search, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 type Status = 'Wishlist' | 'Applied' | 'Interviewing' | 'Offered' | 'Rejected'
 
-const COLUMNS: { key: Status; label: string; color: string }[] = [
-  { key: 'Wishlist', label: 'Wishlist', color: 'bg-gray-100 text-gray-700' },
-  { key: 'Applied', label: 'Applied', color: 'bg-blue-100 text-blue-700' },
-  { key: 'Interviewing', label: 'Interviewing', color: 'bg-amber-100 text-amber-700' },
-  { key: 'Offered', label: 'Offered', color: 'bg-green-100 text-green-700' },
-  { key: 'Rejected', label: 'Rejected', color: 'bg-red-100 text-red-700' },
+const COLUMNS: { key: Status; label: string; color: string; hint: string }[] = [
+  { key: 'Wishlist', label: 'Wishlist', color: 'bg-gray-100 text-gray-700', hint: 'Jobs you are researching or planning to apply to' },
+  { key: 'Applied', label: 'Applied', color: 'bg-blue-100 text-blue-700', hint: 'Applications you have submitted' },
+  { key: 'Interviewing', label: 'Interviewing', color: 'bg-amber-100 text-amber-700', hint: 'You have a phone screen, tech interview, or onsite scheduled' },
+  { key: 'Offered', label: 'Offered', color: 'bg-green-100 text-green-700', hint: 'You received an offer — congratulations!' },
+  { key: 'Rejected', label: 'Rejected', color: 'bg-red-100 text-red-700', hint: 'The company passed or you withdrew' },
 ]
 
 const STATUS_ORDER: Status[] = ['Wishlist', 'Applied', 'Interviewing', 'Offered', 'Rejected']
@@ -36,6 +37,8 @@ export default function TrackerPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false)
   const [draggedJob, setDraggedJob] = useState<string | null>(null)
   const [dragOverCol, setDragOverCol] = useState<Status | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/jobs')
@@ -55,8 +58,15 @@ export default function TrackerPage() {
     }
   }, [])
 
+  const filteredJobs = searchQuery
+    ? jobs.filter((j) =>
+        j.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        j.job_title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : jobs
+
   const jobsByStatus = (status: Status) =>
-    jobs.filter((j) => j.status === status)
+    filteredJobs.filter((j) => j.status === status)
 
   const openNew = () => {
     setEditing(null)
@@ -104,15 +114,22 @@ export default function TrackerPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this job application?')) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      const res = await fetch(`/api/jobs?id=${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/jobs?id=${deleteTarget}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Delete failed')
       await fetchJobs()
     } catch (e) {
       console.error(e)
+    } finally {
+      setDeleteTarget(null)
     }
+  }
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedJob(id)
+    e.dataTransfer.effectAllowed = 'move'
   }
 
   const handleDragOver = (e: React.DragEvent, status: Status) => {
@@ -122,7 +139,7 @@ export default function TrackerPage() {
 
   const handleDrop = async (status: Status) => {
     if (!draggedJob) return
-    const job = jobs.find((j) => j.id === draggedJob)
+    const job = filteredJobs.find((j) => j.id === draggedJob)
     if (!job || job.status === status) {
       setDraggedJob(null)
       return
@@ -172,13 +189,25 @@ export default function TrackerPage() {
             {counts.offered > 0 && ` · ${counts.offered} offered`}
           </p>
         </div>
-        <Button onClick={openNew}>
-          <Plus className="h-4 w-4 mr-1.5" /> Add Job
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by company or title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-56 rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <Button onClick={openNew}>
+            <Plus className="h-4 w-4 mr-1.5" /> Add Job
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-5 gap-4">
-        {COLUMNS.map(({ key, label, color }) => (
+        {COLUMNS.map(({ key, label, color, hint }) => (
           <div
             key={key}
             onDragOver={(e) => handleDragOver(e, key)}
@@ -188,13 +217,18 @@ export default function TrackerPage() {
               dragOverCol === key ? 'shadow-md border-blue-300' : 'border-gray-200'
             }`}
           >
-            <div className="px-3 py-2.5 border-b border-gray-200 flex items-center justify-between">
+            <div className="px-3 py-2.5 border-b border-gray-200 flex items-center justify-between group">
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${color}`}>
                 {label}
               </span>
-              <span className="text-xs text-gray-400 font-medium">
-                {jobsByStatus(key).length}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 font-medium">
+                  {jobsByStatus(key).length}
+                </span>
+                <span className="hidden group-hover:inline-block text-xs text-gray-400 max-w-[140px] truncate" title={hint}>
+                  {hint}
+                </span>
+              </div>
             </div>
             <div className="flex-1 p-2 space-y-2 overflow-y-auto">
               {jobsByStatus(key).length === 0 && (
@@ -206,7 +240,7 @@ export default function TrackerPage() {
                 <div
                   key={job.id}
                   draggable
-                  onDragStart={() => setDraggedJob(job.id)}
+                  onDragStart={(e) => handleDragStart(e, job.id)}
                   onClick={() => openEdit(job)}
                   className="bg-white rounded-lg border border-gray-200 p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow space-y-1.5"
                 >
@@ -215,7 +249,7 @@ export default function TrackerPage() {
                       {job.job_title}
                     </h3>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(job.id) }}
+                      onClick={(e) => { e.stopPropagation(); setDeleteTarget(job.id) }}
                       className="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -248,6 +282,16 @@ export default function TrackerPage() {
           </div>
         ))}
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete application"
+        message="Are you sure you want to delete this job application? This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowForm(false)}>

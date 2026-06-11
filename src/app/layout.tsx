@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CareerDock - Career Acceleration Platform",
   description:
-    "Build ATS-optimized resumes, track job applications, and accelerate your career with AI-powered insights.",
+    "Build ATS-optimized resumes, track job applications, and accelerate your career with smart suggestions and expert guidance.",
 };
 
 export default function RootLayout({

@@ -1,6 +1,7 @@
 'use client'
 
 import { Button, Input } from '@/components/ui'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import type { ExpertConsultant } from '@/types/database'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -22,6 +23,7 @@ export default function AdminExpertsPage() {
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -57,14 +59,15 @@ export default function AdminExpertsPage() {
     finally { setSaving(false) }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this expert?')) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     setError(null)
     try {
-      const res = await fetch(`/api/admin/experts?id=${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/admin/experts?id=${deleteTarget}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Delete failed')
-      setExperts((prev) => prev.filter((e) => e.id !== id))
+      setExperts((prev) => prev.filter((e) => e.id !== deleteTarget))
     } catch { setError('Failed to delete expert') }
+    finally { setDeleteTarget(null) }
   }
 
   return (
@@ -102,7 +105,7 @@ export default function AdminExpertsPage() {
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => openEdit(ex)} className="p-1.5 text-gray-400 hover:text-blue-600"><Pencil className="h-4 w-4" /></button>
-                    <button onClick={() => handleDelete(ex.id)} className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={() => setDeleteTarget(ex.id)} className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </td>
               </tr>
@@ -111,6 +114,16 @@ export default function AdminExpertsPage() {
         </table>
         {experts.length === 0 && <p className="text-center text-gray-400 py-8">No experts yet.</p>}
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete expert"
+        message="Delete this expert consultant? This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowForm(false)}>

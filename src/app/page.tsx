@@ -65,7 +65,7 @@ export default function HomePage() {
               
               <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600 leading-relaxed">
                 Build ATS-optimized resumes, track every job application on a visual Kanban board, 
-                get AI-powered insights, and book 1:1 sessions with industry experts — all from one dashboard.
+                get smart suggestions for your resume, and book 1:1 sessions with industry experts — all from one dashboard.
               </p>
 
               <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
@@ -127,7 +127,7 @@ export default function HomePage() {
                 },
                 {
                   icon: Sparkles,
-                  title: 'AI-Powered Insights',
+                  title: 'Smart Suggestions',
                   desc: 'Get smart suggestions for bullet points, skills, and summaries. Optimize for every job description.',
                   color: 'text-purple-600 bg-purple-50',
                 },
