@@ -1,9 +1,11 @@
 'use client'
 
+import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { Button, Input, Card } from '@/components/ui'
+import type { Profile } from '@/types/database'
 import { Mail, MapPin, Phone, Briefcase, Globe, ExternalLink, User } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 interface FormFields {
   full_name: string
@@ -29,20 +31,45 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [loadingProfile, setLoadingProfile] = useState(!profile)
+
+  const populateFields = useCallback((p: Profile) => {
+    setFields({
+      full_name: p.full_name || '',
+      role_title: p.role_title || '',
+      location: p.location || '',
+      email: p.email || '',
+      phone: p.phone || '',
+      linkedin: p.linkedin || '',
+      website: p.website || '',
+    })
+  }, [])
 
   useEffect(() => {
     if (profile) {
-      setFields({
-        full_name: profile.full_name || '',
-        role_title: profile.role_title || '',
-        location: profile.location || '',
-        email: profile.email || '',
-        phone: profile.phone || '',
-        linkedin: profile.linkedin || '',
-        website: profile.website || '',
-      })
+      populateFields(profile)
+      setLoadingProfile(false)
     }
-  }, [profile])
+  }, [profile, populateFields])
+
+  useEffect(() => {
+    if (profile) return
+    const fetchDirect = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+      if (data) {
+        populateFields(data as Profile)
+      }
+      setLoadingProfile(false)
+    }
+    fetchDirect()
+  }, [profile, populateFields])
 
   const update = useCallback((key: keyof FormFields, value: string) => {
     setFields((prev) => ({ ...prev, [key]: value }))
