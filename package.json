@@ -17,8 +17,10 @@
     "@supabase/supabase-js": "^2.108.1",
     "lucide-react": "^1.17.0",
     "next": "16.2.9",
+    "pdfjs-dist": "^6.0.227",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "uipro-cli": "^2.2.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
