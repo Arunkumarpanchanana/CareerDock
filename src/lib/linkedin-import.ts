@@ -111,13 +111,14 @@ function parseSkills(text: string): string[] {
 function parseProjects(text: string) {
   const entries: ResumeFormData['projects'] = []
   const blocks = text.split('\n\n').filter((b) => b.trim())
+  const MIN_DESC_LENGTH = 30
 
   for (const block of blocks) {
     const lines = block.split('\n').filter((l) => l.trim())
     if (lines.length >= 1) {
       const name = lines[0].trim()
-      const desc = lines.slice(1).find((l) => l.length > 30) || ''
-      const tech = lines.find((l) => /^[A-Z][a-z]+[,;]/.test(l.trim())) || ''
+      const desc = lines.slice(1).find((l) => l.length > MIN_DESC_LENGTH) || ''
+      const tech = lines.find((l) => /,/.test(l.trim()) && /[A-Z]/.test(l.trim())) || ''
       entries.push({
         name,
         description: desc,
