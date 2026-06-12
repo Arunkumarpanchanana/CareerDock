@@ -13,9 +13,7 @@ interface JobDetailPanelProps {
 }
 
 export function JobDetailPanel({ job, onPrepare, onApply, preparing, applied }: JobDetailPanelProps) {
-  const daysAgo = job.created
-    ? Math.floor((Date.now() - new Date(job.created).getTime()) / (1000 * 60 * 60 * 24))
-    : null
+  const daysAgo = job.daysAgo
 
   return (
     <div className="space-y-5">

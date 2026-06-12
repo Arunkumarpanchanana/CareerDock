@@ -115,6 +115,7 @@ export interface JobListing {
   category: string
   contract_type: string | null
   created: string
+  daysAgo: number | null
 }
 
 export interface JobApplication {

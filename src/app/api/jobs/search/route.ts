@@ -60,6 +60,7 @@ export async function POST(request: Request) {
       category: (r.category as Record<string, string>)?.label ?? '',
       contract_type: r.contract_type as string | null,
       created: r.created as string,
+      daysAgo: r.created ? Math.floor((Date.now() - new Date(r.created as string).getTime()) / (1000 * 60 * 60 * 24)) : null,
     }))
 
     return NextResponse.json({

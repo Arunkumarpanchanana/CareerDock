@@ -10,9 +10,7 @@ interface JobCardProps {
 }
 
 export function JobCard({ job, selected, onClick }: JobCardProps) {
-  const daysAgo = job.created
-    ? Math.floor((Date.now() - new Date(job.created).getTime()) / (1000 * 60 * 60 * 24))
-    : null
+  const daysAgo = job.daysAgo
 
   return (
     <button
