@@ -81,24 +81,60 @@ function parseEducation(text: string) {
 
   for (const block of blocks) {
     const lines = block.split('\n').filter((l) => l.trim())
-    if (lines.length < 3) continue
+    if (lines.length < 2) continue
 
-    const degree = lines[0].trim()
-    const field = lines[1].trim()
-    const institution = lines[2].trim()
-    let year = ''
-    if (lines.length > 3 && /\d{4}/.test(lines[3])) {
-      year = lines[3].trim()
+    const edu: { institution: string; degree: string; field: string; year: string } = {
+      institution: '',
+      degree: '',
+      field: '',
+      year: '',
     }
 
-    entries.push({
-      institution,
-      degree,
-      field,
-      year,
-    })
+    const first = lines[0].trim()
+    const second = lines[1].trim()
+    const third = lines.length > 2 ? lines[2].trim() : ''
+    const fourth = lines.length > 3 ? lines[3].trim() : ''
+
+    // Detect whether first line is an institution name
+    const institutionIndicators = /university|college|institute|school|academy/i
+    const degreeIndicators = /^(bachelor|master|doctor|ph\.?d|associate|b\.?s\.?|m\.?s\.?|b\.?a\.?|m\.?a\.?|mba|diploma|certificate)/i
+
+    if (institutionIndicators.test(first) || degreeIndicators.test(second)) {
+      // LinkedIn PDF format: institution first, degree+field second
+      edu.institution = first
+      const df = parseDegreeField(second)
+      edu.degree = df.degree
+      edu.field = df.field
+      if (third && /\d{4}/.test(third)) edu.year = third
+      else if (fourth && /\d{4}/.test(fourth)) edu.year = fourth
+    } else if (degreeIndicators.test(first) || third && institutionIndicators.test(third)) {
+      // Alternative format: degree, field, institution
+      edu.degree = first
+      edu.field = second
+      edu.institution = third
+      if (fourth && /\d{4}/.test(fourth)) edu.year = fourth
+    } else {
+      // Fallback: treat lines[0] as degree, lines[1] as field, lines[2] as institution
+      edu.degree = first
+      edu.field = second
+      edu.institution = third
+      if (fourth && /\d{4}/.test(fourth)) edu.year = fourth
+      else if (third && /\d{4}/.test(third)) edu.year = third
+    }
+
+    entries.push(edu)
   }
   return entries
+}
+
+function parseDegreeField(text: string): { degree: string; field: string } {
+  const idx = text.search(/,|\bin\b/i)
+  if (idx !== -1) {
+    const sep = text[idx] === ',' ? ',' : 'in'
+    const parts = text.split(sep === ',' ? /,\s*/ : /\bin\s+/i)
+    return { degree: parts[0].trim(), field: parts.slice(1).join(', ').trim() }
+  }
+  return { degree: text, field: '' }
 }
 
 function parseSkills(text: string): string[] {

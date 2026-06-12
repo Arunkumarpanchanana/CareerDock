@@ -92,6 +92,28 @@ describe('parseLinkedInText', () => {
     expect(result.confidence).toBeLessThanOrEqual(1)
   })
 
+  it('parses education in LinkedIn PDF format (institution first)', () => {
+    const linkedinFormat = `
+Education
+Stanford University
+Master of Science, Computer Science
+2015 - 2017
+
+MIT
+Bachelor of Science in Computer Engineering
+2011 - 2015
+`
+    const result = parseLinkedInText(linkedinFormat)
+    expect(result.data.education.length).toBe(2)
+    expect(result.data.education[0].institution).toBe('Stanford University')
+    expect(result.data.education[0].degree).toBe('Master of Science')
+    expect(result.data.education[0].field).toBe('Computer Science')
+    expect(result.data.education[0].year).toContain('2015')
+    expect(result.data.education[1].institution).toBe('MIT')
+    expect(result.data.education[1].degree).toBe('Bachelor of Science')
+    expect(result.data.education[1].field).toBe('Computer Engineering')
+  })
+
   it('reports unmatched sections when parsing fails', () => {
     const result = parseLinkedInText('Experience\n\nSome random text that is not structured\n\nEducation\n\nMore random text')
     expect(result.unmatched.length).toBeGreaterThan(0)

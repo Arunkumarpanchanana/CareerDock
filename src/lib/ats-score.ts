@@ -337,10 +337,6 @@ export function analyzeResume(resume: ResumeFormData, jobDescription: string = '
   const allIssues = [...formattingIssues, ...keywordIssues, ...contentIssues, ...lengthIssues]
 
   // Calculate sub-scores based on issues
-  const errorCount = allIssues.filter((i) => i.severity === 'error').length
-  const warningCount = allIssues.filter((i) => i.severity === 'warning').length
-  const infoCount = allIssues.filter((i) => i.severity === 'info').length
-
   const formattingScore = Math.max(0, 100 - formattingIssues.filter((i) => i.severity !== 'info').length * 20)
 
   // For keyword score, penalize per missing keyword beyond the first
@@ -355,7 +351,10 @@ export function analyzeResume(resume: ResumeFormData, jobDescription: string = '
     keywordScore = Math.max(0, 100 - missingCounts * 8)
   }
 
-  const contentScore = Math.max(0, 100 - (errorCount * 15 + warningCount * 8 + infoCount * 3))
+  const contentErrorCount = contentIssues.filter((i) => i.severity === 'error').length
+  const contentWarningCount = contentIssues.filter((i) => i.severity === 'warning').length
+  const contentInfoCount = contentIssues.filter((i) => i.severity === 'info').length
+  const contentScore = Math.max(0, 100 - (contentErrorCount * 15 + contentWarningCount * 8 + contentInfoCount * 3))
 
   const lengthScore = lengthIssues.length > 0
     ? lengthIssues.some((i) => i.severity === 'error') ? 50
