@@ -41,7 +41,16 @@ export function LinkedInImport({ onImport }: LinkedInImportProps) {
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i)
         const content = await page.getTextContent()
-        fullText += content.items.map((item) => ('str' in item ? (item as { str: string }).str : '')).join(' ') + '\n'
+        let lastY: number | null = null
+        for (const item of content.items) {
+          if (!('str' in item)) continue
+          const y = (item as { transform: number[] }).transform[5]
+          if (lastY !== null && Math.abs(y - lastY) > 5) fullText += '\n'
+          else if (lastY !== null) fullText += ' '
+          lastY = y
+          fullText += (item as { str: string }).str
+        }
+        fullText += '\n'
       }
 
       if (!fullText.trim()) {

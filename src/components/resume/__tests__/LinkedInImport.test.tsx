@@ -16,7 +16,10 @@ vi.mock('pdfjs-dist', () => ({
       numPages: 1,
       getPage: vi.fn(() => ({
         getTextContent: vi.fn(() => ({
-          items: [{ str: 'Summary\nExperienced engineer' }],
+          items: [
+            { str: 'Summary', transform: [1, 0, 0, 1, 0, 100] },
+            { str: 'Experienced engineer', transform: [1, 0, 0, 1, 0, 90] },
+          ],
         })),
       })),
     }),
