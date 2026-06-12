@@ -103,7 +103,7 @@ export default function JobSearchPage() {
       })
       if (!res.ok) throw new Error('Failed to save')
       setAppliedJobs((prev) => new Set(prev).add(selectedJob.adzuna_id))
-      window.open(selectedJob.redirect_url, '_blank', 'noopener')
+      window.location.href = selectedJob.redirect_url
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Apply failed')
     }
