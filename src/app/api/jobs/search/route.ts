@@ -35,8 +35,6 @@ export async function POST(request: Request) {
       app_key: adzunaApiKey,
       what: keyword,
       where: location ?? '',
-      page: String(page),
-      content_type: 'application/json',
       results_per_page: '20',
     })
 
