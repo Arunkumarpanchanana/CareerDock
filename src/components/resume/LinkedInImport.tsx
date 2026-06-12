@@ -32,7 +32,6 @@ export function LinkedInImport({ onImport }: LinkedInImportProps) {
 
     try {
       const pdfjs = await import('pdfjs-dist')
-      pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
       const buffer = await file.arrayBuffer()
       const pdf = await pdfjs.getDocument({ data: buffer }).promise
@@ -61,7 +60,8 @@ export function LinkedInImport({ onImport }: LinkedInImportProps) {
         confidence: result.confidence,
         unmatched: result.unmatched || [],
       })
-    } catch {
+    } catch (e) {
+      console.error('LinkedIn PDF import error:', e)
       setError('Failed to process PDF. Please try again.')
     } finally {
       setProcessing(false)
