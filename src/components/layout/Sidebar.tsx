@@ -9,6 +9,7 @@ import {
   LogOut,
   Menu,
   ScrollText,
+  Search,
   Settings,
   Shield,
   Users,
@@ -27,6 +28,7 @@ export function Sidebar() {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/resume', label: 'Resume Builder', icon: ScrollText },
+    { href: '/skill-gap', label: 'Skill Gap', icon: Search },
     { href: '/tracker', label: 'Job Tracker', icon: Briefcase },
     { href: '/experts', label: 'Experts', icon: Users },
     { href: '/profile', label: 'Profile', icon: Settings },

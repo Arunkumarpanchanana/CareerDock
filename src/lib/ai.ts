@@ -41,6 +41,21 @@ Improve it by:
 
 Return 3 alternative versions as a JSON array of strings, no other text.`,
 
+  skillGap: `You are an expert recruitment analyst. Given a resume and job description, analyze the fit.
+
+Return a JSON object with these exact fields:
+- score: number 0-100 (overall match score)
+- verdict: string ("Strong fit", "Possible fit", or "Weak fit")
+- verdict_explanation: string (2-3 sentences explaining the score)
+- strengths: string[] (2-4 specific skills or experiences from the resume that match the JD)
+- gaps: string[] (2-4 specific areas where the resume falls short)
+- missing_keywords: string[] (8-15 specific keywords from the JD not found in the resume)
+- suggestions: string[] (2-4 actionable steps to close the gaps)
+
+Be honest and specific. Base strengths on actual matches, gaps on real deficiencies.
+
+Return ONLY valid JSON, no other text.`,
+
   coverLetter: `You are an expert cover letter writer. Given a resume summary and a job description, generate a professional cover letter.
 
 The cover letter should:
@@ -185,6 +200,61 @@ export async function generateCoverLetter(params: {
   return data.choices[0].message.content?.trim() ?? generateFallbackCoverLetter(params)
 }
 
+export async function analyzeSkillGap(params: {
+  resume: string
+  jobTitle: string
+  jobDescription: string
+}): Promise<{
+  score: number
+  verdict: string
+  verdict_explanation: string
+  strengths: string[]
+  gaps: string[]
+  missingKeywords: string[]
+  suggestions: string[]
+}> {
+  const config = getConfig()
+  if (!config) return generateFallbackSkillGap(params)
+
+  try {
+    const response = await fetch(config.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPTS.skillGap },
+          {
+            role: 'user',
+            content: `Job Title: ${params.jobTitle}\n\nJob Description:\n${params.jobDescription}\n\nResume:\n${params.resume}\n\nAnalyze the fit.`,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 800,
+      }),
+    })
+
+    if (!response.ok) return generateFallbackSkillGap(params)
+
+    const data = await response.json()
+    const parsed = JSON.parse(data.choices[0].message.content)
+    return {
+      score: Math.max(0, Math.min(100, parsed.score ?? 50)),
+      verdict: parsed.verdict || 'Possible fit',
+      verdict_explanation: parsed.verdict_explanation || '',
+      strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
+      gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
+      missingKeywords: Array.isArray(parsed.missing_keywords) ? parsed.missing_keywords : [],
+      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+    }
+  } catch {
+    return generateFallbackSkillGap(params)
+  }
+}
+
 // Fallback generators when no AI API key is configured
 function generateFallbackBullets(role: string, context: string): string[] {
   const roleLower = role.toLowerCase()
@@ -250,4 +320,93 @@ Thank you for considering my application. I look forward to the possibility of d
 
 Sincerely,
 [Your Name]`
+}
+
+const COMMON_SKILLS = [
+  'react', 'angular', 'vue', 'node', 'typescript', 'javascript', 'python', 'java',
+  'go', 'rust', 'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'sql', 'mongodb',
+  'postgresql', 'redis', 'graphql', 'rest', 'api', 'microservices', 'ci/cd',
+  'git', 'agile', 'scrum', 'machine learning', 'ai', 'data science', 'devops',
+  'leadership', 'management', 'communication', 'team building', 'strategy',
+]
+
+function generateFallbackSkillGap(params: {
+  resume: string
+  jobTitle: string
+  jobDescription: string
+}): {
+  score: number
+  verdict: string
+  verdict_explanation: string
+  strengths: string[]
+  gaps: string[]
+  missingKeywords: string[]
+  suggestions: string[]
+} {
+  const resumeLower = params.resume.toLowerCase()
+  const jdLower = params.jobDescription.toLowerCase()
+
+  if (!params.resume.trim() || !params.jobDescription.trim()) {
+    return {
+      score: 0,
+      verdict: 'Insufficient data',
+      verdict_explanation: 'Provide both resume and job description for analysis.',
+      strengths: [],
+      gaps: [],
+      missingKeywords: [],
+      suggestions: ['Paste your resume and the job description to get started.'],
+    }
+  }
+
+  const matched: string[] = []
+  const missing: string[] = []
+
+  for (const skill of COMMON_SKILLS) {
+    const inResume = resumeLower.includes(skill)
+    const inJD = jdLower.includes(skill)
+    if (inResume && inJD) matched.push(skill)
+    else if (inJD && !inResume) missing.push(skill)
+  }
+
+  const score = matched.length + missing.length > 0
+    ? Math.round((matched.length / (matched.length + missing.length)) * 100)
+    : 50
+
+  const strengths = matched.length > 0
+    ? matched.slice(0, 4).map((s) => `Your experience with ${s} aligns with this role's requirements.`)
+    : ['Your resume shows general qualifications. Consider highlighting specific skills from the job description.']
+
+  const gaps = missing.length > 0
+    ? missing.slice(0, 4).map((s) => `The role mentions ${s}, which isn't evident in your resume.`)
+    : ['No major skill gaps detected based on keyword analysis.']
+
+  let verdict: string
+  let explanation: string
+  if (score >= 70) {
+    verdict = 'Strong fit'
+    explanation = `Your resume matches ${matched.length} key requirements for ${params.jobTitle || 'this role'}. Highlight your strongest matches in your application.`
+  } else if (score >= 40) {
+    verdict = 'Possible fit'
+    explanation = `Your resume covers ${matched.length} of ${matched.length + missing.length} identified requirements for ${params.jobTitle || 'this role'}. Consider addressing the gaps below.`
+  } else {
+    verdict = 'Weak fit'
+    explanation = `Your resume only matches ${matched.length} of ${matched.length + missing.length} key requirements. You may need to gain experience in the missing areas.`
+  }
+
+  const suggestions = missing.slice(0, 3).map((s) =>
+    `Gain experience with ${s} through projects, certifications, or coursework to strengthen your application.`
+  )
+  if (suggestions.length === 0) {
+    suggestions.push('Tailor your resume to emphasize the specific skills and experiences mentioned in the job description.')
+  }
+
+  return {
+    score,
+    verdict,
+    verdict_explanation: explanation,
+    strengths,
+    gaps,
+    missingKeywords: missing.slice(0, 15),
+    suggestions,
+  }
 }
