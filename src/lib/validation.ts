@@ -32,6 +32,7 @@ export const profileUpdateSchema = z.object({
   phone: z.string().max(50).nullable().optional(),
   linkedin: z.string().max(500).nullable().optional(),
   website: z.string().max(500).nullable().optional(),
+  persona: z.enum(['fresher', 'professional', 'executive']).optional(),
 })
 
 export const expertSchema = z.object({

@@ -87,4 +87,5 @@ These frameworks exist in the ecosystem and may offer patterns or inspiration:
 - **Ruflo** (`ruvnet/ruflo`) — Multi-agent swarm orchestration, self-learning memory, agent federation.
 - **Open Design** (`nexu-io/open-design`) — Agent-native design artifacts via CLI/MCP. 150 design systems.
 - **Obsidian-CLI-skill** (`pablo-mano/Obsidian-CLI-skill`) — Skill pattern for teaching agents CLI tools via SKILL.md.
+- **UI UX Pro Max** (`nextlevelbuilder/ui-ux-pro-max-skill`) — 67 UI styles, 161 color palettes, 57 font pairings, 161 industry reasoning rules. Installed at `.opencode/skills/ui-ux-pro-max/`.
 <!-- END:karpathy-coding-principles -->

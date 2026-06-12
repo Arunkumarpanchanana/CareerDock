@@ -115,7 +115,7 @@ export default function AdminUsersPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-xs text-gray-500 font-mono">{u.referral_code || '—'}</td>
-                <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => togglePlan(u)}
                     disabled={updating === u.id}

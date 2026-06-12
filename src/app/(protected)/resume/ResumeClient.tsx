@@ -1,6 +1,8 @@
 'use client'
 
-import { ResumePDFDocument } from '@/components/resume/ResumePDF'
+import { ATSPanel } from '@/components/resume/ATSPanel'
+import { PersonaSelector, type Persona } from '@/components/resume/PersonaSelector'
+
 import { ResumePreview } from '@/components/resume/ResumePreview'
 import { SummarySection } from '@/components/resume/SummarySection'
 import { ExperienceSection } from '@/components/resume/ExperienceSection'
@@ -8,11 +10,11 @@ import { EducationSection } from '@/components/resume/EducationSection'
 import { ProjectsSection } from '@/components/resume/ProjectsSection'
 import { SkillsSection } from '@/components/resume/SkillsSection'
 import { CertificatesSection } from '@/components/resume/CertificatesSection'
+import { TemplateGallery } from '@/components/resume/TemplateGallery'
 import { Button } from '@/components/ui'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { resumeToFormData, type ResumeFormData } from '@/lib/resume'
-import { pdf } from '@react-pdf/renderer'
-import { Eye, EyeOff, FileDown, Plus, Trash2 } from 'lucide-react'
+import { Eye, EyeOff, FileDown, GraduationCap, Grid3X3, Plus, Search, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Profile, Resume } from '@/types/database'
@@ -46,8 +48,13 @@ export function ResumeClient({
   const [renaming, setRenaming] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
+  const [showATS, setShowATS] = useState(false)
+  const [showGallery, setShowGallery] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const router = useRouter()
+  const [persona, setPersona] = useState<Persona | null>(
+    (profile?.persona as Persona) ?? null
+  )
   const autosaveRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const isDirtyRef = useRef(false)
 
@@ -202,16 +209,23 @@ export function ResumeClient({
   }
 
   const downloadPDF = async () => {
-    const name = profile?.full_name || 'Resume'
-    const blob = await pdf(<ResumePDFDocument profile={profile} data={data} />).toBlob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${name.replace(/\s+/g, '_')}_Resume.pdf`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    setError(null)
+    try {
+      const { ResumePDFDocument } = await import('@/components/resume/ResumePDF')
+      const { pdf } = await import('@react-pdf/renderer')
+      const name = profile?.full_name || 'Resume'
+      const blob = await pdf(<ResumePDFDocument profile={profile} data={data} />).toBlob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${name.replace(/\s+/g, '_')}_Resume.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      setError('Failed to generate PDF. Please try again.')
+    }
   }
 
   const updateField = useCallback(<K extends keyof ResumeFormData>(key: K, value: ResumeFormData[K]) => {
@@ -219,11 +233,28 @@ export function ResumeClient({
     isDirtyRef.current = true
   }, [])
 
+  if (!persona) {
+    return (
+      <div className="max-w-3xl mx-auto py-12">
+        <PersonaSelector
+          onSelect={(p) => setPersona(p)}
+          onSkip={() => setPersona('professional')}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="flex gap-6 h-[calc(100vh-4rem)]">
       <div className="flex-1 flex flex-col">
         <div className="flex items-center justify-between mb-4 gap-4">
           <div className="flex items-center gap-3 min-w-0">
+            {persona && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 mr-2">
+                <GraduationCap className="h-3 w-3" />
+                {persona.charAt(0).toUpperCase() + persona.slice(1)}
+              </span>
+            )}
             {renaming === activeId ? (
               <input
                 autoFocus
@@ -264,8 +295,15 @@ export function ResumeClient({
             {saved && <span className="text-sm text-green-600">Saved!</span>}
             {error && <span className="text-sm text-red-600">{error}</span>}
             <button
-              onClick={() => setShowPreview(!showPreview)}
-              className="xl:hidden p-2 text-gray-400 hover:text-gray-600"
+              onClick={() => { setShowATS(!showATS); setShowPreview(false) }}
+              className={`p-2 transition-colors ${showATS ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+              title="ATS Resume Checker"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => { setShowPreview(!showPreview); setShowATS(false) }}
+              className={`xl:hidden p-2 transition-colors ${showPreview ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
               title={showPreview ? 'Hide preview' : 'Show preview'}
             >
               {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -318,6 +356,9 @@ export function ResumeClient({
               <Button variant="ghost" size="sm" onClick={createNew}>
                 <Plus className="h-4 w-4 mr-1" /> New Resume
               </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowGallery(true)}>
+                <Grid3X3 className="h-4 w-4 mr-1" /> Templates
+              </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto pr-4">
@@ -344,8 +385,14 @@ export function ResumeClient({
         ) : null}
       </div>
 
-      <div className={`w-[500px] flex-shrink-0 ${showPreview ? 'block' : 'hidden xl:block'}`}>
-        <ResumePreview profile={profile} data={data} />
+      <div className={`w-[500px] flex-shrink-0 ${showPreview || showATS ? 'block' : 'hidden xl:block'}`}>
+        {showATS ? (
+          <div className="h-full overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+            <ATSPanel data={data} persona={persona} />
+          </div>
+        ) : (
+          <ResumePreview profile={profile} data={data} persona={persona} />
+        )}
       </div>
 
       <ConfirmModal
@@ -357,6 +404,19 @@ export function ResumeClient({
         onConfirm={deleteResume}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {showGallery && (
+        <TemplateGallery
+          data={data}
+          currentTemplate="professional-classic"
+          currentPersona={persona}
+          onSelect={(templateId) => {
+            // Template selection is primarily visual — content is preserved
+            setShowGallery(false)
+          }}
+          onClose={() => setShowGallery(false)}
+        />
+      )}
     </div>
   )
 }

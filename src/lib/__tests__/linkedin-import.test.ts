@@ -92,8 +92,10 @@ describe('parseLinkedInText', () => {
     expect(result.confidence).toBeLessThanOrEqual(1)
   })
 
-  it('returns unmatched text for low-confidence sections', () => {
-    const result = parseLinkedInText('Some random text with no sections')
-    expect(result.unmatched).toBeDefined()
+  it('reports unmatched sections when parsing fails', () => {
+    const result = parseLinkedInText('Experience\n\nSome random text that is not structured\n\nEducation\n\nMore random text')
+    expect(result.unmatched.length).toBeGreaterThan(0)
+    expect(result.unmatched).toContain('Experience')
+    expect(result.unmatched).toContain('Education')
   })
 })

@@ -46,6 +46,7 @@ export interface Profile {
   website: string | null
   role: 'user' | 'admin'
   plan_tier: string
+  persona: 'fresher' | 'professional' | 'executive'
   referral_code: string | null
   referred_by: string | null
   updated_at: string
@@ -77,6 +78,8 @@ export interface Education {
   degree: string
   field: string
   year: string
+  gpa?: string
+  relevant_coursework?: string[]
 }
 
 export interface Project {

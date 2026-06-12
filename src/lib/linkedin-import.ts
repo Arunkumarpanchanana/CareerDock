@@ -163,7 +163,7 @@ export function parseLinkedInText(text: string): ParseResult {
   const certificates = parseCertificates(certText)
 
   const expectedSection = ['Summary', 'Experience', 'Education', 'Skills'].filter(
-    (h) => sections.has(h) || sections.get('About')
+    (h) => sections.has(h) || (h === 'Summary' && sections.has('About'))
   ).length + (sections.has('Projects') ? 1 : 0) + (sections.has('Certifications') || sections.has('Licenses & Certifications') ? 1 : 0)
 
   const parsedCount = [summary ? 1 : 0, experience.length > 0 ? 1 : 0, education.length > 0 ? 1 : 0, skills.length > 0 ? 1 : 0, projects.length > 0 ? 1 : 0, certificates.length > 0 ? 1 : 0].filter(Boolean).length
@@ -173,6 +173,9 @@ export function parseLinkedInText(text: string): ParseResult {
   const unmatched: string[] = []
   if (experienceText && experience.length === 0) unmatched.push('Experience')
   if (educationText && education.length === 0) unmatched.push('Education')
+  if (skillsText && skills.length === 0) unmatched.push('Skills')
+  if (projectsText && projects.length === 0) unmatched.push('Projects')
+  if (certText && certificates.length === 0) unmatched.push(certText.includes('Certification') ? 'Certifications' : 'Licenses & Certifications')
 
   return {
     data: {

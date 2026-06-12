@@ -1,7 +1,7 @@
 'use client'
 
 import { SUMMARY_TEMPLATES } from '@/lib/suggestions'
-import { Sparkles } from 'lucide-react'
+import { Loader2, Sparkles, Wand2 } from 'lucide-react'
 import { useState } from 'react'
 
 export function SummarySection({
@@ -12,6 +12,39 @@ export function SummarySection({
   onChange: (value: string) => void
 }) {
   const [showTemplates, setShowTemplates] = useState(false)
+  const [showAiGenerate, setShowAiGenerate] = useState(false)
+  const [targetRole, setTargetRole] = useState('')
+  const [keyStrengths, setKeyStrengths] = useState('')
+  const [generating, setGenerating] = useState(false)
+
+  const generateAiSummary = async () => {
+    setGenerating(true)
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'summary',
+          data: {
+            experience: keyStrengths ? [keyStrengths] : [],
+            targetRole: targetRole || 'professional',
+          },
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        if (res.status === 403) { alert(err.error); return }
+        throw new Error(err.error)
+      }
+      const json = await res.json()
+      onChange(json.result)
+      setShowAiGenerate(false)
+    } catch {
+      alert('Failed to generate summary. Please try again.')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   return (
     <div className="space-y-4 max-w-2xl">
@@ -22,14 +55,58 @@ export function SummarySection({
             A brief overview of your experience, skills, and career goals.
           </p>
         </div>
-        <button
-          onClick={() => setShowTemplates(!showTemplates)}
-          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
-        >
-          <Sparkles className="h-3 w-3" />
-          Templates
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAiGenerate(!showAiGenerate)}
+            className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium"
+          >
+            <Wand2 className="h-3 w-3" />
+            AI Generate
+          </button>
+          <button
+            onClick={() => setShowTemplates(!showTemplates)}
+            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+          >
+            <Sparkles className="h-3 w-3" />
+            Templates
+          </button>
+        </div>
       </div>
+
+      {showAiGenerate && (
+        <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 space-y-2">
+          <p className="text-xs font-medium text-purple-700">Generate a tailored summary with AI</p>
+          <input
+            className="block w-full rounded-lg border border-purple-300 px-3 py-2 text-sm placeholder:text-purple-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white"
+            placeholder="Target role (e.g. Senior Software Engineer)"
+            value={targetRole}
+            onChange={(e) => setTargetRole(e.target.value)}
+          />
+          <textarea
+            rows={2}
+            className="block w-full rounded-lg border border-purple-300 px-3 py-2 text-sm placeholder:text-purple-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white"
+            placeholder="Key strengths or experience to highlight (optional)"
+            value={keyStrengths}
+            onChange={(e) => setKeyStrengths(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={generateAiSummary}
+              disabled={generating}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
+            >
+              {generating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+              {generating ? 'Generating...' : 'Generate Summary'}
+            </button>
+            <button
+              onClick={() => { setShowAiGenerate(false); setTargetRole(''); setKeyStrengths('') }}
+              className="text-xs text-gray-500 hover:text-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {showTemplates && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-2">

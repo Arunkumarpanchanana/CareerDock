@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui/Input'
 import { SUGGESTED_BULLETS } from '@/lib/suggestions'
-import { Plus, Sparkles, Trash2 } from 'lucide-react'
+import { Loader2, Plus, Sparkles, Trash2, Wand2 } from 'lucide-react'
 import { useState } from 'react'
 import type { Experience } from '@/types/database'
 
@@ -25,6 +25,13 @@ export function ExperienceSection({
   onChange: (items: Experience[]) => void
 }) {
   const [showSuggestions, setShowSuggestions] = useState<number | null>(null)
+  const [aiGenerating, setAiGenerating] = useState<number | null>(null)
+  const [aiContext, setAiContext] = useState('')
+  const [showAiInput, setShowAiInput] = useState<number | null>(null)
+  const [aiResults, setAiResults] = useState<string[] | null>(null)
+  const [rewritingBullet, setRewritingBullet] = useState<{ item: number; bullet: number } | null>(null)
+  const [rewriteResults, setRewriteResults] = useState<string[] | null>(null)
+  const [rewriteLoading, setRewriteLoading] = useState(false)
 
   const addItem = () => {
     onChange([...items, { company: '', role: '', start_date: '', end_date: '', bullets: [''] }])
@@ -64,6 +71,67 @@ export function ExperienceSection({
         : item
     )
     onChange(updated)
+  }
+
+  const generateAIBullets = async (itemIndex: number) => {
+    const item = items[itemIndex]
+    setAiGenerating(itemIndex)
+    setAiResults(null)
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'bullets',
+          data: { role: `${item.role} at ${item.company}`, context: aiContext || item.role },
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        if (res.status === 403) {
+          alert(err.error)
+          return
+        }
+        throw new Error(err.error)
+      }
+      const json = await res.json()
+      setAiResults(json.result)
+    } catch {
+      alert('Failed to generate bullets. Please try again.')
+    } finally {
+      setAiGenerating(null)
+    }
+  }
+
+  const rewriteBulletText = async (itemIndex: number, bulletIndex: number) => {
+    const text = items[itemIndex].bullets[bulletIndex]
+    if (!text.trim()) return
+    setRewriteLoading(true)
+    setRewriteResults(null)
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'rewrite',
+          data: { text },
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        if (res.status === 403) {
+          alert(err.error)
+          return
+        }
+        throw new Error(err.error)
+      }
+      const json = await res.json()
+      setRewriteResults(json.result)
+    } catch {
+      alert('Failed to rewrite. Please try again.')
+    } finally {
+      setRewriteLoading(false)
+    }
   }
 
   return (
@@ -127,15 +195,72 @@ export function ExperienceSection({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700">Bullet Points</label>
-              <button
-                onClick={() => setShowSuggestions(showSuggestions === index ? null : index)}
-                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
-              >
-                <Sparkles className="h-3 w-3" />
-                Suggestions
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowAiInput(showAiInput === index ? null : index)}
+                  className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium"
+                >
+                  <Wand2 className="h-3 w-3" />
+                  AI Generate
+                </button>
+                <button
+                  onClick={() => setShowSuggestions(showSuggestions === index ? null : index)}
+                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  Templates
+                </button>
+              </div>
             </div>
 
+            {/* AI Generator */}
+            {showAiInput === index && (
+              <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 space-y-2">
+                <p className="text-xs font-medium text-purple-700">Generate bullet points with AI</p>
+                <input
+                  className="block w-full rounded-lg border border-purple-300 px-3 py-2 text-sm placeholder:text-purple-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white"
+                  placeholder="Describe your role and achievements..."
+                  value={aiContext}
+                  onChange={(e) => setAiContext(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => generateAIBullets(index)}
+                    disabled={aiGenerating === index}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                  >
+                    {aiGenerating === index ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-3 w-3" />
+                    )}
+                    {aiGenerating === index ? 'Generating...' : 'Generate'}
+                  </button>
+                  <button
+                    onClick={() => { setShowAiInput(null); setAiResults(null); setAiContext('') }}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                {aiResults && (
+                  <div className="space-y-1.5 mt-2 border-t border-purple-200 pt-2">
+                    <p className="text-xs font-medium text-purple-700">Select bullets to add:</p>
+                    {aiResults.map((bullet, bi) => (
+                      <button
+                        key={bi}
+                        onClick={() => { addBullet(index, bullet); setAiResults(null) }}
+                        className="block w-full text-left px-3 py-2 rounded-lg bg-white border border-purple-200 hover:border-purple-400 text-xs text-gray-700 transition-colors"
+                      >
+                        {bullet}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Static Suggestions */}
             {showSuggestions === index && (
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-2">
                 <p className="text-xs font-medium text-blue-700">Click a suggestion to add it:</p>
@@ -185,20 +310,69 @@ export function ExperienceSection({
             )}
 
             {item.bullets.map((bullet, bIndex) => (
-              <div key={bIndex} className="flex gap-2">
-                <input
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Describe an achievement or responsibility"
-                  value={bullet}
-                  onChange={(e) => updateBullet(index, bIndex, e.target.value)}
-                />
-                {item.bullets.length > 1 && (
-                  <button
-                    onClick={() => removeBullet(index, bIndex)}
-                    className="text-gray-400 hover:text-red-500"
-                  >
-                    <Trash2 className="h-4 w-4 mt-2.5" />
-                  </button>
+              <div key={bIndex} className="space-y-1">
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="Describe an achievement or responsibility"
+                    value={bullet}
+                    onChange={(e) => updateBullet(index, bIndex, e.target.value)}
+                  />
+                  {bullet.trim() && (
+                    <button
+                      onClick={() => {
+                        setRewritingBullet({ item: index, bullet: bIndex })
+                        rewriteBulletText(index, bIndex)
+                      }}
+                      className="text-purple-400 hover:text-purple-600 transition-colors"
+                      title="Rewrite with AI"
+                    >
+                      <Wand2 className="h-4 w-4 mt-2.5" />
+                    </button>
+                  )}
+                  {item.bullets.length > 1 && (
+                    <button
+                      onClick={() => removeBullet(index, bIndex)}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4 mt-2.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Rewrite results */}
+                {rewritingBullet?.item === index && rewritingBullet?.bullet === bIndex && (
+                  <div className="rounded-lg border border-purple-200 bg-purple-50 p-2 space-y-1.5">
+                    {rewriteLoading ? (
+                      <div className="flex items-center gap-2 text-xs text-purple-600 py-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Rewriting...
+                      </div>
+                    ) : rewriteResults ? (
+                      <>
+                        <p className="text-[10px] font-medium text-purple-700">Choose a rewrite:</p>
+                        {rewriteResults.map((rewrite, ri) => (
+                          <button
+                            key={ri}
+                            onClick={() => {
+                              updateBullet(index, bIndex, rewrite)
+                              setRewritingBullet(null)
+                              setRewriteResults(null)
+                            }}
+                            className="block w-full text-left px-2 py-1 rounded text-xs text-gray-700 bg-white border border-purple-200 hover:border-purple-400 transition-colors"
+                          >
+                            {rewrite}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => { setRewritingBullet(null); setRewriteResults(null) }}
+                          className="text-[10px] text-gray-500 hover:text-gray-700"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
                 )}
               </div>
             ))}

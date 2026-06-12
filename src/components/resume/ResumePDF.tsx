@@ -1,16 +1,8 @@
 'use client'
 
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { ResumeFormData } from '@/lib/resume'
 import type { Profile } from '@/types/database'
-
-Font.register({
-  family: 'Helvetica',
-  fonts: [
-    { src: 'https://fonts.gstatic.com/s/helvetica/Helvetica.ttf', fontWeight: 'normal' },
-    { src: 'https://fonts.gstatic.com/s/helvetica/Helvetica-Bold.ttf', fontWeight: 'bold' },
-  ],
-})
 
 const styles = StyleSheet.create({
   page: {
