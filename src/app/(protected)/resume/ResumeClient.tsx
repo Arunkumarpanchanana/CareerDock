@@ -1,6 +1,7 @@
 'use client'
 
 import { ATSPanel } from '@/components/resume/ATSPanel'
+import { LinkedInImport } from '@/components/resume/LinkedInImport'
 import { PersonaSelector, type Persona } from '@/components/resume/PersonaSelector'
 
 import { ResumePreview } from '@/components/resume/ResumePreview'
@@ -208,6 +209,19 @@ export function ResumeClient({
     }
   }
 
+  const handleLinkedInImport = useCallback((importedData: ResumeFormData) => {
+    setData((prev) => ({
+      ...prev,
+      summary: importedData.summary || prev.summary,
+      experience: importedData.experience.length > 0 ? importedData.experience : prev.experience,
+      education: importedData.education.length > 0 ? importedData.education : prev.education,
+      projects: importedData.projects.length > 0 ? importedData.projects : prev.projects,
+      skills: importedData.skills.length > 0 ? importedData.skills : prev.skills,
+      certificates: importedData.certificates.length > 0 ? importedData.certificates : prev.certificates,
+    }))
+    isDirtyRef.current = true
+  }, [])
+
   const downloadPDF = async () => {
     setError(null)
     try {
@@ -359,6 +373,7 @@ export function ResumeClient({
               <Button variant="ghost" size="sm" onClick={() => setShowGallery(true)}>
                 <Grid3X3 className="h-4 w-4 mr-1" /> Templates
               </Button>
+              <LinkedInImport onImport={handleLinkedInImport} />
             </div>
 
             <div className="flex-1 overflow-y-auto pr-4">
