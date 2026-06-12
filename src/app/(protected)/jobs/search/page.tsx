@@ -101,7 +101,10 @@ export default function JobSearchPage() {
           adzuna_id: selectedJob.adzuna_id,
         }),
       })
-      if (!res.ok) throw new Error('Failed to save')
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(err.error || 'Failed to save')
+      }
       setAppliedJobs((prev) => new Set(prev).add(selectedJob.adzuna_id))
       window.location.href = selectedJob.redirect_url
     } catch (e) {
