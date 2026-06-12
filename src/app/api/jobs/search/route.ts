@@ -29,7 +29,20 @@ export async function POST(request: Request) {
     }
 
     const { keyword, location, page } = parsed.data
-    const country = 'gb'
+
+    const locationLower = (location ?? '').toLowerCase()
+    const COUNTRY_MAP: Record<string, string[]> = {
+      gb: ['london', 'manchester', 'birmingham', 'leeds', 'glasgow', 'uk', 'england', 'britain', 'edinburgh'],
+      us: ['new york', 'san francisco', 'chicago', 'los angeles', 'seattle', 'boston', 'austin', 'us', 'usa', 'united states'],
+      au: ['sydney', 'melbourne', 'brisbane', 'perth', 'australia'],
+      ca: ['toronto', 'vancouver', 'montreal', 'canada'],
+      de: ['berlin', 'munich', 'hamburg', 'frankfurt', 'germany'],
+      sg: ['singapore'],
+      ae: ['dubai', 'abu dhabi', 'uae'],
+    }
+    const country = locationLower
+      ? Object.entries(COUNTRY_MAP).find(([, cities]) => cities.some(c => locationLower.includes(c)))?.[0] ?? 'in'
+      : 'in'
     const params = new URLSearchParams({
       app_id: adzunaAppId,
       app_key: adzunaApiKey,
