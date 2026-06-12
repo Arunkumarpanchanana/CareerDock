@@ -11,6 +11,10 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: mockCreateClient,
 }))
 
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimitByIp: vi.fn(() => undefined),
+}))
+
 import { POST } from '../route'
 
 describe('POST /api/import/linkedin', () => {
@@ -62,5 +66,20 @@ describe('POST /api/import/linkedin', () => {
     })
     const res = await POST(req)
     expect(res.status).toBe(400)
+  })
+
+  it('returns 500 on parse error', async () => {
+    mockParseLinkedInText.mockImplementation(() => {
+      throw new Error('Parse failure')
+    })
+    const req = new Request('http://localhost/api/import/linkedin', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'broken' }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(500)
+    const body = await res.json()
+    expect(body.error).toBe('Parse failure')
   })
 })
