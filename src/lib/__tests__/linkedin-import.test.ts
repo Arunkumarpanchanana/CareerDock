@@ -120,4 +120,57 @@ Bachelor of Science in Computer Engineering
     expect(result.unmatched).toContain('Experience')
     expect(result.unmatched).toContain('Education')
   })
+
+  it('parses realistic LinkedIn PDF with colons and Top Skills', () => {
+    const realistic = `
+Experienced software engineer with 8+ years
+building scalable systems.
+
+Experience:
+Senior Engineer
+Acme Corp
+Jan 2020 - Present
+- Built microservices
+- Led team of 3
+
+Education:
+Stanford University
+M.S. Computer Science
+2015 - 2017
+
+Top Skills:
+JavaScript, TypeScript, React, Node.js
+
+Certifications:
+AWS Solutions Architect
+Amazon
+2023
+`
+    const result = parseLinkedInText(realistic)
+    expect(result.data.summary).toContain('Experienced software engineer')
+    expect(result.data.experience.length).toBe(1)
+    expect(result.data.experience[0].company).toBe('Acme Corp')
+    expect(result.data.education[0].institution).toBe('Stanford University')
+    expect(result.data.skills).toContain('JavaScript')
+    expect(result.data.certificates.length).toBe(1)
+    expect(result.confidence).toBeGreaterThanOrEqual(0.7)
+  })
+
+  it('detects sections with content before first heading', () => {
+    const text = `John Doe
+Senior Software Engineer
+john@email.com
+
+Skills
+React, TypeScript, Node.js
+
+Experience
+Engineer at Acme
+2020 - Present
+- Built things
+`
+    const result = parseLinkedInText(text)
+    expect(result.data.summary).toContain('John Doe')
+    expect(result.data.skills).toContain('React')
+  })
 })

@@ -7,15 +7,19 @@ export interface ParseResult {
   source: 'heuristic' | 'ai'
 }
 
-const SECTION_HEADINGS = [
-  'Summary',
-  'About',
-  'Experience',
-  'Education',
-  'Skills',
-  'Projects',
-  'Certifications',
-  'Licenses & Certifications',
+const SECTION_RULES: { key: string; patterns: RegExp[] }[] = [
+  { key: 'Summary', patterns: [/^summary$/i, /^about$/i] },
+  { key: 'Experience', patterns: [/^experience$/i] },
+  { key: 'Education', patterns: [/^education$/i] },
+  { key: 'Skills', patterns: [/^skills/i, /^top skills/i] },
+  { key: 'Projects', patterns: [/^projects$/i] },
+  { key: 'Certifications', patterns: [/^certifications$/i, /^licenses? & certifications?$/i, /^licenses?$/i] },
+  { key: 'Honors & Awards', patterns: [/^honors?\s*&?\s*awards?$/i] },
+  { key: 'Languages', patterns: [/^languages$/i] },
+  { key: 'Volunteer', patterns: [/^volunteer/i] },
+  { key: 'Publications', patterns: [/^publications$/i] },
+  { key: 'Courses', patterns: [/^courses$/i] },
+  { key: 'Recommendations', patterns: [/^recommendations$/i] },
 ]
 
 function findSections(text: string): Map<string, string> {
@@ -25,18 +29,22 @@ function findSections(text: string): Map<string, string> {
   let currentContent: string[] = []
 
   for (const line of lines) {
-    const trimmed = line.trim()
-    const heading = SECTION_HEADINGS.find(
-      (h) => trimmed.toLowerCase() === h.toLowerCase()
-    )
-    if (heading) {
+    const trimmed = line.trim().replace(/:$/, '')
+    const isEmpty = !trimmed && !currentSection
+
+    const match = !isEmpty && SECTION_RULES.find((r) => r.patterns.some((p) => p.test(trimmed)))
+    if (match) {
       if (currentSection && currentContent.length > 0) {
         sections.set(currentSection, currentContent.join('\n').trim())
       }
-      currentSection = heading
+      currentSection = match.key
       currentContent = []
     } else if (currentSection) {
-      currentContent.push(trimmed)
+      currentContent.push(line)
+    } else if (trimmed) {
+      // Content before any heading — treat as summary
+      currentSection = 'Summary'
+      currentContent = [line]
     }
   }
   if (currentSection && currentContent.length > 0) {
@@ -199,11 +207,18 @@ export function parseLinkedInText(text: string): ParseResult {
   const projects = parseProjects(projectsText)
   const certificates = parseCertificates(certText)
 
-  const expectedSection = ['Summary', 'Experience', 'Education', 'Skills'].filter(
-    (h) => sections.has(h) || (h === 'Summary' && sections.has('About'))
-  ).length + (sections.has('Projects') ? 1 : 0) + (sections.has('Certifications') || sections.has('Licenses & Certifications') ? 1 : 0)
+  const coreSections = ['Summary', 'Experience', 'Education', 'Skills', 'Projects', 'Certifications']
+  const expectedSection = coreSections.filter((h) => sections.has(h)).length
 
-  const parsedCount = [summary ? 1 : 0, experience.length > 0 ? 1 : 0, education.length > 0 ? 1 : 0, skills.length > 0 ? 1 : 0, projects.length > 0 ? 1 : 0, certificates.length > 0 ? 1 : 0].filter(Boolean).length
+  const contentSections: [string, boolean][] = [
+    ['Summary', !!summary],
+    ['Experience', experience.length > 0],
+    ['Education', education.length > 0],
+    ['Skills', skills.length > 0],
+    ['Projects', projects.length > 0],
+    ['Certifications', certificates.length > 0],
+  ]
+  const parsedCount = contentSections.filter(([, ok]) => ok).length
 
   const confidence = expectedSection > 0 ? parsedCount / expectedSection : 0
 
@@ -212,7 +227,7 @@ export function parseLinkedInText(text: string): ParseResult {
   if (educationText && education.length === 0) unmatched.push('Education')
   if (skillsText && skills.length === 0) unmatched.push('Skills')
   if (projectsText && projects.length === 0) unmatched.push('Projects')
-  if (certText && certificates.length === 0) unmatched.push(sections.has('Certifications') ? 'Certifications' : 'Licenses & Certifications')
+  if (certText && certificates.length === 0) unmatched.push('Certifications')
 
   return {
     data: {
