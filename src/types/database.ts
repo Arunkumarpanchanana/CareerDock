@@ -102,6 +102,21 @@ export interface Certificate {
   url: string
 }
 
+export interface JobListing {
+  adzuna_id: string
+  title: string
+  company: string
+  location: string
+  description: string
+  salary_min: number | null
+  salary_max: number | null
+  salary_is_predicted: boolean
+  redirect_url: string
+  category: string
+  contract_type: string | null
+  created: string
+}
+
 export interface JobApplication {
   id: string
   user_id: string
@@ -109,6 +124,8 @@ export interface JobApplication {
   job_title: string
   salary_range: string | null
   job_url: string | null
+  adzuna_id: string | null
+  source: 'manual' | 'adzuna'
   status: 'Wishlist' | 'Applied' | 'Interviewing' | 'Offered' | 'Rejected'
   notes: string | null
   applied_date: string
