@@ -32,15 +32,21 @@ export function LinkedInImport({ onImport }: LinkedInImportProps) {
 
     try {
       const pdfjs = await import('pdfjs-dist')
+      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs'
 
       const buffer = await file.arrayBuffer()
-      const pdf = await pdfjs.getDocument({ data: buffer }).promise
+      const pdf = await pdfjs.getDocument({ data: buffer, useSystemFonts: true }).promise
       let fullText = ''
 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i)
         const content = await page.getTextContent()
         fullText += content.items.map((item) => ('str' in item ? (item as { str: string }).str : '')).join(' ') + '\n'
+      }
+
+      if (!fullText.trim()) {
+        setError('No text could be extracted from this PDF.')
+        return
       }
 
       const res = await fetch('/api/import/linkedin', {
@@ -50,6 +56,8 @@ export function LinkedInImport({ onImport }: LinkedInImportProps) {
       })
 
       if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        console.error('Import API error:', res.status, errData)
         setError('Failed to parse PDF. Please try again.')
         return
       }
@@ -62,7 +70,16 @@ export function LinkedInImport({ onImport }: LinkedInImportProps) {
       })
     } catch (e) {
       console.error('LinkedIn PDF import error:', e)
-      setError('Failed to process PDF. Please try again.')
+      // Check for common pdfjs issues
+      const msg = String(e)
+      if (msg.includes('worker') || msg.includes('Worker') || msg.includes('CSP') || msg.includes('eval'))
+        setError('PDF worker failed to load. This may be blocked by your browser or network.')
+      else if (msg.includes('Invalid PDF') || msg.includes('corrupted'))
+        setError('The PDF file appears to be invalid or corrupted.')
+      else if (msg.includes('NetworkError') || msg.includes('Failed to fetch') || msg.includes('Network'))
+        setError('Network error — check your connection and try again.')
+      else
+        setError('Failed to process PDF. Please try again.')
     } finally {
       setProcessing(false)
       if (fileRef.current) fileRef.current.value = ''
