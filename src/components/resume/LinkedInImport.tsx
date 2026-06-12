@@ -56,8 +56,7 @@ export function LinkedInImport({ onImport }: LinkedInImportProps) {
       })
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        console.error('Import API error:', res.status, errData)
+        try { const d = await res.json(); console.error('Import API error:', res.status, d) } catch {}
         setError('Failed to parse PDF. Please try again.')
         return
       }
