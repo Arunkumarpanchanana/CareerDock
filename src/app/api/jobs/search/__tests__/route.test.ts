@@ -87,14 +87,16 @@ describe('POST /api/jobs/search', () => {
     expect(res.status).toBe(400)
   })
 
-  it('returns 502 when Adzuna API fails', async () => {
+  it('returns 200 with empty results when Adzuna API fails', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500, text: () => Promise.resolve('error') })
     const res = await POST(new Request('http://localhost/api/jobs/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ keyword: 'engineer' }),
     }))
-    expect(res.status).toBe(502)
+    expect(res.status).toBe(200)
+    const data = await res.json()
+    expect(data.results).toHaveLength(0)
   })
 
   it('returns listings on success', async () => {
