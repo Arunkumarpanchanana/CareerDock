@@ -68,16 +68,26 @@ export function JobDetailPanel({ job, onPrepare, onApply, preparing, applied }: 
             <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent" />
           )}
         </div>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="mt-1 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-        >
-          {expanded ? (
-            <><ChevronUp className="h-4 w-4" /> Show less</>
-          ) : (
-            <><ChevronDown className="h-4 w-4" /> Show more</>
-          )}
-        </button>
+        <div className="flex items-center gap-3 mt-1">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+          >
+            {expanded ? (
+              <><ChevronUp className="h-4 w-4" /> Show less</>
+            ) : (
+              <><ChevronDown className="h-4 w-4" /> Show more</>
+            )}
+          </button>
+          <a
+            href={job.redirect_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 hover:text-blue-700 underline"
+          >
+            View full posting &rarr;
+          </a>
+        </div>
       </div>
 
       <div className="flex gap-3 pt-2">

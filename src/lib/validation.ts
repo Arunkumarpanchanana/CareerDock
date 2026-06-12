@@ -15,6 +15,7 @@ export const jobSearchSchema = z.object({
   keyword: z.string().min(1, 'Keyword is required'),
   location: z.string().optional(),
   page: z.coerce.number().int().positive().optional().default(1),
+  postedWithin: z.number().optional(),
 })
 
 export const jobPrepareSchema = z.object({

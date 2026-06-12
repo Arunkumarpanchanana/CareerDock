@@ -93,7 +93,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
     }
 
-    const { keyword, location, page } = parsed.data
+    const { keyword, location, page, postedWithin } = parsed.data
 
     const locationLower = (location ?? '').toLowerCase()
     const COUNTRY_MAP: Record<string, string[]> = {
@@ -116,6 +116,7 @@ export async function POST(request: Request) {
       where: location ?? '',
       results_per_page: '20',
     })
+    if (postedWithin) params.set('max_days_old', String(postedWithin))
 
     const [, adzunaResponse, indeedResponse] = await Promise.all([
       Promise.resolve(),
@@ -145,7 +146,10 @@ export async function POST(request: Request) {
     ])
 
     const adzunaListings = mapAdzunaResults(adzunaResponse.results ?? [])
-    const indeedItems = mapIndeedItems(indeedResponse)
+    let indeedItems = mapIndeedItems(indeedResponse)
+    if (postedWithin) {
+      indeedItems = indeedItems.filter((item) => item.daysAgo !== null && item.daysAgo <= postedWithin)
+    }
     const allListings = deduplicate([...adzunaListings, ...indeedItems])
 
     return NextResponse.json({

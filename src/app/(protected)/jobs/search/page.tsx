@@ -17,6 +17,7 @@ interface SearchResult {
 export default function JobSearchPage() {
   const [keyword, setKeyword] = useState('')
   const [location, setLocation] = useState('')
+  const [postedWithin, setPostedWithin] = useState<number | undefined>(undefined)
   const [loading, setLoading] = useState(false)
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null)
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null)
@@ -34,7 +35,7 @@ export default function JobSearchPage() {
       const res = await fetch('/api/jobs/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword, location: location || undefined, page }),
+        body: JSON.stringify({ keyword, location: location || undefined, postedWithin, page }),
       })
       if (!res.ok) {
         const err = await res.json()
@@ -48,7 +49,7 @@ export default function JobSearchPage() {
     } finally {
       setLoading(false)
     }
-  }, [keyword, location])
+  }, [keyword, location, postedWithin])
 
   const handlePrepare = async () => {
     if (!selectedJob) return
@@ -85,6 +86,7 @@ export default function JobSearchPage() {
 
   const handleApply = async () => {
     if (!selectedJob) return
+    window.open(selectedJob.redirect_url, '_blank')
     try {
       const res = await fetch('/api/jobs', {
         method: 'POST',
@@ -106,7 +108,6 @@ export default function JobSearchPage() {
         throw new Error(err.error || 'Failed to save')
       }
       setAppliedJobs((prev) => new Set(prev).add(selectedJob.adzuna_id))
-      window.open(selectedJob.redirect_url, '_blank')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Apply failed')
     }
@@ -126,8 +127,10 @@ export default function JobSearchPage() {
       <JobSearchBar
         keyword={keyword}
         location={location}
+        postedWithin={postedWithin}
         onKeywordChange={setKeyword}
         onLocationChange={setLocation}
+        onPostedWithinChange={setPostedWithin}
         onSearch={() => handleSearch(1)}
         loading={loading}
       />
