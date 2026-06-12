@@ -21,6 +21,12 @@ export interface Database {
         Update: Partial<Omit<JobApplication, 'id' | 'user_id'>>
         Relationships: []
       }
+      cover_letters: {
+        Row: CoverLetter
+        Insert: Omit<CoverLetter, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<CoverLetter, 'id' | 'user_id'>>
+        Relationships: []
+      }
       expert_consultants: {
         Row: ExpertConsultant
         Insert: Omit<ExpertConsultant, 'id'>
@@ -116,6 +122,19 @@ export interface ExpertConsultant {
   bio: string | null
   scheduling_url: string
   is_active: boolean
+}
+
+export interface CoverLetter {
+  id: string
+  user_id: string
+  title: string
+  content: string
+  job_title: string
+  company: string
+  job_description: string
+  resume_snapshot: Record<string, unknown> | null
+  created_at: string
+  updated_at: string
 }
 
 export interface Booking {
