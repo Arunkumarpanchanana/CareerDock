@@ -1,9 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitByIp } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import { analyzeSkillGap, generateCoverLetter } from '@/lib/ai'
 import { jobPrepareSchema } from '@/lib/validation'
 
 export async function POST(request: Request) {
+  const limit = rateLimitByIp(request, 10, 60_000)
+  if (limit instanceof NextResponse) return limit
+
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -64,6 +68,7 @@ export async function POST(request: Request) {
     })
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error'
+    console.error('Jobs prepare API error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

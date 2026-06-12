@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { NextResponse } from 'next/server'
 
 const mockAnalyze = vi.hoisted(() => vi.fn())
 const mockGenerateCoverLetter = vi.hoisted(() => vi.fn())
@@ -13,14 +14,30 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: mockCreateClient,
 }))
 
+const mockRateLimit = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimitByIp: mockRateLimit,
+}))
+
 import { POST } from '../route'
 
 describe('POST /api/jobs/prepare', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockRateLimit.mockReturnValue(undefined)
     mockCreateClient.mockReturnValue({
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }) },
     })
+  })
+
+  it('returns 429 when rate limited', async () => {
+    mockRateLimit.mockReturnValue(NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 }))
+    const res = await POST(new Request('http://localhost/api/jobs/prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_title: 'Engineer', company: 'Acme', description: 'desc', resume_id: '550e8400-e29b-41d4-a716-446655440001' }),
+    }))
+    expect(res.status).toBe(429)
   })
 
   it('returns 401 when unauthorized', async () => {
@@ -59,6 +76,24 @@ describe('POST /api/jobs/prepare', () => {
       body: JSON.stringify({ job_title: 'Engineer', company: 'Acme', description: 'desc',       resume_id: '550e8400-e29b-41d4-a716-446655440099' }),
     }))
     expect(res.status).toBe(404)
+  })
+
+  it('returns 500 when AI service fails', async () => {
+    mockCreateClient.mockReturnValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }) },
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { summary: '', experience: [], skills: [] }, error: null }),
+      }),
+    })
+    mockAnalyze.mockRejectedValue(new Error('AI service down'))
+    const res = await POST(new Request('http://localhost/api/jobs/prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_title: 'Engineer', company: 'Acme', description: 'desc', resume_id: '550e8400-e29b-41d4-a716-446655440001' }),
+    }))
+    expect(res.status).toBe(500)
   })
 
   it('returns AI analysis results on success', async () => {
