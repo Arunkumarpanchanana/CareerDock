@@ -1,8 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import type { JobListing } from '@/types/database'
-import { Building2, MapPin, DollarSign, ExternalLink, CalendarDays, Briefcase, Loader2 } from 'lucide-react'
+import { Building2, MapPin, DollarSign, ExternalLink, CalendarDays, Briefcase, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui'
+
+const DESC_PREVIEW_HEIGHT = 180
 
 interface JobDetailPanelProps {
   job: JobListing
@@ -13,6 +16,7 @@ interface JobDetailPanelProps {
 }
 
 export function JobDetailPanel({ job, onPrepare, onApply, preparing, applied }: JobDetailPanelProps) {
+  const [expanded, setExpanded] = useState(false)
   const daysAgo = job.daysAgo
 
   return (
@@ -54,10 +58,26 @@ export function JobDetailPanel({ job, onPrepare, onApply, preparing, applied }: 
 
       <div className="border-t border-gray-200 pt-4">
         <h3 className="text-sm font-semibold text-gray-900 mb-2">Job Description</h3>
-        <div
-          className="prose prose-sm max-w-none text-gray-600"
-          dangerouslySetInnerHTML={{ __html: job.description }}
-        />
+        <div className="relative">
+          <div
+            className="prose prose-sm max-w-none text-gray-600 overflow-hidden"
+            style={{ maxHeight: expanded ? 'none' : DESC_PREVIEW_HEIGHT }}
+            dangerouslySetInnerHTML={{ __html: job.description }}
+          />
+          {!expanded && (
+            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent" />
+          )}
+        </div>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-1 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+        >
+          {expanded ? (
+            <><ChevronUp className="h-4 w-4" /> Show less</>
+          ) : (
+            <><ChevronDown className="h-4 w-4" /> Show more</>
+          )}
+        </button>
       </div>
 
       <div className="flex gap-3 pt-2">
