@@ -7,6 +7,21 @@ export const jobApplicationSchema = z.object({
   job_url: z.string().url().nullable().optional().or(z.literal('')),
   notes: z.string().nullable().optional(),
   status: z.enum(['Wishlist', 'Applied', 'Interviewing', 'Offered', 'Rejected']).optional(),
+  adzuna_id: z.string().optional(),
+  source: z.enum(['manual', 'adzuna']).optional(),
+})
+
+export const jobSearchSchema = z.object({
+  keyword: z.string().min(1, 'Keyword is required'),
+  location: z.string().optional(),
+  page: z.coerce.number().int().positive().optional().default(1),
+})
+
+export const jobPrepareSchema = z.object({
+  job_title: z.string().min(1),
+  company: z.string().min(1),
+  description: z.string().min(1),
+  resume_id: z.string().uuid(),
 })
 
 export const jobApplicationUpdateSchema = jobApplicationSchema.partial().extend({
