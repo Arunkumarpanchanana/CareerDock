@@ -44,14 +44,14 @@ export function PersonaSelector({
 
   const handleSelect = async (persona: Persona) => {
     setSelected(persona)
+    onSelect(persona)
     setSaving(true)
     try {
-      const res = await fetch('/api/profile', {
+      await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ persona }),
       })
-      if (res.ok) onSelect(persona)
     } finally {
       setSaving(false)
     }
