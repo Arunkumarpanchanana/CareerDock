@@ -69,6 +69,12 @@ export function LinkedInImport({ onImport }: LinkedInImportProps) {
     }
   }, [])
 
+  const dismiss = useCallback(() => setPreview(null), [])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') dismiss()
+  }, [dismiss])
+
   const confirmImport = useCallback(() => {
     if (preview) {
       onImport(preview.data)
@@ -109,8 +115,13 @@ export function LinkedInImport({ onImport }: LinkedInImportProps) {
       )}
 
       {preview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={dismiss}
+          onKeyDown={handleKeyDown}
+          tabIndex={-1}
+        >
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-gray-900 mb-4">Import Preview</h3>
 
             {preview.confidence < 0.7 && (
