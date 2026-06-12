@@ -40,6 +40,19 @@ Improve it by:
 - Focus on achievement over responsibility
 
 Return 3 alternative versions as a JSON array of strings, no other text.`,
+
+  coverLetter: `You are an expert cover letter writer. Given a resume summary and a job description, generate a professional cover letter.
+
+The cover letter should:
+- Be 3-4 paragraphs
+- Start with a compelling opening expressing interest in the role and company
+- Highlight 2-3 key qualifications from the resume that match the job requirements
+- Include specific skills and experience relevant to the position
+- End with a confident closing and call to action
+- Be written in first person
+- Sound natural and professional, not like a template
+
+Return ONLY the letter text, no other text.`,
 }
 
 export async function generateBullets(role: string, context: string): Promise<string[]> {
@@ -137,6 +150,41 @@ export async function rewriteText(text: string): Promise<string[]> {
   }
 }
 
+export async function generateCoverLetter(params: {
+  resume: string
+  jobTitle: string
+  company: string
+  jobDescription: string
+}): Promise<string> {
+  const config = getConfig()
+  if (!config) return generateFallbackCoverLetter(params)
+
+  const response = await fetch(config.apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPTS.coverLetter },
+        {
+          role: 'user',
+          content: `Resume: ${params.resume}\n\nJob Title: ${params.jobTitle}\nCompany: ${params.company}\n\nJob Description: ${params.jobDescription || 'No specific description provided.'}\n\nGenerate a professional cover letter.`,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+    }),
+  })
+
+  if (!response.ok) return generateFallbackCoverLetter(params)
+
+  const data = await response.json()
+  return data.choices[0].message.content?.trim() ?? generateFallbackCoverLetter(params)
+}
+
 // Fallback generators when no AI API key is configured
 function generateFallbackBullets(role: string, context: string): string[] {
   const roleLower = role.toLowerCase()
@@ -174,4 +222,32 @@ function generateFallbackRewrites(text: string): string[] {
     `Led initiatives to ${text.replace(/^(was|were|been)\s+/i, '').toLowerCase()}`,
     `Drove ${text.replace(/^(was|were|been)\s+/i, '').toLowerCase()} resulting in significant improvements`,
   ].filter((s) => s.length > 0).slice(0, 3)
+}
+
+function generateFallbackCoverLetter(params: {
+  resume: string
+  jobTitle: string
+  company: string
+  jobDescription: string
+}): string {
+  const date = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
+  return `${date}
+
+Dear Hiring Manager at ${params.company},
+
+I am writing to express my strong interest in the ${params.jobTitle} position at ${params.company}. With my background in ${params.resume.slice(0, 100)}, I am confident that I would be a valuable addition to your team.
+
+${params.jobDescription ? `Your requirement for a ${params.jobTitle} aligns perfectly with my experience. ${params.resume.slice(0, 150)} I am eager to bring these skills to ${params.company} and contribute to your continued success.` : `Based on my experience, I believe I am well-positioned to excel in this role and make meaningful contributions to ${params.company}'s team.`}
+
+I am particularly drawn to ${params.company} because of your reputation for innovation and excellence in the industry. I would welcome the opportunity to discuss how my experience and skills can benefit your organization.
+
+Thank you for considering my application. I look forward to the possibility of discussing this opportunity further.
+
+Sincerely,
+[Your Name]`
 }

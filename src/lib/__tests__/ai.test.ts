@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateBullets, generateSummary, rewriteText } from '../ai'
+import { generateBullets, generateSummary, rewriteText, generateCoverLetter } from '../ai'
 
 describe('generateBullets', () => {
   it('returns array of 3 bullet points for engineer role', async () => {
@@ -55,5 +55,31 @@ describe('rewriteText', () => {
     const rewrites = await rewriteText('Did some coding')
     expect(Array.isArray(rewrites)).toBe(true)
     expect(rewrites.length).toBe(3)
+  })
+})
+
+describe('generateCoverLetter', () => {
+  it('generates a cover letter from resume data and job description', async () => {
+    const letter = await generateCoverLetter({
+      resume: 'Experienced software engineer with 5 years in React and Node.js.',
+      jobTitle: 'Senior Frontend Engineer',
+      company: 'Tech Corp',
+      jobDescription: 'We are looking for a senior frontend engineer with React expertise.',
+    })
+    expect(typeof letter).toBe('string')
+    expect(letter.length).toBeGreaterThan(50)
+    expect(letter).toContain('Tech Corp')
+    expect(letter).toContain('Senior Frontend Engineer')
+  })
+
+  it('handles empty job description gracefully', async () => {
+    const letter = await generateCoverLetter({
+      resume: 'Entry-level developer.',
+      jobTitle: 'Junior Developer',
+      company: 'Startup Inc',
+      jobDescription: '',
+    })
+    expect(typeof letter).toBe('string')
+    expect(letter.length).toBeGreaterThan(50)
   })
 })
