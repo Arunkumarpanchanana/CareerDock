@@ -4,6 +4,29 @@ import { NextResponse } from 'next/server'
 import { resumeSchema } from '@/lib/validation'
 import { checkResumeQuota } from '@/lib/quota'
 
+export async function GET() {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data, error } = await supabase
+      .from('resumes')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return NextResponse.json(data ?? [])
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Unknown error'
+    console.error('Resume API list error:', message)
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
 export async function POST(request: Request) {
   const limit = rateLimitByIp(request, 20, 60_000)
   if (limit instanceof NextResponse) return limit
