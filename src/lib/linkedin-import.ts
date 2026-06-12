@@ -55,82 +55,95 @@ function findSections(text: string): Map<string, string> {
 
 function parseExperience(text: string) {
   const entries: ResumeFormData['experience'] = []
-  const blocks = text.split('\n\n').filter((b) => b.trim())
+  const lines = text.split('\n').filter((l) => l.trim())
+  if (lines.length < 3) return entries
 
-  for (const block of blocks) {
-    const lines = block.split('\n').filter((l) => l.trim())
-    if (lines.length < 3) continue
+  const isBullet = (l: string) => /^[•\-*]\s/.test(l)
+  const isDateLine = (l: string) => /\d{4}|Present|Current/i.test(l) && /[-–—]/.test(l)
 
-    const role = lines[0].trim()
-    const company = lines[1].trim()
-    const dateLine = lines[2].trim()
+  let i = 0
+  while (i < lines.length) {
+    if (isBullet(lines[i])) { i++; continue }
+
+    const role = lines[i].trim()
+    const company = i + 1 < lines.length && !isBullet(lines[i + 1]) && !isDateLine(lines[i + 1])
+      ? lines[i + 1].trim() : ''
+    const dateIdx = company ? i + 2 : i + 1
+    const dateLine = dateIdx < lines.length ? lines[dateIdx].trim() : ''
     const dateMatch = dateLine.match(/^(.+?)\s*[-–—]\s*(.+)$/)
-    const startDate = dateMatch ? dateMatch[1].trim() : dateLine
+    const startDate = dateMatch ? dateMatch[1].trim() : ''
     const endDate = dateMatch ? dateMatch[2].trim() : ''
 
-    const bullets = lines.slice(3)
-      .filter((l) => l.startsWith('•') || l.startsWith('-') || l.startsWith('*'))
-      .map((l) => l.replace(/^[•\-*]\s*/, ''))
+    if (!company || !dateMatch) {
+      i++
+      continue
+    }
 
-    entries.push({
-      company,
-      role,
-      start_date: startDate,
-      end_date: endDate || null,
-      bullets,
-    })
+    // Collect bullets until next entry boundary
+    const bullets: string[] = []
+    let j = dateIdx + 1
+    while (j < lines.length) {
+      const next = lines[j].trim()
+      if (!next) { j++; continue }
+      if (!isBullet(next) && j + 2 < lines.length && !isBullet(lines[j + 1]) && isDateLine(lines[j + 2])) break
+      if (!isBullet(next) && j + 1 < lines.length && isDateLine(lines[j + 1])) break
+      if (isBullet(next)) bullets.push(next.replace(/^[•\-*]\s*/, ''))
+      j++
+    }
+
+    entries.push({ company, role, start_date: startDate, end_date: endDate || null, bullets })
+    i = j
   }
   return entries
 }
 
 function parseEducation(text: string) {
   const entries: ResumeFormData['education'] = []
-  const blocks = text.split('\n\n').filter((b) => b.trim())
+  const lines = text.split('\n').filter((l) => l.trim())
+  if (lines.length < 2) return entries
 
-  for (const block of blocks) {
-    const lines = block.split('\n').filter((l) => l.trim())
-    if (lines.length < 2) continue
+  const institutionIndicators = /university|college|institute|school|academy|^mit$/i
+  const degreeIndicators = /^(bachelor|master|doctor|ph\.?d|associate|b\.?s\.?|m\.?s\.?|b\.?a\.?|m\.?a\.?|mba|diploma|certificate|engineer)/i
 
+  const yearPattern = /\b(19|20)\d{2}\b/
+  const dateIdx: number[] = []
+  for (let i = 0; i < lines.length; i++) {
+    if (yearPattern.test(lines[i])) dateIdx.push(i)
+  }
+
+  let prevDate: number | null = null
+  for (const di of dateIdx) {
+    const year = lines[di].trim()
+    const startIdx = prevDate !== null ? prevDate + 1 : 0
+    const entryLines = lines.slice(startIdx, di)
+    if (entryLines.length < 2) { prevDate = di; continue }
+
+    const [a, b, c] = [entryLines[0]?.trim() || '', entryLines[1]?.trim() || '', entryLines[2]?.trim() || '']
     const edu: { institution: string; degree: string; field: string; year: string } = {
-      institution: '',
-      degree: '',
-      field: '',
-      year: '',
+      institution: '', degree: '', field: '', year,
     }
 
-    const first = lines[0].trim()
-    const second = lines[1].trim()
-    const third = lines.length > 2 ? lines[2].trim() : ''
-    const fourth = lines.length > 3 ? lines[3].trim() : ''
-
-    // Detect whether first line is an institution name
-    const institutionIndicators = /university|college|institute|school|academy/i
-    const degreeIndicators = /^(bachelor|master|doctor|ph\.?d|associate|b\.?s\.?|m\.?s\.?|b\.?a\.?|m\.?a\.?|mba|diploma|certificate)/i
-
-    if (institutionIndicators.test(first) || degreeIndicators.test(second)) {
-      // LinkedIn PDF format: institution first, degree+field second
-      edu.institution = first
-      const df = parseDegreeField(second)
+    if (institutionIndicators.test(a) || degreeIndicators.test(b)) {
+      edu.institution = a
+      const df = parseDegreeField(b)
       edu.degree = df.degree
       edu.field = df.field
-      if (third && /\d{4}/.test(third)) edu.year = third
-      else if (fourth && /\d{4}/.test(fourth)) edu.year = fourth
-    } else if (degreeIndicators.test(first) || third && institutionIndicators.test(third)) {
-      // Alternative format: degree, field, institution
-      edu.degree = first
-      edu.field = second
-      edu.institution = third
-      if (fourth && /\d{4}/.test(fourth)) edu.year = fourth
+      if (c && !degreeIndicators.test(c) && !institutionIndicators.test(c)) edu.field = c
+    } else if (degreeIndicators.test(a) || c && institutionIndicators.test(c)) {
+      edu.degree = a
+      edu.field = b
+      edu.institution = c
+    } else if (c) {
+      edu.institution = c
+      edu.degree = a
+      edu.field = b
     } else {
-      // Fallback: treat lines[0] as degree, lines[1] as field, lines[2] as institution
-      edu.degree = first
-      edu.field = second
-      edu.institution = third
-      if (fourth && /\d{4}/.test(fourth)) edu.year = fourth
-      else if (third && /\d{4}/.test(third)) edu.year = third
+      edu.institution = a
+      edu.degree = b
     }
 
     entries.push(edu)
+    prevDate = di
   }
   return entries
 }
