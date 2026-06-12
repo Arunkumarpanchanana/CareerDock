@@ -175,7 +175,7 @@ export function parseLinkedInText(text: string): ParseResult {
   if (educationText && education.length === 0) unmatched.push('Education')
   if (skillsText && skills.length === 0) unmatched.push('Skills')
   if (projectsText && projects.length === 0) unmatched.push('Projects')
-  if (certText && certificates.length === 0) unmatched.push(certText.includes('Certification') ? 'Certifications' : 'Licenses & Certifications')
+  if (certText && certificates.length === 0) unmatched.push(sections.has('Certifications') ? 'Certifications' : 'Licenses & Certifications')
 
   return {
     data: {
