@@ -1,6 +1,6 @@
 const AI_API_KEY = process.env.AI_API_KEY
-const AI_API_URL = process.env.AI_API_URL ?? 'https://api.openai.com/v1/chat/completions'
-const AI_MODEL = process.env.AI_MODEL ?? 'gpt-4o-mini'
+const AI_API_URL = process.env.AI_API_URL ?? 'https://api.groq.com/openai/v1/chat/completions'
+const AI_MODEL = process.env.AI_MODEL ?? 'llama-3.3-70b-versatile'
 
 interface Message {
   role: 'system' | 'user' | 'assistant'

@@ -35,29 +35,29 @@ A career acceleration platform built with Next.js and Supabase.
 
 ## AI Features
 
-CareerDock uses an OpenAI-compatible AI API (works with Gemini, OpenAI, etc.).
+CareerDock uses an OpenAI-compatible AI API (works with Groq, Gemini, OpenAI, etc.).
 
-### Getting a Gemini API Key (Free)
+### Getting a Groq API Key (Free)
 
-1. Go to https://aistudio.google.com/apikey
+1. Go to https://console.groq.com/keys
 2. Click **"Create API Key"** — no credit card required
-3. Copy the key
+3. Copy the key (starts with `gsk_`)
 
 ### Local Development
 
 Add to `.env.local`:
 ```
-AI_API_KEY=your-gemini-api-key
-AI_API_URL=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
-AI_MODEL=gemini-2.5-flash
+AI_API_KEY=gsk_...
+AI_API_URL=https://api.groq.com/openai/v1/chat/completions
+AI_MODEL=llama-3.3-70b-versatile
 ```
 
 ### Production (Vercel)
 
 Add these environment variables in your Vercel project dashboard:
-- `AI_API_KEY` — your Gemini API key
-- `AI_API_URL` — `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
-- `AI_MODEL` — `gemini-2.5-flash`
+- `AI_API_KEY` — your Groq API key
+- `AI_API_URL` — `https://api.groq.com/openai/v1/chat/completions`
+- `AI_MODEL` — `llama-3.3-70b-versatile`
 
 ## Available Scripts
 
