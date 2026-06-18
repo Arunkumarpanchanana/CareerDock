@@ -94,6 +94,10 @@ export async function handleInterviewTurn(params: {
     messages.push({ role: entry.role === 'ai' ? 'assistant' : 'user', content: entry.content })
   }
 
+  if (messages.length === 1) {
+    messages.push({ role: 'user', content: 'Begin the interview.' })
+  }
+
   const response = await callGemini(messages)
   if (!response) return { type: 'error', content: 'AI service unavailable. Please try again.' }
   return parseInterviewResponse(response)
