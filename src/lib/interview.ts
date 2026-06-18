@@ -68,7 +68,8 @@ export async function callGemini(messages: Message[], temperature = 0.7): Promis
     })
 
     if (!response.ok) {
-      console.error(`AI API error: ${response.status} ${response.statusText}`)
+      const body = await response.text().catch(() => '')
+      console.error(`AI API error: ${response.status} ${response.statusText}`, body)
       return null
     }
 
