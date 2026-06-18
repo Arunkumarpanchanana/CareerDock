@@ -134,9 +134,9 @@ export async function handleFeedback(params: {
   if (!parsed) return null
 
   return {
-    score: Math.max(0, Math.min(100, parsed.score ?? 50)),
-    verdict: parsed.verdict || 'Possible fit',
-    verdict_explanation: parsed.verdict_explanation || '',
+    score: Math.max(0, Math.min(100, Number(parsed.score) || 50)),
+    verdict: String(parsed.verdict || 'Possible fit'),
+    verdict_explanation: String(parsed.verdict_explanation || ''),
     strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
     gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
     suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
