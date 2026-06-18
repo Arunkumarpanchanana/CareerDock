@@ -79,7 +79,6 @@ export function InterviewClient() {
       recognitionRef.current = null
     }
     recognitionActiveRef.current = false
-    window.speechSynthesis.cancel()
   }, [])
 
   useEffect(() => {
@@ -97,32 +96,35 @@ export function InterviewClient() {
     }
   }, [])
 
-  const voicesRef = useRef<SpeechSynthesisVoice[]>([])
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  const speak = useCallback(async (text: string): Promise<void> => {
+    if (!voiceEnabled) return
+    try {
+      const res = await fetch(`/api/tts?text=${encodeURIComponent(text)}`)
+      if (!res.ok) throw new Error('TTS failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      audioRef.current = audio
+      await audio.play()
+      await new Promise<void>((resolve) => {
+        audio.onended = () => { URL.revokeObjectURL(url); audioRef.current = null; resolve() }
+        audio.onerror = () => { URL.revokeObjectURL(url); audioRef.current = null; resolve() }
+      })
+    } catch {
+      audioRef.current = null
+    }
+  }, [voiceEnabled])
 
   useEffect(() => {
-    const load = () => { voicesRef.current = window.speechSynthesis.getVoices() }
-    load()
-    window.speechSynthesis.addEventListener('voiceschanged', load)
-    return () => window.speechSynthesis.removeEventListener('voiceschanged', load)
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
   }, [])
-
-  const speak = useCallback((text: string): Promise<void> => {
-    return new Promise((resolve) => {
-      if (!voiceEnabled) { resolve(); return }
-      window.speechSynthesis.cancel()
-      const utterance = new SpeechSynthesisUtterance(text)
-      const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices()
-      const preferred = voices.find((v) =>
-        /Google UK English Female|Google US English|Samantha|Microsoft Zira|Microsoft Hazel/.test(v.name)
-      )
-      if (preferred) utterance.voice = preferred
-      utterance.rate = 0.85
-      utterance.pitch = 1
-      utterance.onend = () => resolve()
-      utterance.onerror = () => resolve()
-      window.speechSynthesis.speak(utterance)
-    })
-  }, [voiceEnabled])
 
   const startListening = useCallback(() => {
     if (recognitionActiveRef.current) return
