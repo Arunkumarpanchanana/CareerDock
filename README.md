@@ -33,6 +33,32 @@ A career acceleration platform built with Next.js and Supabase.
    ```
 3. Enable the **Google OAuth** provider in your Supabase dashboard under Authentication → Providers
 
+## AI Features
+
+CareerDock uses an OpenAI-compatible AI API (works with Gemini, OpenAI, etc.).
+
+### Getting a Gemini API Key (Free)
+
+1. Go to https://aistudio.google.com/apikey
+2. Click **"Create API Key"** — no credit card required
+3. Copy the key
+
+### Local Development
+
+Add to `.env.local`:
+```
+AI_API_KEY=your-gemini-api-key
+AI_API_URL=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+AI_MODEL=gemini-2.5-flash
+```
+
+### Production (Vercel)
+
+Add these environment variables in your Vercel project dashboard:
+- `AI_API_KEY` — your Gemini API key
+- `AI_API_URL` — `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+- `AI_MODEL` — `gemini-2.5-flash`
+
 ## Available Scripts
 
 | Script | Description |
