@@ -100,20 +100,34 @@ export function InterviewClient() {
 
   const speak = useCallback(async (text: string): Promise<void> => {
     if (!voiceEnabled) return
+    const start = Date.now()
     try {
       const res = await fetch(`/api/tts?text=${encodeURIComponent(text)}`)
-      if (!res.ok) throw new Error('TTS failed')
+      if (!res.ok) throw new Error('TTS API error')
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const audio = new Audio(url)
       audioRef.current = audio
-      await audio.play()
-      await new Promise<void>((resolve) => {
-        audio.onended = () => { URL.revokeObjectURL(url); audioRef.current = null; resolve() }
-        audio.onerror = () => { URL.revokeObjectURL(url); audioRef.current = null; resolve() }
-      })
-    } catch {
+
+      const played = await audio.play().then(() => true).catch(() => false)
+
+      if (played) {
+        await new Promise<void>((resolve) => {
+          audio.onended = () => resolve()
+          audio.onerror = () => resolve()
+        })
+      }
+
+      URL.revokeObjectURL(url)
       audioRef.current = null
+    } catch (e) {
+      console.error('TTS error:', e)
+      audioRef.current = null
+    }
+    const elapsed = Date.now() - start
+    const minReadTime = 3000
+    if (elapsed < minReadTime) {
+      await new Promise((r) => setTimeout(r, minReadTime - elapsed))
     }
   }, [voiceEnabled])
 

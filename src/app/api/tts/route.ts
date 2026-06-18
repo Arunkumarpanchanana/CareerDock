@@ -9,8 +9,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const tts = new EdgeTTS(text, 'en-IN-PrabhatNeural', {
-      rate: '+0%',
-      volume: '+0%',
+      rate: '-10%',
+      volume: '+20%',
       pitch: '+0Hz',
     })
     const result = await tts.synthesize()
