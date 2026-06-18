@@ -22,7 +22,6 @@ export function InterviewClient() {
   const [phase, setPhase] = useState<Phase>('setup')
   const [resume, setResume] = useState('')
   const [jobDescription, setJobDescription] = useState('')
-  const [jobTitle, setJobTitle] = useState('')
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [currentQuestion, setCurrentQuestion] = useState('')
   const [transcript, setTranscript] = useState('')
@@ -36,17 +35,16 @@ export function InterviewClient() {
   const streamRef = useRef<MediaStream | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const historyRef = useRef(history)
+  const finishedRef = useRef(false)
+  const phaseRef = useRef(phase)
+  const resumeRef = useRef(resume)
+  const jobDescriptionRef = useRef(jobDescription)
 
-  const startCamera = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-      streamRef.current = stream
-      if (videoRef.current) videoRef.current.srcObject = stream
-      setCameraEnabled(true)
-    } catch {
-      setCameraEnabled(false)
-    }
-  }, [])
+  useEffect(() => { historyRef.current = history }, [history])
+  useEffect(() => { phaseRef.current = phase }, [phase])
+  useEffect(() => { resumeRef.current = resume }, [resume])
+  useEffect(() => { jobDescriptionRef.current = jobDescription }, [jobDescription])
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -68,7 +66,7 @@ export function InterviewClient() {
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = 1
     utterance.pitch = 1
-    speechSynthesis.speak(utterance)
+    window.speechSynthesis.speak(utterance)
   }, [voiceEnabled])
 
   const startListening = useCallback(() => {
@@ -97,6 +95,10 @@ export function InterviewClient() {
       setPhase('answering')
     }
 
+    recognition.onend = () => {
+      setPhase('answering')
+    }
+
     recognitionRef.current = recognition
     recognition.start()
   }, [])
@@ -108,11 +110,61 @@ export function InterviewClient() {
     }
   }, [])
 
+  const handleFinish = useCallback(async (finalHistory?: HistoryEntry[]) => {
+    if (finishedRef.current) return
+    finishedRef.current = true
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+    stopListening()
+
+    const hist = finalHistory || historyRef.current
+    setPhase('loading')
+
+    try {
+      const res = await fetch('/api/interview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phase: 'feedback', resume: resumeRef.current, jobDescription: jobDescriptionRef.current, history: hist }),
+      })
+
+      if (!res.ok) { setError('Failed to generate feedback.'); setPhase('feedback'); return }
+
+      setFeedback(await res.json())
+      setPhase('feedback')
+      stopCamera()
+    } catch {
+      setError('Failed to generate feedback.')
+      setPhase('feedback')
+    }
+  }, [stopCamera, stopListening])
+
+  // Watch for timer expiry
+  useEffect(() => {
+    if (timeLeft <= 0 && phaseRef.current !== 'setup' && phaseRef.current !== 'feedback') {
+      handleFinish()
+    }
+  }, [timeLeft, handleFinish])
+
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      streamRef.current = stream
+      if (videoRef.current) videoRef.current.srcObject = stream
+      setCameraEnabled(true)
+    } catch {
+      setCameraEnabled(false)
+    }
+  }, [])
+
   const startInterview = async () => {
     if (!resume.trim() || !jobDescription.trim()) return
     setError(null)
+    finishedRef.current = false
     setPhase('loading')
-    startCamera()
+    await startCamera()
 
     try {
       const res = await fetch('/api/interview', {
@@ -133,10 +185,7 @@ export function InterviewClient() {
       speak(data.content || '')
 
       timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) { handleFinish(); return 0 }
-          return prev - 1
-        })
+        setTimeLeft((t) => Math.max(0, t - 1))
       }, 1000)
     } catch {
       setError('Failed to start interview.')
@@ -179,31 +228,6 @@ export function InterviewClient() {
     }
   }
 
-  const handleFinish = async (finalHistory?: HistoryEntry[]) => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    stopListening()
-
-    const hist = finalHistory || history
-    setPhase('loading')
-
-    try {
-      const res = await fetch('/api/interview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phase: 'feedback', resume, jobDescription, history: hist }),
-      })
-
-      if (!res.ok) { setError('Failed to generate feedback.'); setPhase('feedback'); return }
-
-      setFeedback(await res.json())
-      setPhase('feedback')
-      stopCamera()
-    } catch {
-      setError('Failed to generate feedback.')
-      setPhase('feedback')
-    }
-  }
-
   const startRecording = () => {
     setTranscript('')
     setPhase('recording')
@@ -234,16 +258,6 @@ export function InterviewClient() {
         </div>
 
         <div className="space-y-4 mb-8">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
-            <input
-              value={jobTitle}
-              onChange={(e) => setJobTitle(e.target.value)}
-              placeholder="e.g. Senior Frontend Engineer"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Job Description</label>
             <textarea
@@ -452,7 +466,7 @@ export function InterviewClient() {
           )}
 
           <button
-            onClick={() => { setPhase('setup'); setFeedback(null); setHistory([]); setTranscript(''); setTimeLeft(25 * 60) }}
+            onClick={() => { setPhase('setup'); setFeedback(null); setHistory([]); setTranscript(''); setTimeLeft(25 * 60); finishedRef.current = false }}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
           >
             Practice Again
