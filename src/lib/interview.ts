@@ -7,6 +7,8 @@ interface Message {
   content: string
 }
 
+const COMPLETE_SIGNAL = '__INTERVIEW_COMPLETE__'
+
 export function getInterviewPrompt(resume: string, jobDescription: string): string {
   return `You are a professional interviewer conducting a job interview for the following role:
 
@@ -18,7 +20,7 @@ ${resume}
 
 Interview the candidate for this role. Ask one question at a time. Start with general questions about their background, then probe deeper into skills relevant to the role. Adapt your questions based on their answers — if they answer well, go deeper; if they struggle, pivot to related areas.
 
-After each answer, decide if you have enough information to evaluate the candidate. When you have enough signal, respond with exactly: __INTERVIEW_COMPLETE__
+After each answer, decide if you have enough information to evaluate the candidate. When you have enough signal, respond with exactly: ${COMPLETE_SIGNAL}
 
 Otherwise, ask the next question. Be concise — one question per response.`
 }
@@ -39,9 +41,10 @@ Be honest and specific. Base your evaluation on actual answers given, not the re
 Return ONLY valid JSON, no other text.`
 }
 
-export function parseInterviewResponse(content: string): { type: 'question' | 'complete'; content?: string } {
-  if (content.includes('__INTERVIEW_COMPLETE__')) {
-    return { type: 'complete' }
+export function parseInterviewResponse(content: string): { type: 'question' | 'complete' | 'error'; content?: string } {
+  if (content.includes(COMPLETE_SIGNAL)) {
+    const remaining = content.replace(COMPLETE_SIGNAL, '').trim()
+    return { type: 'complete', content: remaining || undefined }
   }
   return { type: 'question', content }
 }
@@ -64,11 +67,15 @@ export async function callGemini(messages: Message[], temperature = 0.7): Promis
       }),
     })
 
-    if (!response.ok) return null
+    if (!response.ok) {
+      console.error(`AI API error: ${response.status} ${response.statusText}`)
+      return null
+    }
 
     const data = await response.json()
     return data.choices?.[0]?.message?.content?.trim() ?? null
-  } catch {
+  } catch (e) {
+    console.error('AI API call failed:', e)
     return null
   }
 }
@@ -77,7 +84,7 @@ export async function handleInterviewTurn(params: {
   resume: string
   jobDescription: string
   history: { role: 'ai' | 'user'; content: string }[]
-}): Promise<{ type: 'question' | 'complete'; content?: string }> {
+}): Promise<{ type: 'question' | 'complete' | 'error'; content?: string }> {
   const messages: Message[] = [
     { role: 'system', content: getInterviewPrompt(params.resume, params.jobDescription) },
   ]
@@ -87,7 +94,7 @@ export async function handleInterviewTurn(params: {
   }
 
   const response = await callGemini(messages)
-  if (!response) return { type: 'question', content: 'Could you tell me more about your experience?' }
+  if (!response) return { type: 'error', content: 'AI service unavailable. Please try again.' }
   return parseInterviewResponse(response)
 }
 
