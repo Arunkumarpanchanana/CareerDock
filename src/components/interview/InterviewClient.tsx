@@ -7,7 +7,7 @@ interface HistoryEntry {
   content: string
 }
 
-type Phase = 'setup' | 'recording' | 'answering' | 'feedback' | 'loading'
+type Phase = 'setup' | 'listening' | 'thinking' | 'feedback'
 
 interface FeedbackResult {
   score: number
@@ -25,6 +25,7 @@ export function InterviewClient() {
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [currentQuestion, setCurrentQuestion] = useState('')
   const [transcript, setTranscript] = useState('')
+  const [interim, setInterim] = useState('')
   const [feedback, setFeedback] = useState<FeedbackResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [timeLeft, setTimeLeft] = useState(25 * 60)
@@ -35,16 +36,19 @@ export function InterviewClient() {
   const streamRef = useRef<MediaStream | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const historyRef = useRef(history)
   const finishedRef = useRef(false)
-  const phaseRef = useRef(phase)
   const resumeRef = useRef(resume)
   const jobDescriptionRef = useRef(jobDescription)
+  const transcriptRef = useRef(transcript)
+  const phaseRef = useRef(phase)
 
   useEffect(() => { historyRef.current = history }, [history])
-  useEffect(() => { phaseRef.current = phase }, [phase])
   useEffect(() => { resumeRef.current = resume }, [resume])
   useEffect(() => { jobDescriptionRef.current = jobDescription }, [jobDescription])
+  useEffect(() => { transcriptRef.current = transcript }, [transcript])
+  useEffect(() => { phaseRef.current = phase }, [phase])
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -58,14 +62,21 @@ export function InterviewClient() {
     return () => {
       stopCamera()
       if (timerRef.current) clearInterval(timerRef.current)
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
     }
   }, [stopCamera])
 
-  const speak = useCallback((text: string) => {
-    if (!voiceEnabled) return
+  const speak = useCallback((text: string, onEnd?: () => void) => {
+    if (!voiceEnabled) { onEnd?.(); return }
+    window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = 1
-    utterance.pitch = 1
+    const voices = window.speechSynthesis.getVoices()
+    const preferred = voices.find((v) =>
+      /Google UK English Female|Google US English|Samantha|Microsoft Zira|Microsoft Hazel/.test(v.name)
+    )
+    if (preferred) utterance.voice = preferred
+    utterance.rate = 0.9
+    if (onEnd) utterance.onend = onEnd
     window.speechSynthesis.speak(utterance)
   }, [voiceEnabled])
 
@@ -77,26 +88,38 @@ export function InterviewClient() {
     }
 
     const recognition = new SpeechRecognitionAPI()
-    recognition.continuous = false
+    recognition.continuous = true
     recognition.interimResults = true
     recognition.lang = 'en-US'
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let final = ''
+      let interimText = ''
       for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript
         if (event.results[i].isFinal) {
-          final += event.results[i][0].transcript
+          final += t
+        } else {
+          interimText += t
         }
       }
-      if (final) setTranscript((prev) => prev + ' ' + final)
+      if (final) {
+        setTranscript((prev) => (prev ? prev + ' ' + final.trim() : final.trim()))
+      }
+      setInterim(interimText)
+
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
+      silenceTimerRef.current = setTimeout(() => {
+        const full = (transcriptRef.current + ' ' + final).trim()
+        if (full) {
+          stopListening()
+          sendAnswer(full)
+        }
+      }, 1500)
     }
 
     recognition.onerror = () => {
-      setPhase('answering')
-    }
-
-    recognition.onend = () => {
-      setPhase('answering')
+      stopListening()
     }
 
     recognitionRef.current = recognition
@@ -104,8 +127,12 @@ export function InterviewClient() {
   }, [])
 
   const stopListening = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current)
+      silenceTimerRef.current = null
+    }
     if (recognitionRef.current) {
-      recognitionRef.current.stop()
+      try { recognitionRef.current.stop() } catch {}
       recognitionRef.current = null
     }
   }, [])
@@ -121,7 +148,7 @@ export function InterviewClient() {
     stopListening()
 
     const hist = finalHistory || historyRef.current
-    setPhase('loading')
+    setPhase('thinking')
 
     try {
       const res = await fetch('/api/interview', {
@@ -141,7 +168,6 @@ export function InterviewClient() {
     }
   }, [stopCamera, stopListening])
 
-  // Watch for timer expiry
   useEffect(() => {
     if (timeLeft <= 0 && phaseRef.current !== 'setup' && phaseRef.current !== 'feedback') {
       handleFinish()
@@ -163,7 +189,7 @@ export function InterviewClient() {
     if (!resume.trim() || !jobDescription.trim()) return
     setError(null)
     finishedRef.current = false
-    setPhase('loading')
+    setPhase('thinking')
     await startCamera()
 
     try {
@@ -179,64 +205,69 @@ export function InterviewClient() {
       if (data.type === 'error') { setError(data.content || 'AI unavailable.'); setPhase('setup'); return }
       if (data.type === 'complete') { setError('Interview ended immediately.'); setPhase('setup'); return }
 
-      setCurrentQuestion(data.content || '')
-      setHistory([{ role: 'ai', content: data.content || '' }])
-      setPhase('answering')
-      speak(data.content || '')
+      const question = data.content || ''
+      setCurrentQuestion(question)
+      setHistory([{ role: 'ai', content: question }])
+      setTranscript('')
+      setInterim('')
 
       timerRef.current = setInterval(() => {
         setTimeLeft((t) => Math.max(0, t - 1))
       }, 1000)
+
+      speak(question, () => startListening())
     } catch {
       setError('Failed to start interview.')
       setPhase('setup')
     }
   }
 
-  const sendAnswer = async () => {
-    const answer = transcript.trim()
-    if (!answer) return
+  const sendAnswer = async (answerText?: string) => {
+    const answer = (answerText || transcript).trim()
+    if (!answer) {
+      startListening()
+      return
+    }
 
-    const updatedHistory = [...history, { role: 'user' as const, content: answer }]
-    setHistory(updatedHistory)
+    setPhase('thinking')
+    setInterim('')
+    const hist = [...history, { role: 'user' as const, content: answer }]
+    setHistory(hist)
     setTranscript('')
-    setPhase('loading')
 
     try {
       const res = await fetch('/api/interview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phase: 'interview', resume, jobDescription, history: updatedHistory }),
+        body: JSON.stringify({ phase: 'interview', resume, jobDescription, history: hist }),
       })
 
-      if (!res.ok) { setError('Failed to get next question.'); setPhase('answering'); return }
+      if (!res.ok) { setError('Failed to get next question.'); setPhase('listening'); return }
 
       const data = await res.json()
-      if (data.type === 'error') { setError(data.content); setPhase('answering'); return }
+      if (data.type === 'error') { setError(data.content); setPhase('listening'); return }
       if (data.type === 'complete') {
-        handleFinish(updatedHistory)
+        handleFinish(hist)
       } else {
-        const nextHistory = [...updatedHistory, { role: 'ai' as const, content: data.content || '' }]
-        setHistory(nextHistory)
-        setCurrentQuestion(data.content || '')
-        setPhase('answering')
-        speak(data.content || '')
+        const question = data.content || ''
+        setCurrentQuestion(question)
+        setHistory([...hist, { role: 'ai', content: question }])
+        speak(question, () => startListening())
       }
     } catch {
       setError('Failed to get next question.')
-      setPhase('answering')
+      setPhase('listening')
     }
   }
 
-  const startRecording = () => {
-    setTranscript('')
-    setPhase('recording')
-    startListening()
-  }
-
-  const stopRecording = () => {
+  const stopAnswer = () => {
     stopListening()
-    setPhase('answering')
+    const text = transcript.trim()
+    if (text) {
+      sendAnswer(text)
+    } else {
+      setPhase('listening')
+    }
   }
 
   const formatTime = (seconds: number) => {
@@ -296,20 +327,13 @@ export function InterviewClient() {
     )
   }
 
-  // Loading screen before first question
-  if (phase === 'loading' && !currentQuestion) {
-    return (
-      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p>Starting interview...</p>
-        </div>
-      </div>
-    )
-  }
+  // Full-screen interview view
+  if (phase === 'listening' || phase === 'thinking') {
+    const isListening = phase === 'listening'
+    const displayText = interim
+      ? transcript + ' ' + interim
+      : transcript
 
-  // Full-screen interview
-  if (phase === 'recording' || phase === 'answering' || phase === 'loading') {
     return (
       <div className="fixed inset-0 bg-gray-900 flex flex-col">
         <div className="flex-1 flex items-center justify-center relative">
@@ -326,9 +350,9 @@ export function InterviewClient() {
             {formatTime(timeLeft)}
           </div>
 
-          {phase === 'recording' && (
+          {phase === 'listening' && (
             <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm animate-pulse">
-              Recording...
+              Listening...
             </div>
           )}
 
@@ -338,30 +362,18 @@ export function InterviewClient() {
         </div>
 
         <div className="bg-gray-800 px-6 py-4 flex items-center justify-center gap-4">
-          {phase === 'answering' && !transcript && (
-            <button onClick={startRecording} className="px-6 py-3 bg-red-600 text-white rounded-full font-medium hover:bg-red-700">
-              🎤 Record Answer
-            </button>
-          )}
-
-          {phase === 'recording' && (
-            <button onClick={stopRecording} className="px-6 py-3 bg-gray-600 text-white rounded-full font-medium hover:bg-gray-700">
-              ⏹ Stop Recording
-            </button>
-          )}
-
-          {phase === 'answering' && transcript && (
+          {isListening && (
             <>
               <div className="bg-gray-700 text-white px-4 py-2 rounded-lg max-w-md truncate">
-                {transcript}
+                {displayText || 'Speak now...'}
               </div>
-              <button onClick={sendAnswer} className="px-6 py-3 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700">
-                Send Answer
+              <button onClick={stopAnswer} className="px-6 py-3 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700">
+                Send
               </button>
             </>
           )}
 
-          {phase === 'loading' && (
+          {phase === 'thinking' && (
             <div className="text-white flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               Processing...
@@ -376,14 +388,14 @@ export function InterviewClient() {
           </button>
         </div>
 
-        {phase === 'answering' && transcript && (
+        {isListening && (
           <div className="bg-gray-800 px-6 py-2 border-t border-gray-700">
             <textarea
-              value={transcript}
+              value={displayText}
               onChange={(e) => setTranscript(e.target.value)}
               className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm resize-none"
               rows={2}
-              placeholder="Edit your answer..."
+              placeholder="Your speech will appear here..."
             />
           </div>
         )}
