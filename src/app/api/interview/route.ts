@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid phase' }, { status: 400 })
-  } catch {
+  } catch (e) {
+    console.error('Interview API error:', e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
