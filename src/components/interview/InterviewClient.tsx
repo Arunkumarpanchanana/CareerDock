@@ -7,7 +7,7 @@ interface HistoryEntry {
   content: string
 }
 
-type Phase = 'setup' | 'listening' | 'thinking' | 'feedback'
+type Phase = 'setup' | 'ai_turn' | 'user_turn' | 'connecting' | 'feedback'
 
 interface FeedbackResult {
   score: number
@@ -16,6 +16,24 @@ interface FeedbackResult {
   strengths: string[]
   gaps: string[]
   suggestions: string[]
+}
+
+function Avatar({ label, speaking }: { label: string; speaking: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div
+        className={`w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold
+          ${speaking ? 'ring-4 ring-green-400 shadow-lg shadow-green-400/30' : 'ring-2 ring-gray-600'}
+          transition-all duration-300`}
+        style={{ backgroundColor: label === 'You' ? '#1e40af' : '#6b21a8' }}
+      >
+        {label === 'You' ? '👤' : '🤖'}
+      </div>
+      <p className={`text-sm font-medium ${speaking ? 'text-green-400' : 'text-gray-400'}`}>
+        {speaking ? `${label} speaking...` : label}
+      </p>
+    </div>
+  )
 }
 
 export function InterviewClient() {
@@ -30,7 +48,7 @@ export function InterviewClient() {
   const [error, setError] = useState<string | null>(null)
   const [timeLeft, setTimeLeft] = useState(25 * 60)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
-  const [cameraEnabled, setCameraEnabled] = useState(false)
+  const [showCamera, setShowCamera] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -42,50 +60,64 @@ export function InterviewClient() {
   const resumeRef = useRef(resume)
   const jobDescriptionRef = useRef(jobDescription)
   const transcriptRef = useRef(transcript)
-  const phaseRef = useRef(phase)
+  const recognitionActiveRef = useRef(false)
 
   useEffect(() => { historyRef.current = history }, [history])
   useEffect(() => { resumeRef.current = resume }, [resume])
   useEffect(() => { jobDescriptionRef.current = jobDescription }, [jobDescription])
   useEffect(() => { transcriptRef.current = transcript }, [transcript])
-  useEffect(() => { phaseRef.current = phase }, [phase])
 
-  const stopCamera = useCallback(() => {
+  const cleanup = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop())
       streamRef.current = null
     }
-    setCameraEnabled(false)
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null }
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop() } catch {}
+      recognitionRef.current = null
+    }
+    recognitionActiveRef.current = false
+    window.speechSynthesis.cancel()
   }, [])
 
   useEffect(() => {
-    return () => {
-      stopCamera()
-      if (timerRef.current) clearInterval(timerRef.current)
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
-    }
-  }, [stopCamera])
+    return () => cleanup()
+  }, [cleanup])
 
-  const speak = useCallback((text: string, onEnd?: () => void) => {
-    if (!voiceEnabled) { onEnd?.(); return }
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(text)
-    const voices = window.speechSynthesis.getVoices()
-    const preferred = voices.find((v) =>
-      /Google UK English Female|Google US English|Samantha|Microsoft Zira|Microsoft Hazel/.test(v.name)
-    )
-    if (preferred) utterance.voice = preferred
-    utterance.rate = 0.9
-    if (onEnd) utterance.onend = onEnd
-    window.speechSynthesis.speak(utterance)
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      streamRef.current = stream
+      if (videoRef.current) videoRef.current.srcObject = stream
+      setShowCamera(true)
+    } catch {
+      setShowCamera(false)
+    }
+  }, [])
+
+  const speak = useCallback((text: string): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!voiceEnabled) { resolve(); return }
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(text)
+      const voices = window.speechSynthesis.getVoices()
+      const preferred = voices.find((v) =>
+        /Google UK English Female|Google US English|Samantha|Microsoft Zira|Microsoft Hazel/.test(v.name)
+      )
+      if (preferred) utterance.voice = preferred
+      utterance.rate = 0.9
+      utterance.onend = () => resolve()
+      utterance.onerror = () => resolve()
+      window.speechSynthesis.speak(utterance)
+    })
   }, [voiceEnabled])
 
   const startListening = useCallback(() => {
+    if (recognitionActiveRef.current) return
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognitionAPI) {
-      setError('Speech recognition not supported in this browser.')
-      return
-    }
+    if (!SpeechRecognitionAPI) return
 
     const recognition = new SpeechRecognitionAPI()
     recognition.continuous = true
@@ -103,26 +135,22 @@ export function InterviewClient() {
           interimText += t
         }
       }
-      if (final) {
-        setTranscript((prev) => (prev ? prev + ' ' + final.trim() : final.trim()))
-      }
+      if (final) setTranscript((prev) => (prev ? prev + ' ' + final.trim() : final.trim()))
       setInterim(interimText)
 
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
       silenceTimerRef.current = setTimeout(() => {
         const full = (transcriptRef.current + ' ' + final).trim()
-        if (full) {
-          stopListening()
-          sendAnswer(full)
-        }
+        if (full) submitAnswer(full)
       }, 1500)
     }
 
     recognition.onerror = () => {
-      stopListening()
+      recognitionActiveRef.current = false
     }
 
     recognitionRef.current = recognition
+    recognitionActiveRef.current = true
     recognition.start()
   }, [])
 
@@ -135,62 +163,79 @@ export function InterviewClient() {
       try { recognitionRef.current.stop() } catch {}
       recognitionRef.current = null
     }
+    recognitionActiveRef.current = false
   }, [])
 
-  const handleFinish = useCallback(async (finalHistory?: HistoryEntry[]) => {
+  const submitAnswer = useCallback(async (text: string) => {
+    stopListening()
+    setPhase('connecting')
+    setInterim('')
+
+    const hist = [...historyRef.current, { role: 'user' as const, content: text }]
+    setHistory(hist)
+    setTranscript('')
+
+    try {
+      const res = await fetch('/api/interview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phase: 'interview', resume: resumeRef.current, jobDescription: jobDescriptionRef.current, history: hist }),
+      })
+
+      if (!res.ok) { setError('Connection lost. Try again.'); setPhase('setup'); return }
+
+      const data = await res.json()
+      if (data.type === 'error') { setError(data.content); setPhase('setup'); return }
+      if (data.type === 'complete') {
+        finishInterview(hist)
+      } else {
+        const question = data.content || ''
+        setCurrentQuestion(question)
+        setHistory([...hist, { role: 'ai', content: question }])
+        setPhase('ai_turn')
+        await speak(question)
+        setPhase('user_turn')
+        startListening()
+      }
+    } catch {
+      setError('Connection lost.')
+      setPhase('setup')
+    }
+  }, [speak, startListening, stopListening])
+
+  const finishInterview = useCallback(async (hist: HistoryEntry[]) => {
     if (finishedRef.current) return
     finishedRef.current = true
-
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-      timerRef.current = null
-    }
     stopListening()
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
 
-    const hist = finalHistory || historyRef.current
-    setPhase('thinking')
-
+    setPhase('connecting')
     try {
       const res = await fetch('/api/interview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phase: 'feedback', resume: resumeRef.current, jobDescription: jobDescriptionRef.current, history: hist }),
       })
-
       if (!res.ok) { setError('Failed to generate feedback.'); setPhase('feedback'); return }
-
       setFeedback(await res.json())
       setPhase('feedback')
-      stopCamera()
     } catch {
       setError('Failed to generate feedback.')
       setPhase('feedback')
     }
-  }, [stopCamera, stopListening])
+  }, [stopListening])
 
   useEffect(() => {
-    if (timeLeft <= 0 && phaseRef.current !== 'setup' && phaseRef.current !== 'feedback') {
-      handleFinish()
+    if (timeLeft <= 0 && phase !== 'setup' && phase !== 'feedback') {
+      finishInterview(historyRef.current)
     }
-  }, [timeLeft, handleFinish])
+  }, [timeLeft, finishInterview, phase])
 
-  const startCamera = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-      streamRef.current = stream
-      if (videoRef.current) videoRef.current.srcObject = stream
-      setCameraEnabled(true)
-    } catch {
-      setCameraEnabled(false)
-    }
-  }, [])
-
-  const startInterview = async () => {
+  const startCall = async () => {
     if (!resume.trim() || !jobDescription.trim()) return
     setError(null)
     finishedRef.current = false
-    setPhase('thinking')
-    await startCamera()
+    setPhase('connecting')
 
     try {
       const res = await fetch('/api/interview', {
@@ -199,10 +244,10 @@ export function InterviewClient() {
         body: JSON.stringify({ phase: 'interview', resume, jobDescription, history: [] }),
       })
 
-      if (!res.ok) { setError('Failed to start interview.'); setPhase('setup'); return }
+      if (!res.ok) { setError('Failed to start.'); setPhase('setup'); return }
 
       const data = await res.json()
-      if (data.type === 'error') { setError(data.content || 'AI unavailable.'); setPhase('setup'); return }
+      if (data.type === 'error') { setError(data.content); setPhase('setup'); return }
       if (data.type === 'complete') { setError('Interview ended immediately.'); setPhase('setup'); return }
 
       const question = data.content || ''
@@ -210,63 +255,35 @@ export function InterviewClient() {
       setHistory([{ role: 'ai', content: question }])
       setTranscript('')
       setInterim('')
+      setTimeLeft(25 * 60)
 
-      timerRef.current = setInterval(() => {
-        setTimeLeft((t) => Math.max(0, t - 1))
-      }, 1000)
+      timerRef.current = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000)
 
-      speak(question, () => startListening())
+      setPhase('ai_turn')
+      await speak(question)
+      setPhase('user_turn')
+      startListening()
     } catch {
-      setError('Failed to start interview.')
+      setError('Failed to start.')
       setPhase('setup')
     }
   }
 
-  const sendAnswer = async (answerText?: string) => {
-    const answer = (answerText || transcript).trim()
-    if (!answer) {
-      startListening()
-      return
-    }
-
-    setPhase('thinking')
-    setInterim('')
-    const hist = [...history, { role: 'user' as const, content: answer }]
-    setHistory(hist)
-    setTranscript('')
-
-    try {
-      const res = await fetch('/api/interview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phase: 'interview', resume, jobDescription, history: hist }),
-      })
-
-      if (!res.ok) { setError('Failed to get next question.'); setPhase('listening'); return }
-
-      const data = await res.json()
-      if (data.type === 'error') { setError(data.content); setPhase('listening'); return }
-      if (data.type === 'complete') {
-        handleFinish(hist)
-      } else {
-        const question = data.content || ''
-        setCurrentQuestion(question)
-        setHistory([...hist, { role: 'ai', content: question }])
-        speak(question, () => startListening())
-      }
-    } catch {
-      setError('Failed to get next question.')
-      setPhase('listening')
-    }
+  const endCall = () => {
+    cleanup()
+    setPhase('setup')
+    setError(null)
   }
 
-  const stopAnswer = () => {
-    stopListening()
-    const text = transcript.trim()
-    if (text) {
-      sendAnswer(text)
+  const toggleCamera = async () => {
+    if (showCamera) {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop())
+        streamRef.current = null
+      }
+      setShowCamera(false)
     } else {
-      setPhase('listening')
+      startCamera()
     }
   }
 
@@ -276,15 +293,14 @@ export function InterviewClient() {
     return `${m}:${s.toString().padStart(2, '0')}`
   }
 
-  // Setup screen
+  // Setup
   if (phase === 'setup') {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Mock Interview</h1>
           <p className="text-gray-600">
-            Practice interviewing with AI. Paste a job description and your resume,
-            then go through a realistic voice-based interview.
+            A voice-only interview experience. The AI will ask you questions — just speak your answers naturally.
           </p>
         </div>
 
@@ -300,7 +316,6 @@ export function InterviewClient() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Your Resume</label>
             <textarea
@@ -312,98 +327,88 @@ export function InterviewClient() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono"
             />
           </div>
-
           <button
-            onClick={startInterview}
+            onClick={startCall}
             disabled={!resume.trim() || !jobDescription.trim()}
-            className="px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-6 py-3 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
           >
-            Start Interview →
+            Start Call →
           </button>
-
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
       </div>
     )
   }
 
-  // Full-screen interview view
-  if (phase === 'listening' || phase === 'thinking') {
-    const isListening = phase === 'listening'
-    const displayText = interim
-      ? transcript + ' ' + interim
-      : transcript
-
+  // Connecting
+  if (phase === 'connecting') {
     return (
-      <div className="fixed inset-0 bg-gray-900 flex flex-col">
-        <div className="flex-1 flex items-center justify-center relative">
-          {cameraEnabled ? (
-            <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-          ) : (
-            <button onClick={startCamera} className="text-white text-center cursor-pointer hover:text-gray-300">
-              <p className="text-6xl mb-4">🎥</p>
-              <p className="text-sm">Enable Camera</p>
-            </button>
-          )}
-
-          <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-mono">
-            {formatTime(timeLeft)}
-          </div>
-
-          {phase === 'listening' && (
-            <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm animate-pulse">
-              Listening...
-            </div>
-          )}
-
-          <div className="absolute bottom-32 left-1/2 -translate-x-1/2 bg-black/70 text-white px-6 py-3 rounded-xl max-w-2xl text-center">
-            <p className="text-lg">{currentQuestion}</p>
-          </div>
-        </div>
-
-        <div className="bg-gray-800 px-6 py-4 flex items-center justify-center gap-4">
-          {isListening && (
-            <>
-              <div className="bg-gray-700 text-white px-4 py-2 rounded-lg max-w-md truncate">
-                {displayText || 'Speak now...'}
-              </div>
-              <button onClick={stopAnswer} className="px-6 py-3 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700">
-                Send
-              </button>
-            </>
-          )}
-
-          {phase === 'thinking' && (
-            <div className="text-white flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Processing...
-            </div>
-          )}
-
-          <button
-            onClick={() => setVoiceEnabled(!voiceEnabled)}
-            className={`px-3 py-2 rounded-full text-sm ${voiceEnabled ? 'bg-blue-600 text-white' : 'bg-gray-600 text-gray-300'}`}
-          >
-            {voiceEnabled ? '🔊 Voice On' : '🔇 Voice Off'}
-          </button>
-        </div>
-
-        {isListening && (
-          <div className="bg-gray-800 px-6 py-2 border-t border-gray-700">
-            <textarea
-              value={displayText}
-              onChange={(e) => setTranscript(e.target.value)}
-              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm resize-none"
-              rows={2}
-              placeholder="Your speech will appear here..."
-            />
-          </div>
-        )}
+      <div className="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        <p className="text-white text-sm">{history.length === 0 ? 'Starting interview...' : 'Thinking...'}</p>
       </div>
     )
   }
 
-  // Feedback screen
+  // Active call (ai_turn or user_turn)
+  if (phase === 'ai_turn' || phase === 'user_turn') {
+    const isAi = phase === 'ai_turn'
+    const displayText = isAi ? currentQuestion : (transcript
+      ? transcript + (interim ? ' ' + interim : '')
+      : interim || '')
+
+    return (
+      <div className="fixed inset-0 bg-gray-900 flex flex-col">
+        {showCamera && (
+          <div className="absolute top-4 right-4 z-10 w-32 h-24 rounded-lg overflow-hidden border-2 border-gray-700 shadow-lg">
+            <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+          </div>
+        )}
+
+        <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-mono z-20">
+          {formatTime(timeLeft)}
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <Avatar label={isAi ? 'Interviewer' : 'You'} speaking={!isAi} />
+
+          <div className="mt-6 max-w-xl text-center">
+            <p className={`text-lg leading-relaxed ${isAi ? 'text-white' : 'text-gray-200'}`}>
+              {displayText || (isAi ? '' : 'Waiting for your answer...')}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-gray-800 px-6 py-5 flex items-center justify-center gap-6">
+          <button
+            onClick={toggleCamera}
+            className={`p-3 rounded-full text-sm ${showCamera ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}
+            title="Toggle camera"
+          >
+            📷
+          </button>
+
+          <button
+            onClick={endCall}
+            className="p-3 rounded-full bg-red-600 text-white hover:bg-red-700"
+            title="End call"
+          >
+            ⏹
+          </button>
+
+          <button
+            onClick={() => setVoiceEnabled(!voiceEnabled)}
+            className={`p-3 rounded-full text-sm ${voiceEnabled ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}
+            title="Toggle voice"
+          >
+            {voiceEnabled ? '🔊' : '🔇'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Feedback
   if (phase === 'feedback') {
     if (!feedback) {
       return (
@@ -431,7 +436,7 @@ export function InterviewClient() {
             <div className="flex items-center gap-6">
               <div className={`text-4xl font-bold ${scoreColor}`}>{feedback.score}</div>
               <div>
-                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Interview Score</p>
+                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Score</p>
                 <h2 className={`text-xl font-bold ${scoreColor}`}>{feedback.verdict}</h2>
                 <p className="text-sm text-gray-600 mt-1">{feedback.verdict_explanation}</p>
               </div>
@@ -478,7 +483,7 @@ export function InterviewClient() {
           )}
 
           <button
-            onClick={() => { setPhase('setup'); setFeedback(null); setHistory([]); setTranscript(''); setTimeLeft(25 * 60); finishedRef.current = false }}
+            onClick={() => { setPhase('setup'); setFeedback(null); setHistory([]); setTranscript(''); setTimeLeft(25 * 60); finishedRef.current = false; cleanup() }}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
           >
             Practice Again

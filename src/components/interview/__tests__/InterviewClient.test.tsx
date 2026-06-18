@@ -5,6 +5,8 @@ global.fetch = mockFetch
 
 const mockSpeechSynthesis = vi.hoisted(() => ({
   speak: vi.fn(),
+  cancel: vi.fn(),
+  getVoices: vi.fn().mockReturnValue([]),
 }))
 Object.defineProperty(window, 'speechSynthesis', { value: mockSpeechSynthesis, writable: true })
 
@@ -19,7 +21,7 @@ describe('InterviewClient', () => {
   it('renders setup screen by default', () => {
     render(<InterviewClient />)
     expect(screen.getByText('AI Mock Interview')).toBeInTheDocument()
-    expect(screen.getByText('Start Interview →')).toBeInTheDocument()
+    expect(screen.getByText('Start Call →')).toBeInTheDocument()
   })
 
   it('has textarea for job description', () => {
@@ -43,10 +45,10 @@ describe('InterviewClient', () => {
     const resumeInput = screen.getByPlaceholderText('Paste your full resume text here...')
     fireEvent.change(resumeInput, { target: { value: 'SWE at Google' } })
 
-    fireEvent.click(screen.getByText('Start Interview →'))
+    fireEvent.click(screen.getByText('Start Call →'))
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to start interview.')).toBeInTheDocument()
+      expect(screen.getByText('Failed to start.')).toBeInTheDocument()
     }, { timeout: 3000 })
   })
 
@@ -60,7 +62,7 @@ describe('InterviewClient', () => {
 
     fireEvent.change(screen.getByPlaceholderText('Paste the full job description here...'), { target: { value: 'Senior Engineer role' } })
     fireEvent.change(screen.getByPlaceholderText('Paste your full resume text here...'), { target: { value: 'SWE at Google' } })
-    fireEvent.click(screen.getByText('Start Interview →'))
+    fireEvent.click(screen.getByText('Start Call →'))
 
     await waitFor(() => {
       expect(screen.getByText(/AI unavailable/)).toBeInTheDocument()
