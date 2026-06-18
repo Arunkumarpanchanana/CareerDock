@@ -97,17 +97,27 @@ export function InterviewClient() {
     }
   }, [])
 
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([])
+
+  useEffect(() => {
+    const load = () => { voicesRef.current = window.speechSynthesis.getVoices() }
+    load()
+    window.speechSynthesis.addEventListener('voiceschanged', load)
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', load)
+  }, [])
+
   const speak = useCallback((text: string): Promise<void> => {
     return new Promise((resolve) => {
       if (!voiceEnabled) { resolve(); return }
       window.speechSynthesis.cancel()
       const utterance = new SpeechSynthesisUtterance(text)
-      const voices = window.speechSynthesis.getVoices()
+      const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices()
       const preferred = voices.find((v) =>
         /Google UK English Female|Google US English|Samantha|Microsoft Zira|Microsoft Hazel/.test(v.name)
       )
       if (preferred) utterance.voice = preferred
-      utterance.rate = 0.9
+      utterance.rate = 0.85
+      utterance.pitch = 1
       utterance.onend = () => resolve()
       utterance.onerror = () => resolve()
       window.speechSynthesis.speak(utterance)

@@ -130,17 +130,35 @@ export async function handleFeedback(params: {
   const response = await callGemini(messages, 0.3)
   if (!response) return null
 
+  const parsed = extractJson(response)
+  if (!parsed) return null
+
+  return {
+    score: Math.max(0, Math.min(100, parsed.score ?? 50)),
+    verdict: parsed.verdict || 'Possible fit',
+    verdict_explanation: parsed.verdict_explanation || '',
+    strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
+    gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
+    suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+  }
+}
+
+function extractJson(text: string): Record<string, unknown> | null {
+  const jsonBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  const target = jsonBlock ? jsonBlock[1] : text
+
   try {
-    const parsed = JSON.parse(response)
-    return {
-      score: Math.max(0, Math.min(100, parsed.score ?? 50)),
-      verdict: parsed.verdict || 'Possible fit',
-      verdict_explanation: parsed.verdict_explanation || '',
-      strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
-      gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
-      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
-    }
+    return JSON.parse(target)
   } catch {
-    return null
+    const braceMatch = target.match(/\{[\s\S]*\}/)
+    if (!braceMatch) return null
+    const cleaned = braceMatch[0]
+      .replace(/,\s*}/g, '}')
+      .replace(/,\s*]/g, ']')
+    try {
+      return JSON.parse(cleaned)
+    } catch {
+      return null
+    }
   }
 }

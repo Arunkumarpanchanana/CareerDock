@@ -7,6 +7,8 @@ const mockSpeechSynthesis = vi.hoisted(() => ({
   speak: vi.fn(),
   cancel: vi.fn(),
   getVoices: vi.fn().mockReturnValue([]),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
 }))
 Object.defineProperty(window, 'speechSynthesis', { value: mockSpeechSynthesis, writable: true })
 
