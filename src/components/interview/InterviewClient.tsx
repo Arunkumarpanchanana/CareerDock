@@ -49,6 +49,7 @@ export function InterviewClient() {
   const [timeLeft, setTimeLeft] = useState(25 * 60)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [showCamera, setShowCamera] = useState(false)
+  const [aiSpeaking, setAiSpeaking] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -61,6 +62,12 @@ export function InterviewClient() {
   const jobDescriptionRef = useRef(jobDescription)
   const transcriptRef = useRef(transcript)
   const recognitionActiveRef = useRef(false)
+  const audioElRef = useRef<HTMLAudioElement>(null)
+
+  useEffect(() => { historyRef.current = history }, [history])
+  useEffect(() => { resumeRef.current = resume }, [resume])
+  useEffect(() => { jobDescriptionRef.current = jobDescription }, [jobDescription])
+  useEffect(() => { transcriptRef.current = transcript }, [transcript])
 
   useEffect(() => { historyRef.current = history }, [history])
   useEffect(() => { resumeRef.current = resume }, [resume])
@@ -79,6 +86,10 @@ export function InterviewClient() {
       recognitionRef.current = null
     }
     recognitionActiveRef.current = false
+    if (audioElRef.current) {
+      audioElRef.current.pause()
+      audioElRef.current.src = ''
+    }
   }, [])
 
   useEffect(() => {
@@ -96,34 +107,27 @@ export function InterviewClient() {
     }
   }, [])
 
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-
   const speak = useCallback(async (text: string): Promise<void> => {
-    if (!voiceEnabled) return
+    if (!voiceEnabled || !audioElRef.current) return
+    setAiSpeaking(true)
     const start = Date.now()
     try {
       const res = await fetch(`/api/tts?text=${encodeURIComponent(text)}`)
       if (!res.ok) throw new Error('TTS API error')
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
-      const audio = new Audio(url)
-      audioRef.current = audio
-
-      const played = await audio.play().then(() => true).catch(() => false)
-
-      if (played) {
-        await new Promise<void>((resolve) => {
-          audio.onended = () => resolve()
-          audio.onerror = () => resolve()
-        })
-      }
-
+      const audio = audioElRef.current
+      audio.src = url
+      await audio.play().catch(() => {})
+      await new Promise<void>((resolve) => {
+        audio.onended = () => resolve()
+        audio.onerror = () => resolve()
+      })
       URL.revokeObjectURL(url)
-      audioRef.current = null
     } catch (e) {
       console.error('TTS error:', e)
-      audioRef.current = null
     }
+    setAiSpeaking(false)
     const elapsed = Date.now() - start
     const minReadTime = 3000
     if (elapsed < minReadTime) {
@@ -133,9 +137,9 @@ export function InterviewClient() {
 
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
+      if (audioElRef.current) {
+        audioElRef.current.pause()
+        audioElRef.current.src = ''
       }
     }
   }, [])
@@ -396,7 +400,8 @@ export function InterviewClient() {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <Avatar label={isAi ? 'Interviewer' : 'You'} speaking={!isAi} />
+          <Avatar label={isAi ? 'Interviewer' : 'You'} speaking={isAi ? aiSpeaking : !isAi} />
+          <audio ref={audioElRef} />
 
           <div className="mt-6 max-w-xl text-center">
             <p className={`text-lg leading-relaxed ${isAi ? 'text-white' : 'text-gray-200'}`}>
