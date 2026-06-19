@@ -381,6 +381,7 @@ export function InterviewClient() {
   if (phase === 'connecting') {
     return (
       <div className="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center gap-4">
+        <audio ref={audioElRef} />
         <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin" />
         <p className="text-white text-sm">{history.length === 0 ? 'Starting interview...' : 'Thinking...'}</p>
       </div>
@@ -396,6 +397,7 @@ export function InterviewClient() {
 
     return (
       <div className="fixed inset-0 bg-gray-900 flex flex-col">
+        <audio ref={audioElRef} />
         {showCamera && (
           <div className="absolute top-4 right-4 z-10 w-32 h-24 rounded-lg overflow-hidden border-2 border-gray-700 shadow-lg">
             <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
@@ -408,7 +410,6 @@ export function InterviewClient() {
 
         <div className="flex-1 flex flex-col items-center justify-center px-6">
           <Avatar label={isAi ? 'Interviewer' : 'You'} speaking={isAi ? aiSpeaking : !isAi} />
-          <audio ref={audioElRef} />
 
           <div className="mt-6 max-w-xl text-center">
             <p className={`text-lg leading-relaxed ${isAi ? 'text-white' : 'text-gray-200'}`}>
