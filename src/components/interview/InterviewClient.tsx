@@ -118,18 +118,25 @@ export function InterviewClient() {
       const url = URL.createObjectURL(blob)
       const audio = audioElRef.current
       audio.src = url
-      await audio.play().catch(() => {})
-      await new Promise<void>((resolve) => {
-        audio.onended = () => resolve()
-        audio.onerror = () => resolve()
-      })
+      const played = await audio.play().then(() => true).catch(() => false)
+      if (played) {
+        await new Promise<void>((resolve) => {
+          audio.onended = () => resolve()
+          audio.onerror = () => resolve()
+        })
+      } else {
+        await new Promise<void>((resolve) => {
+          audio.onloadedmetadata = () => resolve()
+          setTimeout(resolve, 2000)
+        })
+      }
       URL.revokeObjectURL(url)
     } catch (e) {
       console.error('TTS error:', e)
     }
     setAiSpeaking(false)
     const elapsed = Date.now() - start
-    const minReadTime = 3000
+    const minReadTime = 5000
     if (elapsed < minReadTime) {
       await new Promise((r) => setTimeout(r, minReadTime - elapsed))
     }
@@ -405,7 +412,9 @@ export function InterviewClient() {
 
           <div className="mt-6 max-w-xl text-center">
             <p className={`text-lg leading-relaxed ${isAi ? 'text-white' : 'text-gray-200'}`}>
-              {displayText || (isAi ? '' : 'Waiting for your answer...')}
+              {isAi
+                ? currentQuestion || 'Preparing question...'
+                : displayText || (aiSpeaking ? 'Listening...' : 'Waiting for your answer...')}
             </p>
           </div>
         </div>
