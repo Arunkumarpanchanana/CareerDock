@@ -62,7 +62,12 @@ export function InterviewClient() {
   const jobDescriptionRef = useRef(jobDescription)
   const transcriptRef = useRef(transcript)
   const recognitionActiveRef = useRef(false)
-  const audioElRef = useRef<HTMLAudioElement>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  if (!audioRef.current) {
+    audioRef.current = new Audio()
+    audioRef.current.preload = 'auto'
+  }
 
   useEffect(() => { historyRef.current = history }, [history])
   useEffect(() => { resumeRef.current = resume }, [resume])
@@ -86,9 +91,9 @@ export function InterviewClient() {
       recognitionRef.current = null
     }
     recognitionActiveRef.current = false
-    if (audioElRef.current) {
-      audioElRef.current.pause()
-      audioElRef.current.src = ''
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
     }
   }, [])
 
@@ -108,7 +113,10 @@ export function InterviewClient() {
   }, [])
 
   const speak = useCallback(async (text: string): Promise<void> => {
-    if (!voiceEnabled || !audioElRef.current) return
+    if (!voiceEnabled || !audioRef.current) return
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume()
+    }
     setAiSpeaking(true)
     const start = Date.now()
     try {
@@ -116,18 +124,13 @@ export function InterviewClient() {
       if (!res.ok) throw new Error('TTS API error')
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
-      const audio = audioElRef.current
+      const audio = audioRef.current
       audio.src = url
       const played = await audio.play().then(() => true).catch(() => false)
       if (played) {
         await new Promise<void>((resolve) => {
           audio.onended = () => resolve()
           audio.onerror = () => resolve()
-        })
-      } else {
-        await new Promise<void>((resolve) => {
-          audio.onloadedmetadata = () => resolve()
-          setTimeout(resolve, 2000)
         })
       }
       URL.revokeObjectURL(url)
@@ -144,9 +147,9 @@ export function InterviewClient() {
 
   useEffect(() => {
     return () => {
-      if (audioElRef.current) {
-        audioElRef.current.pause()
-        audioElRef.current.src = ''
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
       }
     }
   }, [])
@@ -270,6 +273,12 @@ export function InterviewClient() {
 
   const startCall = async () => {
     if (!resume.trim() || !jobDescription.trim()) return
+    if (typeof AudioContext !== 'undefined' && !audioContextRef.current) {
+      audioContextRef.current = new AudioContext()
+    }
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume()
+    }
     setError(null)
     finishedRef.current = false
     setPhase('connecting')
@@ -381,7 +390,6 @@ export function InterviewClient() {
   if (phase === 'connecting') {
     return (
       <div className="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center gap-4">
-        <audio ref={audioElRef} />
         <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin" />
         <p className="text-white text-sm">{history.length === 0 ? 'Starting interview...' : 'Thinking...'}</p>
       </div>
@@ -397,7 +405,6 @@ export function InterviewClient() {
 
     return (
       <div className="fixed inset-0 bg-gray-900 flex flex-col">
-        <audio ref={audioElRef} />
         {showCamera && (
           <div className="absolute top-4 right-4 z-10 w-32 h-24 rounded-lg overflow-hidden border-2 border-gray-700 shadow-lg">
             <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
