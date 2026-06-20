@@ -49,7 +49,6 @@ export function InterviewClient() {
   const [timeLeft, setTimeLeft] = useState(25 * 60)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [showCamera, setShowCamera] = useState(false)
-  const [aiSpeaking, setAiSpeaking] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -62,17 +61,6 @@ export function InterviewClient() {
   const jobDescriptionRef = useRef(jobDescription)
   const transcriptRef = useRef(transcript)
   const recognitionActiveRef = useRef(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const audioContextRef = useRef<AudioContext | null>(null)
-  if (!audioRef.current) {
-    audioRef.current = new Audio()
-    audioRef.current.preload = 'auto'
-  }
-
-  useEffect(() => { historyRef.current = history }, [history])
-  useEffect(() => { resumeRef.current = resume }, [resume])
-  useEffect(() => { jobDescriptionRef.current = jobDescription }, [jobDescription])
-  useEffect(() => { transcriptRef.current = transcript }, [transcript])
 
   useEffect(() => { historyRef.current = history }, [history])
   useEffect(() => { resumeRef.current = resume }, [resume])
@@ -91,10 +79,7 @@ export function InterviewClient() {
       recognitionRef.current = null
     }
     recognitionActiveRef.current = false
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.src = ''
-    }
+    window.speechSynthesis.cancel()
   }, [])
 
   useEffect(() => {
@@ -112,47 +97,32 @@ export function InterviewClient() {
     }
   }, [])
 
-  const speak = useCallback(async (text: string): Promise<void> => {
-    if (!voiceEnabled || !audioRef.current) return
-    if (audioContextRef.current?.state === 'suspended') {
-      await audioContextRef.current.resume()
-    }
-    setAiSpeaking(true)
-    const start = Date.now()
-    try {
-      const res = await fetch(`/api/tts?text=${encodeURIComponent(text)}`)
-      if (!res.ok) throw new Error('TTS API error')
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const audio = audioRef.current
-      audio.src = url
-      const played = await audio.play().then(() => true).catch(() => false)
-      if (played) {
-        await new Promise<void>((resolve) => {
-          audio.onended = () => resolve()
-          audio.onerror = () => resolve()
-        })
-      }
-      URL.revokeObjectURL(url)
-    } catch (e) {
-      console.error('TTS error:', e)
-    }
-    setAiSpeaking(false)
-    const elapsed = Date.now() - start
-    const minReadTime = 5000
-    if (elapsed < minReadTime) {
-      await new Promise((r) => setTimeout(r, minReadTime - elapsed))
-    }
-  }, [voiceEnabled])
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([])
 
   useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.src = ''
-      }
-    }
+    const load = () => { voicesRef.current = window.speechSynthesis.getVoices() }
+    load()
+    window.speechSynthesis.addEventListener('voiceschanged', load)
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', load)
   }, [])
+
+  const speak = useCallback((text: string): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!voiceEnabled) { resolve(); return }
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(text)
+      const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices()
+      const preferred = voices.find((v) =>
+        /Google UK English Female|Google US English|Samantha|Microsoft Zira|Microsoft Hazel/.test(v.name)
+      )
+      if (preferred) utterance.voice = preferred
+      utterance.rate = 0.85
+      utterance.pitch = 1
+      utterance.onend = () => resolve()
+      utterance.onerror = () => resolve()
+      window.speechSynthesis.speak(utterance)
+    })
+  }, [voiceEnabled])
 
   const startListening = useCallback(() => {
     if (recognitionActiveRef.current) return
@@ -273,12 +243,6 @@ export function InterviewClient() {
 
   const startCall = async () => {
     if (!resume.trim() || !jobDescription.trim()) return
-    if (typeof AudioContext !== 'undefined' && !audioContextRef.current) {
-      audioContextRef.current = new AudioContext()
-    }
-    if (audioContextRef.current?.state === 'suspended') {
-      await audioContextRef.current.resume()
-    }
     setError(null)
     finishedRef.current = false
     setPhase('connecting')
@@ -416,13 +380,11 @@ export function InterviewClient() {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <Avatar label={isAi ? 'Interviewer' : 'You'} speaking={isAi ? aiSpeaking : !isAi} />
+          <Avatar label={isAi ? 'Interviewer' : 'You'} speaking={!isAi} />
 
           <div className="mt-6 max-w-xl text-center">
             <p className={`text-lg leading-relaxed ${isAi ? 'text-white' : 'text-gray-200'}`}>
-              {isAi
-                ? currentQuestion || 'Preparing question...'
-                : displayText || (aiSpeaking ? 'Listening...' : 'Waiting for your answer...')}
+              {displayText || (isAi ? '' : 'Waiting for your answer...')}
             </p>
           </div>
         </div>
