@@ -49,6 +49,7 @@ export function InterviewClient() {
   const [timeLeft, setTimeLeft] = useState(25 * 60)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [showCamera, setShowCamera] = useState(false)
+  const [aiSpeaking, setAiSpeaking] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -61,6 +62,7 @@ export function InterviewClient() {
   const jobDescriptionRef = useRef(jobDescription)
   const transcriptRef = useRef(transcript)
   const recognitionActiveRef = useRef(false)
+  const audioContextRef = useRef<AudioContext | null>(null)
 
   useEffect(() => { historyRef.current = history }, [history])
   useEffect(() => { resumeRef.current = resume }, [resume])
@@ -79,7 +81,10 @@ export function InterviewClient() {
       recognitionRef.current = null
     }
     recognitionActiveRef.current = false
-    window.speechSynthesis.cancel()
+    if (audioContextRef.current) {
+      audioContextRef.current.close()
+      audioContextRef.current = null
+    }
   }, [])
 
   useEffect(() => {
@@ -97,31 +102,29 @@ export function InterviewClient() {
     }
   }, [])
 
-  const voicesRef = useRef<SpeechSynthesisVoice[]>([])
-
-  useEffect(() => {
-    const load = () => { voicesRef.current = window.speechSynthesis.getVoices() }
-    load()
-    window.speechSynthesis.addEventListener('voiceschanged', load)
-    return () => window.speechSynthesis.removeEventListener('voiceschanged', load)
-  }, [])
-
-  const speak = useCallback((text: string): Promise<void> => {
-    return new Promise((resolve) => {
-      if (!voiceEnabled) { resolve(); return }
-      window.speechSynthesis.cancel()
-      const utterance = new SpeechSynthesisUtterance(text)
-      const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices()
-      const preferred = voices.find((v) =>
-        /Google UK English Female|Google US English|Samantha|Microsoft Zira|Microsoft Hazel/.test(v.name)
-      )
-      if (preferred) utterance.voice = preferred
-      utterance.rate = 0.85
-      utterance.pitch = 1
-      utterance.onend = () => resolve()
-      utterance.onerror = () => resolve()
-      window.speechSynthesis.speak(utterance)
-    })
+  const speak = useCallback(async (text: string): Promise<void> => {
+    if (!voiceEnabled || !audioContextRef.current) return
+    setAiSpeaking(true)
+    const start = Date.now()
+    try {
+      const res = await fetch(`/api/tts?text=${encodeURIComponent(text)}`)
+      if (!res.ok) throw new Error('TTS API error')
+      const arrayBuffer = await res.arrayBuffer()
+      const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer)
+      const source = audioContextRef.current.createBufferSource()
+      source.buffer = audioBuffer
+      source.connect(audioContextRef.current.destination)
+      source.start(0)
+      await new Promise<void>((resolve) => { source.onended = () => resolve() })
+    } catch (e) {
+      console.error('TTS error:', e)
+    }
+    setAiSpeaking(false)
+    const elapsed = Date.now() - start
+    const minReadTime = 5000
+    if (elapsed < minReadTime) {
+      await new Promise((r) => setTimeout(r, minReadTime - elapsed))
+    }
   }, [voiceEnabled])
 
   const startListening = useCallback(() => {
@@ -243,6 +246,9 @@ export function InterviewClient() {
 
   const startCall = async () => {
     if (!resume.trim() || !jobDescription.trim()) return
+    if (typeof AudioContext !== 'undefined' && !audioContextRef.current) {
+      audioContextRef.current = new AudioContext()
+    }
     setError(null)
     finishedRef.current = false
     setPhase('connecting')
@@ -380,11 +386,13 @@ export function InterviewClient() {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <Avatar label={isAi ? 'Interviewer' : 'You'} speaking={!isAi} />
+          <Avatar label={isAi ? 'Interviewer' : 'You'} speaking={isAi ? aiSpeaking : !isAi} />
 
           <div className="mt-6 max-w-xl text-center">
             <p className={`text-lg leading-relaxed ${isAi ? 'text-white' : 'text-gray-200'}`}>
-              {displayText || (isAi ? '' : 'Waiting for your answer...')}
+              {isAi
+                ? currentQuestion || 'Preparing question...'
+                : displayText || (aiSpeaking ? 'Listening...' : 'Waiting for your answer...')}
             </p>
           </div>
         </div>
