@@ -63,6 +63,7 @@ export function InterviewClient() {
   const transcriptRef = useRef(transcript)
   const recognitionActiveRef = useRef(false)
   const audioContextRef = useRef<AudioContext | null>(null)
+  const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null)
 
   useEffect(() => { historyRef.current = history }, [history])
   useEffect(() => { resumeRef.current = resume }, [resume])
@@ -85,6 +86,10 @@ export function InterviewClient() {
       audioContextRef.current.close()
       audioContextRef.current = null
     }
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop() } catch {}
+      sourceNodeRef.current = null
+    }
   }, [])
 
   useEffect(() => {
@@ -104,6 +109,13 @@ export function InterviewClient() {
 
   const speak = useCallback(async (text: string): Promise<void> => {
     if (!voiceEnabled || !audioContextRef.current) return
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop() } catch {}
+      sourceNodeRef.current = null
+    }
+    if (audioContextRef.current.state === 'suspended') {
+      await audioContextRef.current.resume()
+    }
     setAiSpeaking(true)
     const start = Date.now()
     try {
@@ -112,10 +124,15 @@ export function InterviewClient() {
       const arrayBuffer = await res.arrayBuffer()
       const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer)
       const source = audioContextRef.current.createBufferSource()
+      sourceNodeRef.current = source
       source.buffer = audioBuffer
       source.connect(audioContextRef.current.destination)
       source.start(0)
-      await new Promise<void>((resolve) => { source.onended = () => resolve() })
+      await new Promise<void>((resolve) => {
+        const timeout = setTimeout(() => resolve(), 30000)
+        source.onended = () => { clearTimeout(timeout); resolve() }
+      })
+      if (sourceNodeRef.current === source) sourceNodeRef.current = null
     } catch (e) {
       console.error('TTS error:', e)
     }
