@@ -201,7 +201,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       results: allListings,
-      total: adzunaResponse.count ?? 0,
+      total: allListings.length,
       page: adzunaResponse.page ?? page,
     })
   } catch (e) {
