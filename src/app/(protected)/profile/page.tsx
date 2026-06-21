@@ -9,7 +9,7 @@ import {
   Lock, Mail, MapPin, Phone, Briefcase, Globe, ExternalLink, User,
   GraduationCap, Crown, Sparkles, ChevronRight,
 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
 type Persona = 'fresher' | 'professional' | 'executive'
@@ -31,9 +31,8 @@ interface FormFields {
   persona: Persona
 }
 
-export default function ProfilePage() {
-  const { profile, refreshProfile } = useAuth()
-  const [fields, setFields] = useState<FormFields>({
+function initFields(profile: Profile | null): FormFields {
+  if (!profile) return {
     full_name: '',
     role_title: '',
     location: '',
@@ -42,11 +41,26 @@ export default function ProfilePage() {
     linkedin: '',
     website: '',
     persona: 'professional',
-  })
+  }
+  return {
+    full_name: profile.full_name || '',
+    role_title: profile.role_title || '',
+    location: profile.location || '',
+    email: profile.email || '',
+    phone: profile.phone || '',
+    linkedin: profile.linkedin || '',
+    website: profile.website || '',
+    persona: profile.persona || 'professional',
+  }
+}
+
+export default function ProfilePage() {
+  const { profile, refreshProfile, loading: authLoading } = useAuth()
+  const [fields, setFields] = useState<FormFields>(() => initFields(profile))
+  const [initialized, setInitialized] = useState(!!profile)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
-  const [loadingProfile, setLoadingProfile] = useState(!profile)
   const [pwCurrent, setPwCurrent] = useState('')
   const [pwNew, setPwNew] = useState('')
   const [pwConfirm, setPwConfirm] = useState('')
@@ -54,44 +68,35 @@ export default function ProfilePage() {
   const [pwError, setPwError] = useState('')
   const [pwDone, setPwDone] = useState(false)
 
-  const populateFields = useCallback((p: Profile) => {
-    setFields({
-      full_name: p.full_name || '',
-      role_title: p.role_title || '',
-      location: p.location || '',
-      email: p.email || '',
-      phone: p.phone || '',
-      linkedin: p.linkedin || '',
-      website: p.website || '',
-      persona: p.persona || 'professional',
-    })
-  }, [])
-
   useEffect(() => {
+    if (initialized) return
+    if (authLoading) return
+
     if (profile) {
-      populateFields(profile)
-      setLoadingProfile(false)
+      setFields(initFields(profile))
+      setInitialized(true)
+      return
     }
-  }, [profile, populateFields])
 
-  useEffect(() => {
-    if (profile) return
-    const fetchDirect = async () => {
+    const load = async () => {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) return
+      if (!session?.user) {
+        setInitialized(true)
+        return
+      }
       const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .single()
       if (data) {
-        populateFields(data as Profile)
+        setFields(initFields(data as Profile))
       }
-      setLoadingProfile(false)
+      setInitialized(true)
     }
-    fetchDirect()
-  }, [profile, populateFields])
+    load()
+  }, [authLoading, profile, initialized])
 
   const update = useCallback((key: keyof FormFields, value: string) => {
     setFields((prev) => ({ ...prev, [key]: value }))
@@ -139,12 +144,13 @@ export default function ProfilePage() {
     }
   }
 
-  const contactFields: { key: keyof FormFields; label: string; icon: typeof User; placeholder: string; type?: string }[] = [
-    { key: 'email', label: 'Email', icon: Mail, placeholder: 'your@email.com', type: 'email' },
-    { key: 'phone', label: 'Phone', icon: Phone, placeholder: '+1 (555) 123-4567', type: 'tel' },
-    { key: 'linkedin', label: 'LinkedIn URL', icon: ExternalLink, placeholder: 'https://linkedin.com/in/your-profile' },
-    { key: 'website', label: 'Website / Portfolio', icon: Globe, placeholder: 'https://your-site.com' },
-  ]
+  const contactFields = useMemo(() => [
+    { key: 'email' as const, label: 'Email', icon: Mail, placeholder: 'your@email.com', type: 'email' },
+    { key: 'phone' as const, label: 'Phone', icon: Phone, placeholder: '+1 (555) 123-4567', type: 'tel' },
+    { key: 'linkedin' as const, label: 'LinkedIn URL', icon: ExternalLink, placeholder: 'https://linkedin.com/in/your-profile' },
+    { key: 'website' as const, label: 'Website / Portfolio', icon: Globe, placeholder: 'https://your-site.com' },
+  ], [])
+
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
