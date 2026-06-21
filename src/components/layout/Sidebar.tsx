@@ -30,7 +30,6 @@ export function Sidebar() {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/canvas', label: 'Career Canvas', icon: LayoutDashboard },
     { href: '/resume', label: 'Resume Builder', icon: ScrollText },
     { href: '/skill-gap', label: 'Skill Gap', icon: Search },
     { href: '/jobs/search', label: 'Job Search', icon: Globe },
