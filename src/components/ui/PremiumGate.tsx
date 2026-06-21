@@ -8,7 +8,15 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 
 export function PremiumGate({ children, feature }: { children: ReactNode; feature: string }) {
-  const { profile } = useAuth()
+  const { profile, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+      </div>
+    )
+  }
 
   if (profile?.plan_tier === 'premium') {
     return <>{children}</>

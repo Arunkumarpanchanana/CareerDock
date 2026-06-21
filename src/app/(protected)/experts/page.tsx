@@ -9,15 +9,18 @@ import { useEffect, useState } from 'react'
 export default function ExpertsPage() {
   const [experts, setExperts] = useState<ExpertConsultant[]>([])
   const [loading, setLoading] = useState(true)
-  const [error] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     setLoading(true)
     fetch('/api/experts')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load experts')
+        return res.json()
+      })
       .then((data) => setExperts(data))
-      .catch(console.error)
+      .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
   }, [])
 
