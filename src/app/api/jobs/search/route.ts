@@ -118,7 +118,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
     }
 
-    const { keyword, location, page, postedWithin } = parsed.data
+    const { keyword, location, company, page, postedWithin } = parsed.data
 
     const locationLower = (location ?? '').toLowerCase()
     const COUNTRY_MAP: Record<string, string[]> = {
@@ -169,17 +169,18 @@ export async function POST(request: Request) {
       })(),
       (async () => {
         if (!INDIAN_API_KEY) return []
+        const titles = keyword.split(',').map((t) => t.trim()).filter(Boolean)
         try {
-          const res = await fetch(`https://jobs.indianapi.in/jobs?title=${encodeURIComponent(keyword)}&limit=20${location ? `&location=${encodeURIComponent(location)}` : ''}`, {
-            headers: { 'X-Api-Key': INDIAN_API_KEY },
-          })
-          if (!res.ok) {
-            console.error('IndianAPI error:', res.status)
-            return []
-          }
-          return res.json()
-        } catch (e) {
-          console.error('IndianAPI error:', e)
+          const results = await Promise.all(titles.map((title) =>
+            fetch(`https://jobs.indianapi.in/jobs?title=${encodeURIComponent(title)}&limit=20${location ? `&location=${encodeURIComponent(location)}` : ''}`, {
+              headers: { 'X-Api-Key': INDIAN_API_KEY },
+            }).then(async (r) => {
+              if (!r.ok) { console.error('IndianAPI error:', r.status); return [] }
+              return r.json()
+            }).catch((e) => { console.error('IndianAPI error:', e); return [] })
+          ))
+          return results.flat()
+        } catch {
           return []
         }
       })(),
@@ -191,7 +192,12 @@ export async function POST(request: Request) {
       indeedItems = indeedItems.filter((item) => item.daysAgo !== null && item.daysAgo <= postedWithin)
     }
     const indianItems = mapIndianItems(indianResponse as Record<string, unknown>[])
-    const allListings = deduplicate([...adzunaListings, ...indeedItems, ...indianItems])
+    let allListings = deduplicate([...adzunaListings, ...indeedItems, ...indianItems])
+
+    if (company) {
+      const q = company.toLowerCase()
+      allListings = allListings.filter((l) => l.company.toLowerCase().includes(q))
+    }
 
     return NextResponse.json({
       results: allListings,

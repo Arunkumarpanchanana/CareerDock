@@ -18,6 +18,7 @@ interface SearchResult {
 export default function JobSearchPage() {
   const [keyword, setKeyword] = useState('')
   const [location, setLocation] = useState('')
+  const [company, setCompany] = useState('')
   const [postedWithin, setPostedWithin] = useState<number | undefined>(undefined)
   const [loading, setLoading] = useState(false)
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null)
@@ -36,7 +37,7 @@ export default function JobSearchPage() {
       const res = await fetch('/api/jobs/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword, location: location || undefined, postedWithin, page }),
+        body: JSON.stringify({ keyword, location: location || undefined, company: company || undefined, postedWithin, page }),
       })
       if (!res.ok) {
         const err = await res.json()
@@ -50,7 +51,7 @@ export default function JobSearchPage() {
     } finally {
       setLoading(false)
     }
-  }, [keyword, location, postedWithin])
+  }, [keyword, location, company, postedWithin])
 
   const handlePrepare = async () => {
     if (!selectedJob) return
@@ -128,9 +129,11 @@ export default function JobSearchPage() {
       <JobSearchBar
         keyword={keyword}
         location={location}
+        company={company}
         postedWithin={postedWithin}
         onKeywordChange={setKeyword}
         onLocationChange={setLocation}
+        onCompanyChange={setCompany}
         onPostedWithinChange={setPostedWithin}
         onSearch={() => handleSearch(1)}
         loading={loading}
