@@ -1,3 +1,8 @@
 export { Button } from './Button'
 export { Input } from './Input'
 export { Card, CardHeader, CardTitle } from './Card'
+export { GlassPanel } from './GlassPanel'
+export { Badge } from './Badge'
+export { ThemeToggle } from './ThemeToggle'
+export { VibeChip } from './VibeChip'
+export { AnimatedBackground } from './AnimatedBackground'

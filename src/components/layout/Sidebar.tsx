@@ -20,6 +20,7 @@ import {
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
@@ -29,6 +30,7 @@ export function Sidebar() {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/canvas', label: 'Career Canvas', icon: LayoutDashboard },
     { href: '/resume', label: 'Resume Builder', icon: ScrollText },
     { href: '/skill-gap', label: 'Skill Gap', icon: Search },
     { href: '/jobs/search', label: 'Job Search', icon: Globe },
@@ -42,41 +44,44 @@ export function Sidebar() {
   return (
     <>
       <button
-        className="fixed left-4 top-4 z-50 rounded-lg border border-gray-200 bg-white p-2 shadow-sm lg:hidden"
+        className="fixed left-4 top-4 z-50 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl p-2 shadow-lg lg:hidden"
         onClick={() => setMobileOpen(!mobileOpen)}
       >
         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-gray-200 bg-white transition-all duration-300 lg:static ${
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl transition-all duration-300 lg:static ${
           collapsed ? 'w-16' : 'w-64'
         } ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="flex h-16 items-center justify-between border-b border-gray-200 px-4">
+        <div className="flex h-16 items-center justify-between border-b border-[var(--glass-border)] px-4">
           {!collapsed && (
             <Link href="/dashboard" className="flex items-center gap-2">
-              <Building2 className="h-6 w-6 text-blue-600" />
-              <span className="text-lg font-bold text-gray-900">CareerDock</span>
+              <Building2 className="h-6 w-6 text-[var(--accent)]" />
+              <span className="text-lg font-bold text-[var(--text-primary)]">CareerDock</span>
             </Link>
           )}
           {collapsed && (
             <Link href="/dashboard" className="mx-auto">
-              <Building2 className="h-6 w-6 text-blue-600" />
+              <Building2 className="h-6 w-6 text-[var(--accent)]" />
             </Link>
           )}
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="hidden rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 lg:block"
-          >
-            <ChevronLeft
-              className={`h-4 w-4 transition-transform ${
-                collapsed ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="hidden rounded-xl p-1.5 text-[var(--text-tertiary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] lg:block"
+            >
+              <ChevronLeft
+                className={`h-4 w-4 transition-transform ${
+                  collapsed ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+          </div>
         </div>
 
         <nav className="flex-1 space-y-1 p-3">
@@ -88,10 +93,10 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]'
                 }`}
                 onClick={() => setMobileOpen(false)}
               >
@@ -102,18 +107,18 @@ export function Sidebar() {
           })}
         </nav>
 
-        <div className="border-t border-gray-200 p-3">
+        <div className="border-t border-[var(--glass-border)] p-3">
           {profile && !collapsed && (
             <div className="mb-3 flex items-center gap-3 px-3 py-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)]/15 text-sm font-semibold text-[var(--accent)]">
                 {profile.full_name.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-gray-900">
+                <p className="truncate text-sm font-medium text-[var(--text-primary)]">
                   {profile.full_name}
                 </p>
                 {profile.role_title && (
-                  <p className="truncate text-xs text-gray-500">
+                  <p className="truncate text-xs text-[var(--text-tertiary)]">
                     {profile.role_title}
                   </p>
                 )}
@@ -122,7 +127,7 @@ export function Sidebar() {
           )}
           <button
             onClick={signOut}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-all duration-200 hover:bg-[var(--danger)]/10 hover:text-[var(--danger)]"
           >
             <LogOut className="h-5 w-5 flex-shrink-0" />
             {!collapsed && <span>Sign Out</span>}

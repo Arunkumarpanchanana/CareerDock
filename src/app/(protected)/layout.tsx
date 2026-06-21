@@ -10,7 +10,7 @@ export default function ProtectedLayout({
   return (
     <AuthProvider>
       <OnboardingModal />
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
         <Sidebar />
         <main className="flex-1 overflow-auto p-6 lg:p-8">{children}</main>
       </div>

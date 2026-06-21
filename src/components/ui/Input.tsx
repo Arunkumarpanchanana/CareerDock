@@ -3,33 +3,34 @@ import { forwardRef, type InputHTMLAttributes } from 'react'
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
+  variant?: 'default' | 'glass'
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className = '', id, ...props }, ref) => {
+  ({ label, error, variant = 'default', className = '', id, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
+
+    const baseClasses = 'block w-full rounded-xl px-3 py-2 text-sm transition-colors placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50'
+
+    const variantClasses = {
+      default: 'bg-[var(--bg-secondary)] border border-[var(--glass-border)] text-[var(--text-primary)] focus:border-[var(--accent)]',
+      glass: 'bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--glass-border)] text-[var(--text-primary)] focus:border-[var(--accent)]',
+    }
 
     return (
       <div className="space-y-1">
         {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor={inputId} className="block text-sm font-medium text-[var(--text-secondary)]">
             {label}
           </label>
         )}
         <input
           ref={ref}
           id={inputId}
-          className={`block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 ${
-            error
-              ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-              : 'border-gray-300'
-          } ${className}`}
+          className={`${baseClasses} ${variantClasses[variant]} ${error ? '!border-[var(--danger)]' : ''} ${className}`}
           {...props}
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
       </div>
     )
   }
