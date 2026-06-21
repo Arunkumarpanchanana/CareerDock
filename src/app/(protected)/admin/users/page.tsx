@@ -15,6 +15,10 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null)
   const [updating, setUpdating] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [resetPwUser, setResetPwUser] = useState<Profile | null>(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [resettingPw, setResettingPw] = useState(false)
+  const [pwError, setPwError] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -79,6 +83,31 @@ export default function AdminUsersPage() {
       setError('Failed to update role')
     } finally {
       setUpdating(null)
+    }
+  }
+
+  const resetPassword = async () => {
+    if (!resetPwUser || newPassword.length < 8) return
+    setResettingPw(true)
+    setPwError('')
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+      const res = await fetch('/api/admin/users/reset-password', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ id: resetPwUser.id, password: newPassword }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to reset password')
+      setResetPwUser(null)
+      setNewPassword('')
+    } catch (e) {
+      setPwError(e instanceof Error ? e.message : 'Failed to reset password')
+    } finally {
+      setResettingPw(false)
     }
   }
 
@@ -162,6 +191,12 @@ export default function AdminUsersPage() {
                     >
                       {updating === u.id ? '...' : u.plan_tier === 'premium' ? 'Downgrade' : 'Upgrade'}
                     </button>
+                    <button
+                      onClick={() => { setResetPwUser(u); setNewPassword(''); setPwError('') }}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
+                    >
+                      Reset PW
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -175,6 +210,41 @@ export default function AdminUsersPage() {
           <p className="text-center text-gray-400 py-8">Loading...</p>
         )}
       </div>
+
+      {resetPwUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Reset Password: {resetPwUser.full_name}
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">Enter a new password for this user.</p>
+            <input
+              type="password"
+              placeholder="New password (min 8 characters)"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+            {pwError && <p className="mt-2 text-sm text-red-600">{pwError}</p>}
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                onClick={() => { setResetPwUser(null); setNewPassword(''); setPwError('') }}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={resetPassword}
+                disabled={resettingPw || newPassword.length < 8}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {resettingPw ? 'Resetting...' : 'Reset Password'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

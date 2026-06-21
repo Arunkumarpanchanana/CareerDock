@@ -86,3 +86,8 @@ export const adminUpdatePlanSchema = z.object({
   id: z.string().uuid(),
   plan_tier: z.enum(['free', 'premium']),
 })
+
+export const adminResetPasswordSchema = z.object({
+  id: z.string().uuid(),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+})
