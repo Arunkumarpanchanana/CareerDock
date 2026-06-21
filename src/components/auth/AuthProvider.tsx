@@ -57,13 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initialize = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        if (cancelled) return
         if (session?.user) {
           setUser(session.user)
           await fetchProfile(session.user.id)
         }
       } catch {
-        // session fetch failed, user stays null
+        // session fetch failed
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -79,7 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event: AuthChangeEvent, session: Session | null) => {
-        if (cancelled) return
         setUser(session?.user ?? null)
         if (session?.user) {
           await fetchProfile(session.user.id)
@@ -98,7 +96,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refreshProfile = async () => {
+    setLoading(true)
     if (user) await fetchProfile(user.id)
+    setLoading(false)
   }
 
   const signOut = async () => {
