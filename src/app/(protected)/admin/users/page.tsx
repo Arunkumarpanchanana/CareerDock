@@ -59,6 +59,29 @@ export default function AdminUsersPage() {
     }
   }
 
+  const toggleRole = async (user: Profile) => {
+    const newRole = user.role === 'admin' ? 'user' : 'admin'
+    setUpdating(user.id)
+    setError(null)
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+      const res = await fetch('/api/admin/admins', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id: user.id, role: newRole }),
+      })
+      if (!res.ok) throw new Error('Update failed')
+      setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, role: newRole } : u)))
+    } catch {
+      setError('Failed to update role')
+    } finally {
+      setUpdating(null)
+    }
+  }
+
   const filtered = users.filter(u =>
     u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     u.email?.toLowerCase().includes(search.toLowerCase())
@@ -116,17 +139,30 @@ export default function AdminUsersPage() {
                 </td>
                 <td className="px-4 py-3 text-xs text-gray-500 font-mono">{u.referral_code || '—'}</td>
                   <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => togglePlan(u)}
-                    disabled={updating === u.id}
-                    className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
-                      u.plan_tier === 'premium'
-                        ? 'border-red-200 text-red-600 hover:bg-red-50'
-                        : 'border-green-200 text-green-600 hover:bg-green-50'
-                    }`}
-                  >
-                    {updating === u.id ? '...' : u.plan_tier === 'premium' ? 'Downgrade' : 'Upgrade'}
-                  </button>
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => toggleRole(u)}
+                      disabled={updating === u.id}
+                      className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                        u.role === 'admin'
+                          ? 'border-orange-200 text-orange-600 hover:bg-orange-50'
+                          : 'border-purple-200 text-purple-600 hover:bg-purple-50'
+                      }`}
+                    >
+                      {updating === u.id ? '...' : u.role === 'admin' ? 'Demote' : 'Make Admin'}
+                    </button>
+                    <button
+                      onClick={() => togglePlan(u)}
+                      disabled={updating === u.id}
+                      className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                        u.plan_tier === 'premium'
+                          ? 'border-red-200 text-red-600 hover:bg-red-50'
+                          : 'border-green-200 text-green-600 hover:bg-green-50'
+                      }`}
+                    >
+                      {updating === u.id ? '...' : u.plan_tier === 'premium' ? 'Downgrade' : 'Upgrade'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

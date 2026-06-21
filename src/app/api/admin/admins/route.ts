@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimitByIp } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
@@ -43,7 +44,10 @@ export async function PUT(request: Request) {
     }
     const { id, role } = parsed.data
 
-    const { error } = await supabase.from('profiles').update({ role }).eq('id', id)
+    const adminClient = createAdminClient()
+    if (!adminClient) return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
+
+    const { error } = await adminClient.from('profiles').update({ role }).eq('id', id)
     if (error) throw error
     return NextResponse.json({ success: true })
   } catch (e) {
