@@ -15,6 +15,11 @@ export const jobSearchSchema = z.object({
   keyword: z.string().min(1, 'Keyword is required'),
   location: z.string().optional(),
   company: z.string().optional(),
+  skills: z.string().optional(),
+  jobType: z.enum(['', 'permanent', 'contract']).optional(),
+  workSchedule: z.enum(['', 'full_time', 'part_time']).optional(),
+  experienceYears: z.number().optional(),
+  educationLevel: z.enum(['', 'certificate', 'high_school', 'bachelors', 'masters', 'ignore']).optional(),
   page: z.coerce.number().int().positive().optional().default(1),
   postedWithin: z.number().optional(),
 })

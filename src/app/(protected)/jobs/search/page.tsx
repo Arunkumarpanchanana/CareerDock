@@ -19,6 +19,11 @@ export default function JobSearchPage() {
   const [keyword, setKeyword] = useState('')
   const [location, setLocation] = useState('')
   const [company, setCompany] = useState('')
+  const [skills, setSkills] = useState('')
+  const [jobType, setJobType] = useState('')
+  const [workSchedule, setWorkSchedule] = useState('')
+  const [experienceYears, setExperienceYears] = useState<number | undefined>(undefined)
+  const [educationLevel, setEducationLevel] = useState('')
   const [postedWithin, setPostedWithin] = useState<number | undefined>(undefined)
   const [loading, setLoading] = useState(false)
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null)
@@ -37,7 +42,18 @@ export default function JobSearchPage() {
       const res = await fetch('/api/jobs/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword, location: location || undefined, company: company || undefined, postedWithin, page }),
+        body: JSON.stringify({
+          keyword,
+          location: location || undefined,
+          company: company || undefined,
+          skills: skills || undefined,
+          jobType: jobType || undefined,
+          workSchedule: workSchedule || undefined,
+          experienceYears,
+          educationLevel: educationLevel || undefined,
+          postedWithin,
+          page,
+        }),
       })
       if (!res.ok) {
         const err = await res.json()
@@ -51,7 +67,7 @@ export default function JobSearchPage() {
     } finally {
       setLoading(false)
     }
-  }, [keyword, location, company, postedWithin])
+  }, [keyword, location, company, skills, jobType, workSchedule, experienceYears, educationLevel, postedWithin])
 
   const handlePrepare = async () => {
     if (!selectedJob) return
@@ -130,10 +146,20 @@ export default function JobSearchPage() {
         keyword={keyword}
         location={location}
         company={company}
+        skills={skills}
+        jobType={jobType}
+        workSchedule={workSchedule}
+        experienceYears={experienceYears}
+        educationLevel={educationLevel}
         postedWithin={postedWithin}
         onKeywordChange={setKeyword}
         onLocationChange={setLocation}
         onCompanyChange={setCompany}
+        onSkillsChange={setSkills}
+        onJobTypeChange={setJobType}
+        onWorkScheduleChange={setWorkSchedule}
+        onExperienceYearsChange={setExperienceYears}
+        onEducationLevelChange={setEducationLevel}
         onPostedWithinChange={setPostedWithin}
         onSearch={() => handleSearch(1)}
         loading={loading}

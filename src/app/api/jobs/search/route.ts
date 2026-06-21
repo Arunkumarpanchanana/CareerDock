@@ -118,7 +118,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
     }
 
-    const { keyword, location, company, page, postedWithin } = parsed.data
+    const { keyword, location, company, skills, jobType, workSchedule, experienceYears, educationLevel, page, postedWithin } = parsed.data
 
     const locationLower = (location ?? '').toLowerCase()
     const COUNTRY_MAP: Record<string, string[]> = {
@@ -142,6 +142,8 @@ export async function POST(request: Request) {
       results_per_page: '20',
     })
     if (postedWithin) params.set('max_days_old', String(postedWithin))
+    if (jobType) params.set('contract_type', jobType)
+    if (workSchedule === 'full_time') params.set('full_time', '1')
 
     const [adzunaResponse, indeedResponse, indianResponse] = await Promise.all([
       fetch(`${ADZUNA_API_URL}/${country}/search/${page}?${params}`).then(async (r) => {
@@ -197,6 +199,30 @@ export async function POST(request: Request) {
     if (company) {
       const q = company.toLowerCase()
       allListings = allListings.filter((l) => l.company.toLowerCase().includes(q))
+    }
+
+    if (skills) {
+      const skillList = skills.toLowerCase().split(',').map((s) => s.trim())
+      allListings = allListings.filter((l) =>
+        skillList.some((s) =>
+          l.title.toLowerCase().includes(s) || l.description.toLowerCase().includes(s)
+        )
+      )
+    }
+
+    if (experienceYears !== undefined) {
+      allListings = allListings.filter((l) => {
+        if (l.description.toLowerCase().includes('fresher') || l.description.toLowerCase().includes('entry level')) {
+          return experienceYears <= 1
+        }
+        const yearsMatch = l.description.match(/(\d+)[\+\s]*years?/i)
+        if (yearsMatch) return parseInt(yearsMatch[1], 10) <= experienceYears
+        return true
+      })
+    }
+
+    if (educationLevel === 'ignore') {
+      allListings = allListings.filter((l) => !l.description.toLowerCase().includes('phd') && !l.description.toLowerCase().includes('doctorate'))
     }
 
     return NextResponse.json({
