@@ -52,10 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const supabase = getSupabase()
+    let cancelled = false
 
     const initialize = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
+        if (cancelled) return
         if (session?.user) {
           setUser(session.user)
           await fetchProfile(session.user.id)
@@ -63,14 +65,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         // session fetch failed, user stays null
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     initialize()
 
+    // Safety: force loading to false after 12s regardless of hangs
+    const safetyTimer = setTimeout(() => {
+      cancelled = true
+      setLoading(false)
+    }, 12000)
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event: AuthChangeEvent, session: Session | null) => {
+        if (cancelled) return
         setUser(session?.user ?? null)
         if (session?.user) {
           await fetchProfile(session.user.id)
@@ -80,7 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      cancelled = true
+      clearTimeout(safetyTimer)
+      subscription.unsubscribe()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
