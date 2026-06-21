@@ -91,6 +91,18 @@ function SignupForm() {
 
     setLoading(true)
 
+    const { exists: emailTaken } = await fetch('/api/auth/check-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }).then(r => r.json())
+
+    if (emailTaken) {
+      setError('An account with this email already exists. Please sign in instead.')
+      setLoading(false)
+      return
+    }
+
     const captchaToken = await executeCaptcha()
 
     const { data, error } = await getSupabase().auth.signUp({
