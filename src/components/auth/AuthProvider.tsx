@@ -35,25 +35,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const fetchProfile = async (userId: string) => {
-    const supabase = getSupabase()
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    setProfile(data as Profile | null)
+    try {
+      const supabase = getSupabase()
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      if (!error) {
+        setProfile(data as Profile | null)
+      }
+    } catch {
+      // profile stays null
+    }
   }
 
   useEffect(() => {
     const supabase = getSupabase()
 
     const initialize = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        setUser(session.user)
-        await fetchProfile(session.user.id)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          setUser(session.user)
+          await fetchProfile(session.user.id)
+        }
+      } catch {
+        // session fetch failed, user stays null
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
     initialize()
