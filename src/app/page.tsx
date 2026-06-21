@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   ArrowUpRight,
   Star,
-  Quote,
 } from 'lucide-react'
 
 function useInView<T extends HTMLElement>() {
@@ -24,7 +23,7 @@ function useInView<T extends HTMLElement>() {
     if (!el) return
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.unobserve(el) } },
-      { threshold: 0.1 }
+      { threshold: 0.2 }
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -36,290 +35,222 @@ function useInView<T extends HTMLElement>() {
 function AnimatedSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   const { ref, inView } = useInView<HTMLDivElement>()
   return (
-    <div ref={ref} className={`scroll-animate ${inView ? 'visible' : ''} ${className}`}>
+    <div ref={ref} className={`transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} ${className}`}>
       {children}
     </div>
   )
 }
-
-function StaggerItem({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  const { ref, inView } = useInView<HTMLDivElement>()
-  return (
-    <div
-      ref={ref}
-      className={`scroll-animate-stagger ${inView ? 'visible' : ''}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  )
-}
-
-function CountUp({ end, suffix = '' }: { end: number; suffix?: string }) {
-  const [count, setCount] = useState(0)
-  const { ref, inView } = useInView<HTMLDivElement>()
-
-  useEffect(() => {
-    if (!inView) return
-    const duration = 1500
-    const steps = 30
-    const increment = end / steps
-    let current = 0
-    const timer = setInterval(() => {
-      current += increment
-      if (current >= end) {
-        setCount(end)
-        clearInterval(timer)
-      } else {
-        setCount(Math.floor(current))
-      }
-    }, duration / steps)
-    return () => clearInterval(timer)
-  }, [inView, end])
-
-  return <span ref={ref}>{count}{suffix}</span>
-}
-
-const trustStats = [
-  { value: 10, suffix: 'K+', label: 'Active Users' },
-  { value: 5, suffix: 'K+', label: 'Resumes Built' },
-  { value: 500, suffix: '+', label: 'Expert Sessions' },
-  { value: 95, suffix: '%', label: 'Satisfaction' },
-]
 
 const features = [
   {
     icon: FileText,
     title: 'ATS Resume Builder',
-    desc: 'Create clean, serif-formatted resumes that pass Applicant Tracking Systems. Download as PDF instantly.',
-    color: 'text-blue-600 bg-blue-100',
-    delay: 0,
+    desc: 'Create clean resumes that pass Applicant Tracking Systems. Download as PDF instantly.',
   },
   {
     icon: Kanban,
     title: 'Job Pipeline Tracker',
-    desc: 'Drag applications across Wishlist → Applied → Interviewing → Offered → Rejected. Never lose track.',
-    color: 'text-emerald-600 bg-emerald-100',
-    delay: 100,
+    desc: 'Drag applications across stages — from Wishlist to Offer. Never lose track.',
   },
   {
     icon: Sparkles,
     title: 'Smart Suggestions',
-    desc: 'Get smart suggestions for bullet points, skills, and summaries. Optimize for every job description.',
-    color: 'text-violet-600 bg-violet-100',
-    delay: 200,
+    desc: 'Get AI-powered suggestions for bullet points, skills, and summaries.',
   },
   {
     icon: Users,
     title: 'Expert Consultations',
-    desc: 'Book 1:1 sessions with industry professionals for resume reviews, interview prep, and career advice.',
-    color: 'text-amber-600 bg-amber-100',
-    delay: 300,
+    desc: 'Book 1:1 sessions with industry professionals for career advice.',
   },
 ]
 
 const steps = [
-  { step: '01', title: 'Build Your Resume', desc: 'Fill in your details with our guided editor. Choose from expert-written templates and bullet point suggestions.' },
-  { step: '02', title: 'Track Applications', desc: 'Add jobs to your pipeline, move them across stages with drag-and-drop, and never miss a follow-up.' },
-  { step: '03', title: 'Get Expert Help', desc: 'Book 1:1 sessions with industry professionals who have been where you want to go. Get feedback that works.' },
+  { step: '01', title: 'Build Your Resume', desc: 'Fill in your details with our guided editor. Choose from expert-written templates.' },
+  { step: '02', title: 'Track Applications', desc: 'Add jobs to your pipeline and move them across stages with ease.' },
+  { step: '03', title: 'Get Expert Help', desc: 'Book 1:1 sessions with professionals who have been where you want to go.' },
 ]
 
 export default function HomePage() {
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    function onScroll() { setScrolled(window.scrollY > 20) }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--bg-primary)]">
-      {/* Floating Navbar */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--glass-bg)] backdrop-blur-xl border-b border-[var(--glass-border)]">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--accent-gradient)] shadow-sm transition-transform duration-200 group-hover:scale-105">
-              <Building2 className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-[var(--text-primary)]">CareerDock</span>
+    <div className="flex min-h-screen flex-col bg-white">
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-gray-100/50' : 'bg-transparent'}`}>
+        <div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-5 sm:px-8">
+          <Link href="/" className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-[#0071e3]" />
+            <span className="text-sm font-semibold text-[#1d1d1f]">CareerDock</span>
           </Link>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/auth/login"
-              className="rounded-xl px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-200"
-            >
+          <div className="flex items-center gap-6">
+            <Link href="/auth/login" className="text-xs font-medium text-[#6e6e73] hover:text-[#1d1d1f] transition-colors">
               Sign In
             </Link>
             <Link
               href="/auth/signup"
-              className="rounded-xl bg-[var(--accent-gradient)] px-5 py-2 text-sm font-medium text-white hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-lg"
+              className="px-4 py-1.5 rounded-full bg-[#0071e3] text-xs font-medium text-white hover:bg-[#0077ed] transition-colors"
             >
-              Get Started Free
+              Get Started
             </Link>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 pt-16">
+      <main className="flex-1">
         {/* Hero */}
-        <section className="relative overflow-hidden bg-[var(--bg-primary)]">
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-20 left-[15%] w-72 h-72 rounded-full bg-[var(--accent)]/10 animate-float blur-3xl" />
-            <div className="absolute top-40 right-[20%] w-96 h-96 rounded-full bg-violet-500/10 animate-float-delayed blur-3xl" />
-            <div className="absolute bottom-20 left-[40%] w-64 h-64 rounded-full bg-[var(--accent)]/5 animate-float blur-3xl" style={{ animationDuration: '10s' }} />
-            <div className="absolute top-60 left-[5%] w-16 h-16 rounded-full border-2 border-[var(--glass-border)] animate-float-delayed" />
-            <div className="absolute top-32 right-[10%] w-8 h-8 rounded-full border-2 border-[var(--accent)]/20 animate-float" style={{ animationDuration: '7s' }} />
-            <div className="absolute bottom-40 right-[30%] w-12 h-12 rounded-full bg-[var(--accent)]/10 animate-float-delayed" style={{ animationDuration: '9s' }} />
-          </div>
+        <section className="bg-white pt-32 pb-20 sm:pt-40 sm:pb-28">
+          <div className="mx-auto max-w-4xl px-5 sm:px-8 text-center">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-100 px-3.5 py-1 mb-8">
+              <Sparkles className="h-3 w-3 text-[#0071e3]" />
+              <span className="text-[11px] font-medium text-[#6e6e73] tracking-wide">Your career, accelerated</span>
+            </div>
 
-          <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
-            <div className="text-center max-w-4xl mx-auto">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)]/20 bg-[var(--accent)]/10 backdrop-blur-xl px-4 py-1.5 text-sm font-medium text-[var(--accent)] mb-8 animate-fade-in-down">
-                <Sparkles className="h-4 w-4" />
-                Land your dream job faster
-              </div>
+            <h1 className="text-[40px] leading-[1.05] font-semibold tracking-tight text-[#1d1d1f] sm:text-[56px] lg:text-[64px]">
+              Your{' '}
+              <span className="text-[#0071e3]">Career Accelerator</span>
+              <br />
+              in One Place
+            </h1>
 
-              <h1 className="text-5xl font-bold tracking-tight text-[var(--text-primary)] sm:text-6xl lg:text-7xl leading-[1.1] animate-fade-in-up" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
-                Your{' '}
-                <span className="bg-[var(--accent-gradient)] bg-clip-text text-transparent">
-                  Career Accelerator
-                </span>
-                <br />
-                in One Place
-              </h1>
+            <p className="mx-auto mt-5 max-w-xl text-base sm:text-lg text-[#6e6e73] leading-relaxed">
+              Build ATS-optimized resumes, track every job application, get AI-powered suggestions, and book 1:1 sessions with industry experts.
+            </p>
 
-              <p className="mx-auto mt-6 max-w-2xl text-lg text-[var(--text-secondary)] leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
-                Build ATS-optimized resumes, track every job application on a visual Kanban board,
-                get smart suggestions for your resume, and book 1:1 sessions with industry experts — all from one dashboard.
-              </p>
+            <div className="mt-9 flex items-center justify-center gap-3">
+              <Link
+                href="/auth/signup"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#0071e3] px-6 py-3 text-sm font-medium text-white hover:bg-[#0077ed] transition-colors"
+              >
+                Start Free <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link
+                href="/auth/login"
+                className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-100 px-6 py-3 text-sm font-medium text-[#1d1d1f] hover:bg-gray-100 transition-colors"
+              >
+                Sign In <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
 
-              <div className="mt-10 flex items-center justify-center gap-4 flex-wrap animate-fade-in-up" style={{ animationDelay: '0.3s', animationFillMode: 'both' }}>
-                <Link
-                  href="/auth/signup"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent-gradient)] px-8 py-3.5 text-base font-semibold text-white hover:opacity-90 transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  Start Free <ArrowUpRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/auth/login"
-                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl px-8 py-3.5 text-base font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all duration-200"
-                >
-                  Sign In <ChevronRight className="h-4 w-4" />
-                </Link>
-              </div>
-
-              <div className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto">
-                {[
-                  { label: 'Resume Templates', value: '10+' },
-                  { label: 'Job Pipelines', value: 'Unlimited' },
-                  { label: 'Expert Sessions', value: '1:1' },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl p-4">
-                    <p className="text-2xl font-bold text-[var(--text-primary)]">{stat.value}</p>
-                    <p className="text-sm text-[var(--text-tertiary)] mt-1">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="mt-14 flex items-center justify-center gap-8 sm:gap-14">
+              {[
+                { label: 'Resume Templates', value: '10+' },
+                { label: 'Job Pipelines', value: 'Unlimited' },
+                { label: 'Expert Sessions', value: '1:1' },
+              ].map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <p className="text-2xl sm:text-3xl font-semibold text-[#1d1d1f]">{stat.value}</p>
+                  <p className="text-xs text-[#6e6e73] mt-0.5 tracking-wide">{stat.label}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Trust Stats */}
-        <section className="border-y border-[var(--glass-border)] py-12">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Trust Bar */}
+        <section className="bg-[#f5f5f7] border-y border-gray-100/50 py-14">
+          <div className="mx-auto max-w-5xl px-5 sm:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {trustStats.map((s, i) => (
-                <StaggerItem key={s.label} delay={i * 100}>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-[var(--text-primary)]">
-                      <CountUp end={s.value} suffix={s.suffix} />
-                    </p>
-                    <p className="text-sm text-[var(--text-tertiary)] mt-1">{s.label}</p>
-                  </div>
-                </StaggerItem>
+              {[
+                { value: '10K+', label: 'Active Users' },
+                { value: '5K+', label: 'Resumes Built' },
+                { value: '500+', label: 'Expert Sessions' },
+                { value: '95%', label: 'Satisfaction' },
+              ].map((s) => (
+                <div key={s.label} className="text-center">
+                  <p className="text-2xl sm:text-3xl font-semibold text-[#1d1d1f]">{s.value}</p>
+                  <p className="text-xs text-[#6e6e73] mt-0.5 tracking-wide">{s.label}</p>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
         {/* Features */}
-        <section className="py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section className="bg-white py-20 sm:py-28">
+          <div className="mx-auto max-w-6xl px-5 sm:px-8">
             <AnimatedSection className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-[var(--text-primary)] sm:text-4xl">
+              <h2 className="text-3xl sm:text-4xl font-semibold text-[#1d1d1f] tracking-tight">
                 Everything you need to land the role
               </h2>
-              <p className="mt-4 text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">
+              <p className="mt-3 text-base sm:text-lg text-[#6e6e73] max-w-xl mx-auto">
                 From resume to offer letter — CareerDock supports every step of your job search.
               </p>
             </AnimatedSection>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-              {features.map(({ icon: Icon, title, desc, color, delay }) => (
-                <StaggerItem key={title} delay={delay}>
-                  <div className="group rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl p-6 hover:-translate-y-1 hover:shadow-[var(--glass-glow)] hover:border-[var(--accent)]/30 transition-all duration-300 cursor-default">
-                    <div className={`inline-flex rounded-xl p-3 ${color} mb-4`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors duration-200">
-                      {title}
-                    </h3>
-                    <p className="mt-2 text-sm text-[var(--text-secondary)] leading-relaxed">{desc}</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {features.map(({ icon: Icon, title, desc }) => (
+                <div key={title} className="group rounded-2xl border border-gray-100 bg-white p-7 hover:shadow-md hover:border-gray-200 transition-all duration-300 cursor-default">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-4 group-hover:bg-[#0071e3]/5 transition-colors">
+                    <Icon className="h-5 w-5 text-[#0071e3]" />
                   </div>
-                </StaggerItem>
+                  <h3 className="text-base font-semibold text-[#1d1d1f]">{title}</h3>
+                  <p className="mt-1.5 text-sm text-[#6e6e73] leading-relaxed">{desc}</p>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
         {/* How It Works */}
-        <section className="border-y border-[var(--glass-border)] py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section className="bg-[#f5f5f7] py-20 sm:py-28">
+          <div className="mx-auto max-w-6xl px-5 sm:px-8">
             <AnimatedSection className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-[var(--text-primary)] sm:text-4xl">
+              <h2 className="text-3xl sm:text-4xl font-semibold text-[#1d1d1f] tracking-tight">
                 Three steps to your next role
               </h2>
-              <p className="mt-4 text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">
+              <p className="mt-3 text-base sm:text-lg text-[#6e6e73] max-w-xl mx-auto">
                 Get started in minutes, not hours.
               </p>
             </AnimatedSection>
 
-            <div className="grid gap-12 md:grid-cols-3 relative">
-              <div className="hidden md:block absolute top-12 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-[var(--accent)]/30 via-violet-500/30 to-[var(--accent)]/30" />
-
+            <div className="grid gap-8 md:grid-cols-3">
               {steps.map(({ step, title, desc }, i) => (
-                <StaggerItem key={step} delay={i * 150}>
-                  <div className="relative text-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent-gradient)] text-lg font-bold text-white mx-auto mb-4 relative z-10 shadow-lg shadow-[var(--glass-glow)]">
+                <AnimatedSection key={step}>
+                  <div className="text-center">
+                    <div className="w-14 h-14 rounded-full bg-[#0071e3] text-white text-lg font-semibold flex items-center justify-center mx-auto mb-5 shadow-sm">
                       {step}
                     </div>
-                    <h3 className="text-xl font-semibold text-[var(--text-primary)]">{title}</h3>
-                    <p className="mt-2 text-[var(--text-secondary)] leading-relaxed max-w-sm mx-auto">{desc}</p>
+                    <h3 className="text-xl font-semibold text-[#1d1d1f]">{title}</h3>
+                    <p className="mt-2 text-sm text-[#6e6e73] leading-relaxed max-w-xs mx-auto">{desc}</p>
                   </div>
-                </StaggerItem>
+                </AnimatedSection>
               ))}
             </div>
           </div>
         </section>
 
         {/* Testimonial */}
-        <section className="py-24">
-          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
+        <section className="bg-white py-20 sm:py-28">
+          <div className="mx-auto max-w-2xl px-5 sm:px-8 text-center">
             <AnimatedSection>
-              <Quote className="h-8 w-8 text-[var(--accent)]/30 mx-auto mb-6" />
-              <blockquote className="text-xl sm:text-2xl text-[var(--text-primary)] leading-relaxed font-medium">
+              <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-6">
+                <Star className="h-5 w-5 text-[#0071e3]" />
+              </div>
+              <blockquote className="text-xl sm:text-2xl text-[#1d1d1f] leading-relaxed font-medium">
                 &ldquo;I went from sending out scattered applications to running a structured job search
                 with CareerDock. The resume builder alone saved me hours.&rdquo;
               </blockquote>
-              <div className="mt-8 flex items-center justify-center gap-2">
+              <div className="mt-8 flex items-center justify-center gap-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 fill-[var(--warning)] text-[var(--warning)]" />
+                  <Star key={i} className="h-4 w-4 fill-[#ff9f0a] text-[#ff9f0a]" />
                 ))}
               </div>
-              <div className="mt-4 flex items-center justify-center gap-3">
+              <div className="mt-6 flex items-center justify-center gap-3">
                 <div className="flex -space-x-2">
-                  {['bg-[var(--accent)]', 'bg-[var(--success)]', 'bg-violet-500'].map((bg) => (
-                    <div key={bg} className={`h-10 w-10 rounded-full ${bg} ring-2 ring-[var(--bg-primary)] flex items-center justify-center text-white text-xs font-bold`}>
-                      {bg.includes('accent') ? 'S' : bg.includes('success') ? 'J' : 'M'}
+                  {['bg-[#0071e3]', 'bg-[#34c759]', 'bg-[#af52de]'].map((bg) => (
+                    <div key={bg} className={`h-9 w-9 rounded-full ${bg} ring-2 ring-white flex items-center justify-center text-white text-[11px] font-semibold`}>
+                      {bg.includes('0071e3') ? 'S' : bg.includes('34c759') ? 'J' : 'M'}
                     </div>
                   ))}
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-[var(--text-primary)]">Early Access Users</p>
-                  <p className="text-xs text-[var(--text-tertiary)]">Join 10K+ job seekers</p>
+                  <p className="text-sm font-semibold text-[#1d1d1f]">Early Access Users</p>
+                  <p className="text-xs text-[#6e6e73]">Join 10K+ job seekers</p>
                 </div>
               </div>
             </AnimatedSection>
@@ -327,46 +258,41 @@ export default function HomePage() {
         </section>
 
         {/* CTA */}
-        <section className="bg-[var(--accent-gradient)] py-20 relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-10 right-[20%] w-64 h-64 rounded-full bg-white/5 animate-float-delayed blur-2xl" />
-            <div className="absolute bottom-10 left-[20%] w-48 h-48 rounded-full bg-white/5 animate-float blur-2xl" />
-          </div>
-          <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">
-              Ready to accelerate your career?
-            </h2>
-            <p className="mt-4 text-lg text-white/80 max-w-xl mx-auto">
-              Join CareerDock for free. No credit card required.
-            </p>
-            <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
-              <Link
-                href="/auth/signup"
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-[var(--accent)] hover:bg-white/90 transition-all duration-200 shadow-lg hover:shadow-xl animate-pulse-soft"
-              >
-                Create Free Account <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="mt-8 flex items-center justify-center gap-6 text-sm text-white/80">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> No credit card</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Cancel anytime</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Free updates</span>
-            </div>
+        <section className="bg-[#1d1d1f] py-20 sm:py-28">
+          <div className="mx-auto max-w-3xl px-5 sm:px-8 text-center">
+            <AnimatedSection>
+              <h2 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
+                Ready to accelerate your career?
+              </h2>
+              <p className="mt-3 text-base sm:text-lg text-[#86868b] max-w-lg mx-auto">
+                Join CareerDock for free. No credit card required.
+              </p>
+              <div className="mt-9 flex items-center justify-center gap-3 flex-wrap">
+                <Link
+                  href="/auth/signup"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0071e3] px-6 py-3 text-sm font-medium text-white hover:bg-[#0077ed] transition-colors"
+                >
+                  Create Free Account <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+              <div className="mt-8 flex items-center justify-center gap-6 text-xs text-[#86868b]">
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> No credit card</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Cancel anytime</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Free updates</span>
+              </div>
+            </AnimatedSection>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-[var(--glass-border)] py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent-gradient)]">
-                <Building2 className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-sm font-semibold text-[var(--text-primary)]">CareerDock</span>
+      <footer className="bg-[#f5f5f7] border-t border-gray-100/50 py-8">
+        <div className="mx-auto max-w-6xl px-5 sm:px-8">
+          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-[#0071e3]" />
+              <span className="text-xs font-semibold text-[#1d1d1f]">CareerDock</span>
             </div>
-            <p className="text-sm text-[var(--text-tertiary)]">
+            <p className="text-xs text-[#6e6e73]">
               &copy; {new Date().getFullYear()} CareerDock. All rights reserved.
             </p>
           </div>
