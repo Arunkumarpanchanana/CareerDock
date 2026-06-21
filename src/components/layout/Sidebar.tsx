@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   Globe,
   LayoutDashboard,
+  Lock,
   LogOut,
   Menu,
   MessageSquare,
@@ -28,14 +29,16 @@ export function Sidebar() {
   const pathname = usePathname()
   const { profile, signOut } = useAuth()
 
+  const isFree = profile?.plan_tier !== 'premium'
+
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/resume', label: 'Resume Builder', icon: ScrollText },
     { href: '/skill-gap', label: 'Skill Gap', icon: Search },
     { href: '/jobs/search', label: 'Job Search', icon: Globe },
     { href: '/tracker', label: 'Job Tracker', icon: Briefcase },
-    { href: '/interview', label: 'Mock Interview', icon: MessageSquare },
-    { href: '/experts', label: 'Experts', icon: Users },
+    { href: '/interview', label: 'Mock Interview', icon: MessageSquare, premium: true },
+    { href: '/experts', label: 'Experts', icon: Users, premium: true },
     { href: '/profile', label: 'Profile', icon: Settings },
     ...(profile?.role === 'admin' ? [{ href: '/admin', label: 'Admin', icon: Shield }] : []),
   ]
@@ -100,7 +103,12 @@ export function Sidebar() {
                 onClick={() => setMobileOpen(false)}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                {!collapsed && (
+                  <span className="flex-1">{item.label}</span>
+                )}
+                {!collapsed && isFree && (item as { premium?: boolean }).premium && (
+                  <Lock className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
+                )}
               </Link>
             )
           })}

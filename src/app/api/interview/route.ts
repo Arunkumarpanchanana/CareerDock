@@ -1,8 +1,29 @@
+import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { handleInterviewTurn, handleFeedback } from '@/lib/interview'
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('plan_tier')
+      .eq('id', user.id)
+      .single()
+
+    const planTier = (profile?.plan_tier as string) || 'free'
+    if (planTier !== 'premium') {
+      return NextResponse.json(
+        { error: 'Mock Interview is a Premium feature. Upgrade to access.' },
+        { status: 403 }
+      )
+    }
+
     const body = await req.json()
     const { phase, resume, jobDescription, history } = body
 
