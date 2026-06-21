@@ -6,6 +6,7 @@ import { XMLParser } from 'fast-xml-parser'
 
 const ADZUNA_API_URL = process.env.ADZUNA_API_URL ?? 'https://api.adzuna.com/v1/api/jobs'
 const INDEED_PUBLISHER_ID = process.env.INDEED_PUBLISHER_ID
+const INDIAN_API_KEY = process.env.INDIAN_API_KEY
 
 function mapAdzunaResults(results: Record<string, unknown>[]) {
   return (results ?? []).map((r) => ({
@@ -57,6 +58,30 @@ function mapIndeedItems(items: Record<string, unknown>[] | Record<string, unknow
       daysAgo: pubDate ? Math.floor((Date.now() - new Date(pubDate).getTime()) / (1000 * 60 * 60 * 24)) : 0,
     }
   })
+}
+
+function mapIndianItems(results: Record<string, unknown>[]) {
+  return (results ?? []).map((r) => ({
+    source: 'indian' as const,
+    adzuna_id: `indian-${r.id}`,
+    title: (r.title as string) ?? '',
+    company: (r.company as string) ?? 'Unknown',
+    location: (r.location as string) ?? '',
+    description: [
+      r.job_description as string,
+      r.about_company as string,
+      r.role_and_responsibility as string,
+      r.education_and_skills as string,
+    ].filter(Boolean).join('\n\n'),
+    salary_min: null,
+    salary_max: null,
+    salary_is_predicted: false,
+    redirect_url: (r.apply_link as string) ?? '',
+    category: '',
+    contract_type: (r.job_type as string) ?? null,
+    created: (r.posted_date as string) ?? new Date().toISOString(),
+    daysAgo: r.posted_date ? Math.floor((Date.now() - new Date(r.posted_date as string).getTime()) / (1000 * 60 * 60 * 24)) : null,
+  }))
 }
 
 function deduplicate<T extends { title: string; company: string }>(listings: T[]) {
@@ -118,8 +143,7 @@ export async function POST(request: Request) {
     })
     if (postedWithin) params.set('max_days_old', String(postedWithin))
 
-    const [, adzunaResponse, indeedResponse] = await Promise.all([
-      Promise.resolve(),
+    const [adzunaResponse, indeedResponse, indianResponse] = await Promise.all([
       fetch(`${ADZUNA_API_URL}/${country}/search/${page}?${params}`).then(async (r) => {
         if (!r.ok) {
           console.error('Adzuna error:', r.status)
@@ -143,6 +167,22 @@ export async function POST(request: Request) {
           return null
         }
       })(),
+      (async () => {
+        if (!INDIAN_API_KEY) return []
+        try {
+          const res = await fetch(`https://jobs.indianapi.in/jobs?title=${encodeURIComponent(keyword)}&limit=20${location ? `&location=${encodeURIComponent(location)}` : ''}`, {
+            headers: { 'X-Api-Key': INDIAN_API_KEY },
+          })
+          if (!res.ok) {
+            console.error('IndianAPI error:', res.status)
+            return []
+          }
+          return res.json()
+        } catch (e) {
+          console.error('IndianAPI error:', e)
+          return []
+        }
+      })(),
     ])
 
     const adzunaListings = mapAdzunaResults(adzunaResponse.results ?? [])
@@ -150,7 +190,8 @@ export async function POST(request: Request) {
     if (postedWithin) {
       indeedItems = indeedItems.filter((item) => item.daysAgo !== null && item.daysAgo <= postedWithin)
     }
-    const allListings = deduplicate([...adzunaListings, ...indeedItems])
+    const indianItems = mapIndianItems(indianResponse as Record<string, unknown>[])
+    const allListings = deduplicate([...adzunaListings, ...indeedItems, ...indianItems])
 
     return NextResponse.json({
       results: allListings,

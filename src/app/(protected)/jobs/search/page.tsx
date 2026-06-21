@@ -4,6 +4,7 @@ import { JobSearchBar } from '@/components/jobs/JobSearchBar'
 import { JobCard } from '@/components/jobs/JobCard'
 import { JobDetailPanel } from '@/components/jobs/JobDetailPanel'
 import { ApplicationPrep } from '@/components/jobs/ApplicationPrep'
+import { SalaryInsight } from '@/components/jobs/SalaryInsight'
 import type { JobListing } from '@/types/database'
 import { ChevronLeft, ChevronRight, Briefcase } from 'lucide-react'
 import { useCallback, useState } from 'react'
@@ -196,6 +197,10 @@ export default function JobSearchPage() {
                   onApply={handleApply}
                   preparing={preparing}
                   applied={appliedJobs.has(selectedJob.adzuna_id)}
+                />
+                <SalaryInsight
+                  role={selectedJob.title}
+                  location={selectedJob.location}
                 />
                 {prepData && (
                   <ApplicationPrep
