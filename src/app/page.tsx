@@ -347,7 +347,7 @@ export default function HomePage() {
                 Create Free Account <ArrowUpRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="mt-8 flex items-center justify-center gap-6 text-sm text-white/60">
+            <div className="mt-8 flex items-center justify-center gap-6 text-sm text-white/80">
               <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> No credit card</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Cancel anytime</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Free updates</span>
