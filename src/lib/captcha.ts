@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim() || ''
 
 export function useReCaptcha(action: string) {
   const readyRef = useRef(false)
