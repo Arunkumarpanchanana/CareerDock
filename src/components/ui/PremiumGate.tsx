@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Lock, RefreshCw, Sparkles } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 export function PremiumGate({ children, feature }: { children: ReactNode; feature: string }) {
   const { profile, loading, refreshProfile } = useAuth()
   const [timedOut, setTimedOut] = useState(false)
+  const [serverPremium, setServerPremium] = useState<boolean | null>(null)
+  const checkedRef = useRef(false)
 
   useEffect(() => {
     if (loading) {
@@ -18,6 +20,16 @@ export function PremiumGate({ children, feature }: { children: ReactNode; featur
     }
     setTimedOut(false)
   }, [loading])
+
+  useEffect(() => {
+    if (!loading && !profile && !checkedRef.current) {
+      checkedRef.current = true
+      fetch('/api/auth/check-premium')
+        .then((r) => r.json())
+        .then((d) => setServerPremium(d.premium))
+        .catch(() => setServerPremium(false))
+    }
+  }, [loading, profile])
 
   if (loading) {
     if (timedOut) {
@@ -38,7 +50,7 @@ export function PremiumGate({ children, feature }: { children: ReactNode; featur
     )
   }
 
-  if (profile?.plan_tier === 'premium') {
+  if (profile?.plan_tier === 'premium' || serverPremium) {
     return <>{children}</>
   }
 

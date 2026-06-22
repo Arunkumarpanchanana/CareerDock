@@ -42,11 +42,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('*')
         .eq('id', userId)
         .single()
-      if (!error) {
-        setProfile(data as Profile | null)
+      if (error) {
+        console.error('Profile fetch error:', error)
+        setProfile({ id: userId, plan_tier: 'free' } as Profile)
+        return
       }
-    } catch {
-      // profile stays null
+      setProfile(data as Profile | null)
+    } catch (e) {
+      console.error('Profile fetch exception:', e)
+      setProfile({ id: userId, plan_tier: 'free' } as Profile)
     }
   }
 
@@ -70,11 +74,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initialize()
 
-    // Safety: force loading to false after 12s regardless of hangs
+    // Safety: force loading to false after 8s regardless of hangs
     const safetyTimer = setTimeout(() => {
       cancelled = true
       setLoading(false)
-    }, 12000)
+    }, 8000)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event: AuthChangeEvent, session: Session | null) => {
