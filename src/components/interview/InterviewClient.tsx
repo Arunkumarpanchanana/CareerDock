@@ -155,6 +155,7 @@ export function InterviewClient() {
     recognition.lang = 'en-US'
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
+      if (!recognitionActiveRef.current) return
       let final = ''
       let interimText = ''
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -170,6 +171,7 @@ export function InterviewClient() {
 
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
       silenceTimerRef.current = setTimeout(() => {
+        if (!recognitionActiveRef.current) return
         const full = (transcriptRef.current + ' ' + final).trim()
         if (full) submitAnswer(full)
       }, 1500)
