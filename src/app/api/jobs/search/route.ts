@@ -95,7 +95,7 @@ function deduplicate<T extends { title: string; company: string }>(listings: T[]
 }
 
 export async function POST(request: Request) {
-  const limit = rateLimitByIp(request, 10, 60_000)
+  const limit = rateLimitByIp(request, 30, 60_000)
   if (limit instanceof NextResponse) return limit
 
   try {
