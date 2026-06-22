@@ -27,7 +27,7 @@ function Avatar({ label, speaking }: { label: string; speaking: boolean }) {
           transition-all duration-300`}
         style={{ backgroundColor: label === 'You' ? '#1e40af' : '#6b21a8' }}
       >
-        {label === 'You' ? '👤' : '🤖'}
+        👤
       </div>
       <p className={`text-sm font-medium ${speaking ? 'text-green-400' : 'text-gray-400'}`}>
         {speaking ? `${label} speaking...` : label}
