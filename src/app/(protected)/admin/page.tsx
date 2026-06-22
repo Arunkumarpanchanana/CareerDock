@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function AdminDashboard() {
-  const { profile } = useAuth()
+  const { loading } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<{ label: string; value: string; icon: typeof Users; color: string }[]>([])
 
@@ -27,11 +27,10 @@ export default function AdminDashboard() {
     }).catch(console.error)
   }, [])
 
-  if (profile?.role !== 'admin') {
+  if (loading) {
     return (
-      <div className="text-center py-16">
-        <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
-        <p className="mt-2 text-gray-600">You do not have admin privileges.</p>
+      <div className="flex items-center justify-center py-16">
+        <div className="animate-spin h-6 w-6 border-2 border-[var(--accent)] border-t-transparent rounded-full" />
       </div>
     )
   }
