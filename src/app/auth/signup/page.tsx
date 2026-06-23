@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui/Input'
 import { createClient } from '@/lib/supabase/client'
-import { useReCaptcha } from '@/lib/captcha'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useRef, useState, useMemo, useEffect } from 'react'
@@ -41,7 +40,6 @@ function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
-  const { execute: executeCaptcha } = useReCaptcha('signup')
 
   const refFromUrl = searchParams.get('ref')
   useEffect(() => {
@@ -103,14 +101,11 @@ function SignupForm() {
       return
     }
 
-    const captchaToken = await executeCaptcha()
-
     const { data, error } = await getSupabase().auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName },
-        captchaToken: captchaToken ?? undefined,
       },
     })
 

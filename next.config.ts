@@ -4,12 +4,11 @@ const isDev = process.env.NODE_ENV === 'development'
 
 const cspHeader = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/",
+  "img-src 'self' data: blob:",
   "font-src 'self' data: https://fonts.gstatic.com",
   "connect-src 'self' https://xrqombtevssqznnkohzy.supabase.co",
-  "frame-src https://www.google.com/recaptcha/",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
