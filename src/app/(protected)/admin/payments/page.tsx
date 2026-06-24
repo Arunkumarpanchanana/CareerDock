@@ -45,16 +45,33 @@ export default function AdminPaymentsPage() {
 
   const [editPrices, setEditPrices] = useState<Record<string, { monthly: number; yearly: number }>>({})
 
+  // Gateway form state
+  const [showGatewayForm, setShowGatewayForm] = useState(false)
+  const [editingGateway, setEditingGateway] = useState<Gateway | null>(null)
+  const [gatewayForm, setGatewayForm] = useState({
+    gateway: 'instamojo',
+    api_key: '',
+    api_secret: '',
+    merchant_id: '',
+    salt_key: '',
+    is_active: true,
+  })
+
   useEffect(() => {
     loadAll()
   }, [])
 
-  const loadAll = async () => {
-    setLoading(true)
+  const getHeaders = async () => {
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+    return headers
+  }
+
+  const loadAll = async () => {
+    setLoading(true)
+    const headers = await getHeaders()
 
     const [gRes, pRes, cRes, tRes] = await Promise.all([
       fetch('/api/admin/payments/gateways', { headers }),
@@ -82,10 +99,7 @@ export default function AdminPaymentsPage() {
   const savePrices = async () => {
     setSaving(true)
     setMessage('')
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+    const headers = await getHeaders()
 
     for (const [tier, vals] of Object.entries(editPrices)) {
       await fetch('/api/admin/payments/prices', {
@@ -94,6 +108,48 @@ export default function AdminPaymentsPage() {
       })
     }
     setMessage('Prices saved!')
+    setSaving(false)
+  }
+
+  const openNewGateway = () => {
+    setEditingGateway(null)
+    setGatewayForm({ gateway: 'instamojo', api_key: '', api_secret: '', merchant_id: '', salt_key: '', is_active: true })
+    setShowGatewayForm(true)
+  }
+
+  const openEditGateway = (g: Gateway) => {
+    setEditingGateway(g)
+    setGatewayForm({
+      gateway: g.gateway,
+      api_key: g.api_key,
+      api_secret: g.api_secret,
+      merchant_id: g.merchant_id,
+      salt_key: g.salt_key,
+      is_active: g.is_active,
+    })
+    setShowGatewayForm(true)
+  }
+
+  const saveGateway = async () => {
+    setSaving(true)
+    setMessage('')
+    const headers = await getHeaders()
+
+    const body: any = { ...gatewayForm }
+    if (editingGateway) body.id = editingGateway.id
+
+    const res = await fetch('/api/admin/payments/gateways', {
+      method: 'PUT', headers,
+      body: JSON.stringify(body),
+    })
+    const data = await res.json()
+    if (data.success) {
+      setMessage('Gateway saved!')
+      setShowGatewayForm(false)
+      await loadAll()
+    } else {
+      setMessage(data.error || 'Failed to save gateway')
+    }
     setSaving(false)
   }
 
@@ -126,19 +182,92 @@ export default function AdminPaymentsPage() {
 
       {tab === 'gateways' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">Payment Gateways</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Payment Gateways</h2>
+            <button onClick={openNewGateway}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+              + Add Gateway
+            </button>
+          </div>
+
+          {showGatewayForm && (
+            <div className="mb-6 p-4 border border-blue-200 bg-blue-50 rounded-lg space-y-3">
+              <h3 className="font-medium text-sm">{editingGateway ? 'Edit' : 'Add'} Gateway</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Gateway</label>
+                  <select value={gatewayForm.gateway}
+                    onChange={e => setGatewayForm(p => ({ ...p, gateway: e.target.value }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm">
+                    <option value="instamojo">Instamojo</option>
+                    <option value="phonepe">PhonePe</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Active</label>
+                  <select value={gatewayForm.is_active ? 'true' : 'false'}
+                    onChange={e => setGatewayForm(p => ({ ...p, is_active: e.target.value === 'true' }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm">
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">API Key</label>
+                  <input type="text" value={gatewayForm.api_key}
+                    onChange={e => setGatewayForm(p => ({ ...p, api_key: e.target.value }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">API Secret</label>
+                  <input type="password" value={gatewayForm.api_secret}
+                    onChange={e => setGatewayForm(p => ({ ...p, api_secret: e.target.value }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Merchant ID</label>
+                  <input type="text" value={gatewayForm.merchant_id}
+                    onChange={e => setGatewayForm(p => ({ ...p, merchant_id: e.target.value }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Salt Key</label>
+                  <input type="password" value={gatewayForm.salt_key}
+                    onChange={e => setGatewayForm(p => ({ ...p, salt_key: e.target.value }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={saveGateway} disabled={saving}
+                  className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+                <button onClick={() => setShowGatewayForm(false)}
+                  className="px-4 py-1.5 bg-gray-100 text-sm font-medium rounded-lg hover:bg-gray-200">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           {gateways.map(g => (
-            <div key={g.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg mb-2">
+            <div key={g.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg mb-2 hover:bg-gray-50">
               <div>
                 <p className="font-medium">{g.gateway === 'instamojo' ? 'Instamojo' : 'PhonePe'}</p>
                 <p className="text-xs text-gray-500">API Key: {g.api_key ? `${g.api_key.slice(0, 4)}...${g.api_key.slice(-4)}` : 'Not set'}</p>
               </div>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${g.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                {g.is_active ? 'Active' : 'Inactive'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${g.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  {g.is_active ? 'Active' : 'Inactive'}
+                </span>
+                <button onClick={() => openEditGateway(g)}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                  Edit
+                </button>
+              </div>
             </div>
           ))}
-          {gateways.length === 0 && <p className="text-gray-400 text-sm py-4 text-center">No gateways configured yet.</p>}
+          {gateways.length === 0 && !showGatewayForm && <p className="text-gray-400 text-sm py-4 text-center">No gateways configured yet.</p>}
         </div>
       )}
 
