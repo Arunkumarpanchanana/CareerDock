@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { rateLimitByIp } from '@/lib/rate-limit'
 import { generateBullets, generateSummary, rewriteText } from '@/lib/ai'
+import { getAiLimit } from '@/lib/quota'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
       .single()
 
     const planTier = (profile?.plan_tier as string) || 'free'
-    const aiLimit = planTier === 'premium' ? 100 : 10
+    const aiLimit = getAiLimit(planTier)
 
     const { count } = await supabase
       .from('ai_usage')
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
 
     if ((count ?? 0) >= aiLimit) {
       return NextResponse.json(
-        { error: `AI usage limit reached (${count}/${aiLimit}). ${planTier === 'free' ? 'Upgrade to premium for more.' : ''}` },
+        { error: `AI usage limit reached (${count}/${aiLimit}). ${planTier === 'free' ? 'Upgrade to Premium or Premium Pro for more.' : ''}` },
         { status: 403 }
       )
     }
