@@ -11,6 +11,7 @@ interface Gateway {
   merchant_id: string
   salt_key: string
   is_active: boolean
+  updated_at: string
 }
 
 interface PlanPrice {
@@ -18,6 +19,7 @@ interface PlanPrice {
   plan_tier: string
   monthly_price: number
   yearly_price: number
+  updated_at: string
 }
 
 interface Coupon {
@@ -31,10 +33,13 @@ interface Coupon {
   plan_tier: string | null
   expires_at: string | null
   is_active: boolean
+  created_at: string
 }
 
+type TabId = 'gateways' | 'prices' | 'coupons' | 'transactions'
+
 export default function AdminPaymentsPage() {
-  const [tab, setTab] = useState<'gateways' | 'prices' | 'coupons' | 'transactions'>('gateways')
+  const [tab, setTab] = useState<TabId>('gateways')
   const [gateways, setGateways] = useState<Gateway[]>([])
   const [prices, setPrices] = useState<PlanPrice[]>([])
   const [coupons, setCoupons] = useState<Coupon[]>([])
@@ -45,21 +50,18 @@ export default function AdminPaymentsPage() {
 
   const [editPrices, setEditPrices] = useState<Record<string, { monthly: number; yearly: number }>>({})
 
-  // Gateway form state
   const [showGatewayForm, setShowGatewayForm] = useState(false)
   const [editingGateway, setEditingGateway] = useState<Gateway | null>(null)
-  const [gatewayForm, setGatewayForm] = useState({
-    gateway: 'instamojo',
-    api_key: '',
-    api_secret: '',
-    merchant_id: '',
-    salt_key: '',
-    is_active: true,
+  const [gatewayForm, setGatewayForm] = useState({ gateway: 'instamojo', api_key: '', api_secret: '', merchant_id: '', salt_key: '', is_active: true })
+
+  const [showCouponForm, setShowCouponForm] = useState(false)
+  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null)
+  const [couponForm, setCouponForm] = useState({
+    code: '', discount_type: 'percentage', discount_value: 20,
+    max_uses: '', plan_tier: '', expires_at: '', is_active: true,
   })
 
-  useEffect(() => {
-    loadAll()
-  }, [])
+  useEffect(() => { loadAll() }, [])
 
   const getHeaders = async () => {
     const supabase = createClient()
@@ -72,18 +74,15 @@ export default function AdminPaymentsPage() {
   const loadAll = async () => {
     setLoading(true)
     const headers = await getHeaders()
-
     const [gRes, pRes, cRes, tRes] = await Promise.all([
       fetch('/api/admin/payments/gateways', { headers }),
       fetch('/api/plan-prices'),
       fetch('/api/admin/coupons', { headers }),
       fetch('/api/admin/payments/transactions', { headers }),
     ])
-
     const [gData, pData, cData, tData] = await Promise.all([
       gRes.json(), pRes.json(), cRes.json(), tRes.json(),
     ])
-
     if (Array.isArray(gData)) setGateways(gData)
     if (Array.isArray(pData)) {
       setPrices(pData)
@@ -97,18 +96,16 @@ export default function AdminPaymentsPage() {
   }
 
   const savePrices = async () => {
-    setSaving(true)
-    setMessage('')
+    setSaving(true); setMessage('')
     const headers = await getHeaders()
-
     for (const [tier, vals] of Object.entries(editPrices)) {
       await fetch('/api/admin/payments/prices', {
         method: 'PUT', headers,
         body: JSON.stringify({ planTier: tier, monthlyPrice: vals.monthly, yearlyPrice: vals.yearly }),
       })
     }
-    setMessage('Prices saved!')
-    setSaving(false)
+    setMessage('Prices saved!'); setSaving(false)
+    await loadAll()
   }
 
   const openNewGateway = () => {
@@ -119,45 +116,74 @@ export default function AdminPaymentsPage() {
 
   const openEditGateway = (g: Gateway) => {
     setEditingGateway(g)
-    setGatewayForm({
-      gateway: g.gateway,
-      api_key: g.api_key,
-      api_secret: g.api_secret,
-      merchant_id: g.merchant_id,
-      salt_key: g.salt_key,
-      is_active: g.is_active,
-    })
+    setGatewayForm({ gateway: g.gateway, api_key: g.api_key, api_secret: g.api_secret, merchant_id: g.merchant_id, salt_key: g.salt_key, is_active: g.is_active })
     setShowGatewayForm(true)
   }
 
   const saveGateway = async () => {
-    setSaving(true)
-    setMessage('')
+    setSaving(true); setMessage('')
     const headers = await getHeaders()
-
     const body: any = { ...gatewayForm }
     if (editingGateway) body.id = editingGateway.id
-
-    const res = await fetch('/api/admin/payments/gateways', {
-      method: 'PUT', headers,
-      body: JSON.stringify(body),
-    })
+    const res = await fetch('/api/admin/payments/gateways', { method: 'PUT', headers, body: JSON.stringify(body) })
     const data = await res.json()
-    if (data.success) {
-      setMessage('Gateway saved!')
-      setShowGatewayForm(false)
-      await loadAll()
-    } else {
-      setMessage(data.error || 'Failed to save gateway')
-    }
-    setSaving(false)
+    setMessage(data.success ? 'Gateway saved!' : (data.error || 'Failed'))
+    setShowGatewayForm(false); setSaving(false)
+    if (data.success) await loadAll()
   }
 
-  const TABS = [
-    { id: 'gateways' as const, label: 'Gateways' },
-    { id: 'prices' as const, label: 'Prices' },
-    { id: 'coupons' as const, label: 'Coupons' },
-    { id: 'transactions' as const, label: 'Transactions' },
+  const openNewCoupon = () => {
+    setEditingCoupon(null)
+    setCouponForm({ code: '', discount_type: 'percentage', discount_value: 20, max_uses: '', plan_tier: '', expires_at: '', is_active: true })
+    setShowCouponForm(true)
+  }
+
+  const openEditCoupon = (c: Coupon) => {
+    setEditingCoupon(c)
+    setCouponForm({
+      code: c.code, discount_type: c.discount_type, discount_value: c.discount_value,
+      max_uses: c.max_uses ? String(c.max_uses) : '', plan_tier: c.plan_tier || '',
+      expires_at: c.expires_at ? c.expires_at.split('T')[0] : '', is_active: c.is_active,
+    })
+    setShowCouponForm(true)
+  }
+
+  const saveCoupon = async () => {
+    setSaving(true); setMessage('')
+    const headers = await getHeaders()
+    const body: any = { ...couponForm }
+    if (couponForm.max_uses === '') body.max_uses = null
+    if (couponForm.plan_tier === '') body.plan_tier = null
+    if (couponForm.expires_at === '') body.expires_at = null
+
+    if (editingCoupon) {
+      body.id = editingCoupon.id
+      const res = await fetch('/api/admin/coupons', { method: 'PUT', headers, body: JSON.stringify(body) })
+      const data = await res.json()
+      setMessage(data.success ? 'Coupon updated!' : (data.error || 'Failed'))
+    } else {
+      const res = await fetch('/api/admin/coupons', { method: 'POST', headers, body: JSON.stringify(body) })
+      const data = await res.json()
+      if (data.id) {
+        setMessage('Coupon created!')
+      } else {
+        setMessage(data.error || 'Failed to create coupon')
+      }
+    }
+    setShowCouponForm(false); setSaving(false)
+    await loadAll()
+  }
+
+  const formatDate = (d: string | null) => {
+    if (!d) return '—'
+    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  const TABS: { id: TabId; label: string }[] = [
+    { id: 'gateways', label: 'Gateways' },
+    { id: 'prices', label: 'Prices' },
+    { id: 'coupons', label: 'Coupons' },
+    { id: 'transactions', label: 'Transactions' },
   ]
 
   return (
@@ -172,14 +198,15 @@ export default function AdminPaymentsPage() {
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
               tab === t.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}>
-            {t.label}
-          </button>
+            }`}>{t.label}</button>
         ))}
       </div>
 
-      {message && <p className="text-sm text-green-600">{message}</p>}
+      {message && (
+        <div className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2">{message}</div>
+      )}
 
+      {/* ---- GATEWAYS TAB ---- */}
       {tab === 'gateways' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
@@ -243,34 +270,48 @@ export default function AdminPaymentsPage() {
                   {saving ? 'Saving...' : 'Save'}
                 </button>
                 <button onClick={() => setShowGatewayForm(false)}
-                  className="px-4 py-1.5 bg-gray-100 text-sm font-medium rounded-lg hover:bg-gray-200">
-                  Cancel
-                </button>
+                  className="px-4 py-1.5 bg-gray-100 text-sm font-medium rounded-lg hover:bg-gray-200">Cancel</button>
               </div>
             </div>
           )}
 
-          {gateways.map(g => (
-            <div key={g.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg mb-2 hover:bg-gray-50">
-              <div>
-                <p className="font-medium">{g.gateway === 'instamojo' ? 'Instamojo' : 'PhonePe'}</p>
-                <p className="text-xs text-gray-500">API Key: {g.api_key ? `${g.api_key.slice(0, 4)}...${g.api_key.slice(-4)}` : 'Not set'}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${g.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                  {g.is_active ? 'Active' : 'Inactive'}
-                </span>
-                <button onClick={() => openEditGateway(g)}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium">
-                  Edit
-                </button>
-              </div>
-            </div>
-          ))}
-          {gateways.length === 0 && !showGatewayForm && <p className="text-gray-400 text-sm py-4 text-center">No gateways configured yet.</p>}
+          <div className="space-y-3">
+            {['instamojo', 'phonepe'].map(gw => {
+              const g = gateways.find(x => x.gateway === gw)
+              const initials = gw === 'instamojo' ? 'IM' : 'PP'
+              return (
+                <div key={gw} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">
+                      {initials}
+                    </div>
+                    <div>
+                      <p className="font-medium">{gw === 'instamojo' ? 'Instamojo' : 'PhonePe'}</p>
+                      {g ? (
+                        <p className="text-xs text-gray-500">
+                          API Key: {g.api_key ? `${g.api_key.slice(0, 4)}••••${g.api_key.slice(-4)}` : 'Not set'}
+                          {g.updated_at && <span className="ml-2">· Last updated: {formatDate(g.updated_at)}</span>}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-400">Not configured yet</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                      g?.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                    }`}>{g?.is_active ? 'Active' : 'Inactive'}</span>
+                    <button onClick={() => g ? openEditGateway(g) : openNewGateway()}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 
+      {/* ---- PRICES TAB ---- */}
       {tab === 'prices' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
@@ -284,42 +325,131 @@ export default function AdminPaymentsPage() {
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="text-left py-3 font-medium text-gray-600">Plan</th>
-                <th className="text-left py-3 font-medium text-gray-600">Monthly (₹)</th>
-                <th className="text-left py-3 font-medium text-gray-600">Yearly (₹)</th>
+                <th className="text-left py-3 font-medium text-gray-600">Monthly Price (₹)</th>
+                <th className="text-left py-3 font-medium text-gray-600">Yearly Price (₹)</th>
+                <th className="text-left py-3 font-medium text-gray-600">Last Updated</th>
               </tr>
             </thead>
             <tbody>
               {prices.map(p => (
                 <tr key={p.id} className="border-b border-gray-100">
-                  <td className="py-3 font-medium">{p.plan_tier === 'premium' ? 'Premium' : 'Premium Pro'}</td>
                   <td className="py-3">
-                    <input type="number" value={editPrices[p.plan_tier]?.monthly ?? ''}
-                      onChange={e => setEditPrices(prev => ({ ...prev, [p.plan_tier]: { ...prev[p.plan_tier], monthly: Number(e.target.value) } }))}
-                      className="w-24 px-2 py-1 border border-gray-300 rounded text-right" />
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{p.plan_tier === 'premium' ? 'Premium' : 'Premium Pro'}</span>
+                      <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium">Live</span>
+                    </div>
                   </td>
                   <td className="py-3">
-                    <input type="number" value={editPrices[p.plan_tier]?.yearly ?? ''}
-                      onChange={e => setEditPrices(prev => ({ ...prev, [p.plan_tier]: { ...prev[p.plan_tier], yearly: Number(e.target.value) } }))}
-                      className="w-24 px-2 py-1 border border-gray-300 rounded text-right" />
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-400">₹</span>
+                      <input type="number" value={editPrices[p.plan_tier]?.monthly ?? ''}
+                        onChange={e => setEditPrices(prev => ({ ...prev, [p.plan_tier]: { ...prev[p.plan_tier], monthly: Number(e.target.value) } }))}
+                        className="w-20 px-2 py-1 border border-gray-300 rounded text-right" />
+                    </div>
                   </td>
+                  <td className="py-3">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-400">₹</span>
+                      <input type="number" value={editPrices[p.plan_tier]?.yearly ?? ''}
+                        onChange={e => setEditPrices(prev => ({ ...prev, [p.plan_tier]: { ...prev[p.plan_tier], yearly: Number(e.target.value) } }))}
+                        className="w-20 px-2 py-1 border border-gray-300 rounded text-right" />
+                    </div>
+                  </td>
+                  <td className="py-3 text-gray-500 text-xs">{formatDate(p.updated_at)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <p className="mt-3 text-xs text-gray-400">Changes take effect immediately on the pricing page.</p>
         </div>
       )}
 
+      {/* ---- COUPONS TAB ---- */}
       {tab === 'coupons' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">Coupon Codes</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Coupon Codes</h2>
+            <button onClick={openNewCoupon}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+              + Create Coupon
+            </button>
+          </div>
+
+          {showCouponForm && (
+            <div className="mb-6 p-4 border border-blue-200 bg-blue-50 rounded-lg space-y-3">
+              <h3 className="font-medium text-sm">{editingCoupon ? 'Edit' : 'Create New'} Coupon</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Code</label>
+                  <input type="text" value={couponForm.code} placeholder="e.g. SUMMER50"
+                    onChange={e => setCouponForm(p => ({ ...p, code: e.target.value }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Discount Type</label>
+                  <select value={couponForm.discount_type}
+                    onChange={e => setCouponForm(p => ({ ...p, discount_type: e.target.value }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm">
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed (₹)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Value</label>
+                  <input type="number" value={couponForm.discount_value}
+                    onChange={e => setCouponForm(p => ({ ...p, discount_value: Number(e.target.value) }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Max Uses</label>
+                  <input type="text" value={couponForm.max_uses} placeholder="Unlimited"
+                    onChange={e => setCouponForm(p => ({ ...p, max_uses: e.target.value }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Plan Restriction</label>
+                  <select value={couponForm.plan_tier}
+                    onChange={e => setCouponForm(p => ({ ...p, plan_tier: e.target.value }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm">
+                    <option value="">Any Plan</option>
+                    <option value="premium">Premium</option>
+                    <option value="premium_pro">Premium Pro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Expiry Date</label>
+                  <input type="date" value={couponForm.expires_at}
+                    onChange={e => setCouponForm(p => ({ ...p, expires_at: e.target.value }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="coupon-active" checked={couponForm.is_active}
+                    onChange={e => setCouponForm(p => ({ ...p, is_active: e.target.checked }))}
+                    className="rounded border-gray-300" />
+                  <label htmlFor="coupon-active" className="text-sm text-gray-700">Active</label>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={saveCoupon} disabled={saving}
+                  className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                  {saving ? 'Saving...' : editingCoupon ? 'Update Coupon' : 'Create Coupon'}
+                </button>
+                <button onClick={() => setShowCouponForm(false)}
+                  className="px-4 py-1.5 bg-gray-100 text-sm font-medium rounded-lg hover:bg-gray-200">Cancel</button>
+              </div>
+            </div>
+          )}
+
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="text-left py-3 font-medium text-gray-600">Code</th>
                 <th className="text-left py-3 font-medium text-gray-600">Discount</th>
-                <th className="text-left py-3 font-medium text-gray-600">Uses</th>
+                <th className="text-left py-3 font-medium text-gray-600">Usage</th>
                 <th className="text-left py-3 font-medium text-gray-600">Plan</th>
+                <th className="text-left py-3 font-medium text-gray-600">Expires</th>
                 <th className="text-left py-3 font-medium text-gray-600">Status</th>
+                <th className="text-left py-3 font-medium text-gray-600"></th>
               </tr>
             </thead>
             <tbody>
@@ -329,19 +459,29 @@ export default function AdminPaymentsPage() {
                   <td className="py-3">{c.discount_type === 'percentage' ? `${c.discount_value}% off` : `₹${c.discount_value} off`}</td>
                   <td className="py-3 text-gray-500">{c.current_uses}{c.max_uses ? `/${c.max_uses}` : ''}</td>
                   <td className="py-3">{c.plan_tier ?? 'Any'}</td>
+                  <td className="py-3 text-xs text-gray-500">{formatDate(c.expires_at)}</td>
                   <td className="py-3">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${c.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {c.is_active ? 'Active' : 'Inactive'}
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                      c.is_active && (!c.expires_at || new Date(c.expires_at) > new Date())
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-600'
+                    }`}>
+                      {c.is_active && (!c.expires_at || new Date(c.expires_at) > new Date()) ? 'Active' : 'Expired'}
                     </span>
+                  </td>
+                  <td className="py-3">
+                    <button onClick={() => openEditCoupon(c)}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {coupons.length === 0 && <p className="text-gray-400 text-sm py-4 text-center">No coupons created yet.</p>}
+          {coupons.length === 0 && !showCouponForm && <p className="text-gray-400 text-sm py-4 text-center">No coupons created yet.</p>}
         </div>
       )}
 
+      {/* ---- TRANSACTIONS TAB ---- */}
       {tab === 'transactions' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-lg font-semibold mb-4">Transaction Log</h2>
@@ -368,7 +508,7 @@ export default function AdminPaymentsPage() {
                       'bg-red-100 text-red-700'
                     }`}>{t.status}</span>
                   </td>
-                  <td className="py-3 text-gray-500">{new Date(t.created_at).toLocaleDateString()}</td>
+                  <td className="py-3 text-gray-500">{formatDate(t.created_at)}</td>
                 </tr>
               ))}
             </tbody>
