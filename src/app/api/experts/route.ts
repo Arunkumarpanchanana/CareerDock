@@ -20,9 +20,9 @@ export async function GET(request: Request) {
       .single()
 
     const planTier = (profile?.plan_tier as string) || 'free'
-    if (planTier !== 'premium') {
+    if (planTier !== 'premium_pro') {
       return NextResponse.json(
-        { error: 'Expert Consultants is a Premium feature. Upgrade to access.' },
+        { error: 'Expert Consultants is a Premium Pro feature. Upgrade to access.' },
         { status: 403 }
       )
     }
