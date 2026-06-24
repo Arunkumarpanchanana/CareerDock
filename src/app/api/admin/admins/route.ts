@@ -1,5 +1,4 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
 import { rateLimitByIp } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import { adminRoleUpdateSchema } from '@/lib/validation'
@@ -9,14 +8,26 @@ export async function GET(request: Request) {
   if (limit instanceof NextResponse) return limit
 
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const adminClient = createAdminClient()
+    if (!adminClient) {
+      return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
+    }
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const authHeader = request.headers.get('Authorization') || ''
+    const token = authHeader.replace('Bearer ', '')
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: { user }, error: userError } = await adminClient.auth.getUser(token)
+    if (userError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
     if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { data, error } = await supabase.from('profiles').select('*').order('full_name')
+    const { data, error } = await adminClient.from('profiles').select('*').order('full_name')
     if (error) throw error
     return NextResponse.json(data)
   } catch (e) {
@@ -30,11 +41,23 @@ export async function PUT(request: Request) {
   if (limit instanceof NextResponse) return limit
 
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const adminClient = createAdminClient()
+    if (!adminClient) {
+      return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
+    }
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const authHeader = request.headers.get('Authorization') || ''
+    const token = authHeader.replace('Bearer ', '')
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: { user }, error: userError } = await adminClient.auth.getUser(token)
+    if (userError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
     if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await request.json()
@@ -43,9 +66,6 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
     }
     const { id, role } = parsed.data
-
-    const adminClient = createAdminClient()
-    if (!adminClient) return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
 
     const { error } = await adminClient.from('profiles').update({ role }).eq('id', id)
     if (error) throw error

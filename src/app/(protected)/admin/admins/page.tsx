@@ -18,10 +18,19 @@ export default function AdminAdminsPage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    fetch('/api/admin/admins').then(r => r.json()).then(data => {
-      if (Array.isArray(data)) setUsers(data)
-      else console.error('Unexpected response format')
-    }).catch(console.error)
+    const load = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+      try {
+        const res = await fetch('/api/admin/admins', { headers })
+        const data = await res.json()
+        if (Array.isArray(data)) setUsers(data)
+        else console.error('Unexpected response format')
+      } catch (e) { console.error(e) }
+    }
+    load()
   }, [])
 
   const toggleRole = async (user: Profile) => {
@@ -29,9 +38,13 @@ export default function AdminAdminsPage() {
     setUpdating(user.id)
     setToggleError(null)
     try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
       const res = await fetch('/api/admin/admins', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ id: user.id, role: newRole }),
       })
       if (!res.ok) throw new Error('Update failed')
@@ -56,7 +69,9 @@ export default function AdminAdminsPage() {
       if (!res.ok) throw new Error(data.error || 'Creation failed')
       setShowForm(false)
       setForm({ email: '', password: '', full_name: '', role: 'user' })
-      const refresh = await fetch('/api/admin/admins')
+      const refreshHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) refreshHeaders['Authorization'] = `Bearer ${token}`
+      const refresh = await fetch('/api/admin/admins', { headers: refreshHeaders })
       const updated = await refresh.json()
       if (Array.isArray(updated)) setUsers(updated)
     } catch (e) {
