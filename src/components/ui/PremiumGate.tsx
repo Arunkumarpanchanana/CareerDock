@@ -7,7 +7,11 @@ import { Lock, RefreshCw, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
-export function PremiumGate({ children, feature }: { children: ReactNode; feature: string }) {
+export function PremiumGate({ children, feature, requiredTier = 'premium' }: { 
+  children: ReactNode; 
+  feature: string;
+  requiredTier?: 'premium' | 'premium_pro' 
+}) {
   const { profile, loading, refreshProfile } = useAuth()
   const [timedOut, setTimedOut] = useState(false)
   const [serverPremium, setServerPremium] = useState<boolean | null>(null)
@@ -50,7 +54,7 @@ export function PremiumGate({ children, feature }: { children: ReactNode; featur
     )
   }
 
-  if (profile?.plan_tier === 'premium' || serverPremium) {
+  if (profile?.plan_tier === requiredTier || profile?.plan_tier === 'premium_pro' || serverPremium) {
     return <>{children}</>
   }
 
@@ -65,13 +69,12 @@ export function PremiumGate({ children, feature }: { children: ReactNode; featur
             Premium Feature
           </h2>
           <p className="mb-6 max-w-md text-sm text-gray-600 dark:text-gray-400">
-            {feature} is available exclusively on the Premium plan. Upgrade to unlock unlimited
-            access to expert consultants, mock interviews, and more.
+            {feature} is available on the {requiredTier === 'premium_pro' ? 'Premium Pro' : 'Premium'} plan{requiredTier === 'premium' ? ' and above' : ''}. Upgrade to unlock access.
           </p>
-          <Link href="/upgrade">
+          <Link href={`/upgrade?plan=${requiredTier}`}>
             <Button className="gap-2">
               <Sparkles className="h-4 w-4" />
-              Upgrade to Premium
+              Upgrade to {requiredTier === 'premium_pro' ? 'Premium Pro' : 'Premium'}
             </Button>
           </Link>
         </div>
