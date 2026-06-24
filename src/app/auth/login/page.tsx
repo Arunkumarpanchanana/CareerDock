@@ -61,9 +61,9 @@ export default function LoginPage() {
           <Image
             src="/logo.png"
             alt="CareerDock"
-            width={48}
-            height={48}
-            className="mx-auto mb-4"
+            width={80}
+            height={80}
+            className="mx-auto mb-6 rounded-2xl shadow-lg"
           />
           <h1 className="text-3xl font-bold text-gray-900">Welcome back</h1>
           <p className="mt-2 text-sm text-gray-600">
