@@ -4,7 +4,6 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { Card } from '@/components/ui'
 import { Sparkles, Zap, Crown } from 'lucide-react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
 type PlanTier = 'free' | 'premium' | 'premium_pro'
@@ -65,9 +64,7 @@ const plans = [
 
 export default function UpgradePage() {
   const { profile } = useAuth()
-  const searchParams = useSearchParams()
-  const preselected = searchParams.get('plan') || ''
-  const [yearly, setYearly] = useState(preselected === 'premium' || preselected === 'premium_pro' ? false : false)
+  const [yearly, setYearly] = useState(false)
   const currentTier: PlanTier = (profile?.plan_tier as PlanTier) || 'free'
 
   return (
