@@ -300,18 +300,43 @@ export default function ProfileForm({ initialProfile }: { initialProfile: Profil
               </p>
             </div>
           </div>
-          {activeProfile?.plan_tier === 'free' && (
-            <Link
-              href="/upgrade"
-              className="flex items-center gap-1 px-4 py-2 bg-[var(--accent)] text-white text-sm font-medium rounded-xl hover:bg-[var(--accent-hover)] transition-all"
-            >
-              Upgrade
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          )}
-          {(activeProfile?.plan_tier === 'premium' || activeProfile?.plan_tier === 'premium_pro') && (
-            <Badge variant="accent">{activeProfile.plan_tier === 'premium_pro' ? 'Premium Pro' : 'Premium'}</Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {activeProfile?.plan_tier === 'free' && (
+              <Link
+                href="/upgrade"
+                className="flex items-center gap-1 px-4 py-2 bg-[var(--accent)] text-white text-sm font-medium rounded-xl hover:bg-[var(--accent-hover)] transition-all"
+              >
+                Upgrade
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            )}
+            {activeProfile?.plan_tier === 'premium' && (
+              <>
+                <Link href="/upgrade"
+                  className="px-4 py-2 bg-[var(--accent)] text-white text-sm font-medium rounded-xl hover:opacity-90 transition-all">
+                  Upgrade to Pro
+                </Link>
+                <button onClick={async () => {
+                  if (!confirm('Cancel your Premium plan? You will lose access to premium features.')) return
+                  await fetch('/api/payments/cancel', { method: 'POST' })
+                  window.location.reload()
+                }}
+                  className="px-4 py-2 bg-[var(--danger)]/10 text-[var(--danger)] text-sm font-medium rounded-xl hover:bg-[var(--danger)]/20 transition-all">
+                  Cancel
+                </button>
+              </>
+            )}
+            {activeProfile?.plan_tier === 'premium_pro' && (
+              <button onClick={async () => {
+                if (!confirm('Cancel your Premium Pro plan? You will lose access to all premium features.')) return
+                await fetch('/api/payments/cancel', { method: 'POST' })
+                window.location.reload()
+              }}
+                className="px-4 py-2 bg-[var(--danger)]/10 text-[var(--danger)] text-sm font-medium rounded-xl hover:bg-[var(--danger)]/20 transition-all">
+                Cancel Plan
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Change Password */}
