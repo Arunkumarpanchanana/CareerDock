@@ -22,23 +22,29 @@ export default function AdminUsersPage() {
   const [pwError, setPwError] = useState('')
 
   useEffect(() => {
+    let cancelled = false
     const load = async () => {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
       try {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+        if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
         const res = await fetch('/api/admin/users', { headers })
+        if (cancelled) return
         const data = await res.json()
-        if (Array.isArray(data)) setUsers(data)
-        else setError('Failed to load users')
+        if (Array.isArray(data)) {
+          if (!cancelled) setUsers(data)
+        } else {
+          if (!cancelled) setError(data.error || 'Failed to load users')
+        }
       } catch {
-        setError('Failed to load users')
+        if (!cancelled) setError('Failed to load users')
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
     load()
+    return () => { cancelled = true }
   }, [])
 
   const cyclePlan = async (user: Profile) => {
