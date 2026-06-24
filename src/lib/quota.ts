@@ -7,10 +7,16 @@ export interface QuotaResult {
 }
 
 export function getPlanLimits(planTier: string): { maxResumes: number; maxJobs: number } {
-  if (planTier === 'premium') {
+  if (planTier === 'premium' || planTier === 'premium_pro') {
     return { maxResumes: Infinity, maxJobs: Infinity }
   }
-  return { maxResumes: 4, maxJobs: 15 }
+  return { maxResumes: 3, maxJobs: 15 }
+}
+
+export function getAiLimit(planTier: string): number {
+  if (planTier === 'premium_pro') return Infinity
+  if (planTier === 'premium') return 100
+  return 10
 }
 
 export async function checkResumeQuota(userId: string): Promise<QuotaResult> {
