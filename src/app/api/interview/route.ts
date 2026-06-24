@@ -17,9 +17,9 @@ export async function POST(req: NextRequest) {
       .single()
 
     const planTier = (profile?.plan_tier as string) || 'free'
-    if (planTier !== 'premium') {
+    if (planTier !== 'premium' && planTier !== 'premium_pro') {
       return NextResponse.json(
-        { error: 'Mock Interview is a Premium feature. Upgrade to access.' },
+        { error: 'Mock Interview is available on Premium and Premium Pro plans. Upgrade to access.' },
         { status: 403 }
       )
     }
