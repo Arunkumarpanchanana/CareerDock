@@ -7,19 +7,32 @@ import { Lock, RefreshCw, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
-export function PremiumGate({ children, feature, requiredTier = 'premium' }: { 
-  children: ReactNode; 
+export function PremiumGate({ children, feature, requiredTier = 'premium' }: {
+  children: ReactNode;
   feature: string;
-  requiredTier?: 'premium' | 'premium_pro' 
+  requiredTier?: 'premium' | 'premium_pro'
 }) {
   const { profile, loading, refreshProfile } = useAuth()
   const [timedOut, setTimedOut] = useState(false)
-  const [serverPremium, setServerPremium] = useState<boolean | null>(null)
+  const [serverPlanTier, setServerPlanTier] = useState<string | null>(null)
   const checkedRef = useRef(false)
+
+  const hasAccess = profile?.plan_tier === requiredTier || profile?.plan_tier === 'premium_pro' || serverPlanTier === requiredTier || serverPlanTier === 'premium_pro'
+
+  const fetchPremiumStatus = (signal?: AbortSignal) =>
+    fetch('/api/auth/check-premium', signal ? { signal } : {})
+      .then((r) => r.json())
+      .then((d) => setServerPlanTier(d.planTier || 'free'))
+      .catch(() => setServerPlanTier('free'))
 
   useEffect(() => {
     if (loading) {
-      const timer = setTimeout(() => setTimedOut(true), 8000)
+      const timer = setTimeout(() => {
+        setTimedOut(true)
+        const controller = new AbortController()
+        setTimeout(() => controller.abort(), 8000)
+        fetchPremiumStatus(controller.signal)
+      }, 5000)
       return () => clearTimeout(timer)
     }
     setTimedOut(false)
@@ -28,14 +41,17 @@ export function PremiumGate({ children, feature, requiredTier = 'premium' }: {
   useEffect(() => {
     if (!loading && !profile && !checkedRef.current) {
       checkedRef.current = true
-      fetch('/api/auth/check-premium')
-        .then((r) => r.json())
-        .then((d) => setServerPremium(d.premium))
-        .catch(() => setServerPremium(false))
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(), 8000)
+      fetchPremiumStatus(controller.signal)
     }
   }, [loading, profile])
 
-  if (loading) {
+  if (hasAccess) {
+    return <>{children}</>
+  }
+
+  if (loading && serverPlanTier === null) {
     if (timedOut) {
       return (
         <div className="flex flex-col items-center justify-center py-16 gap-4">
@@ -52,10 +68,6 @@ export function PremiumGate({ children, feature, requiredTier = 'premium' }: {
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     )
-  }
-
-  if (profile?.plan_tier === requiredTier || profile?.plan_tier === 'premium_pro' || serverPremium) {
-    return <>{children}</>
   }
 
   return (

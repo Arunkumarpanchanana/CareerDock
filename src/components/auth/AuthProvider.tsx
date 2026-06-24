@@ -11,6 +11,7 @@ interface AuthContext {
   loading: boolean
   refreshProfile: () => Promise<void>
   signOut: () => Promise<void>
+  getAccessToken: () => string | null
 }
 
 const AuthContext = createContext<AuthContext>({
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContext>({
   loading: true,
   refreshProfile: async () => {},
   signOut: async () => {},
+  getAccessToken: () => null,
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -26,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
+  const accessTokenRef = useRef<string | null>(null)
 
   const getSupabase = () => {
     if (!supabaseRef.current) {
@@ -54,19 +57,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const withTimeout = (promise: Promise<any>, ms: number): Promise<any> =>
+    new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('timeout')), ms)
+      promise.then(
+        (v: any) => { clearTimeout(timer); resolve(v) },
+        (e: any) => { clearTimeout(timer); reject(e) },
+      )
+    })
+
   useEffect(() => {
     const supabase = getSupabase()
     let cancelled = false
 
     const initialize = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session } } = await withTimeout(supabase.auth.getSession(), 5000)
         if (session?.user) {
+          accessTokenRef.current = session.access_token
           setUser(session.user)
-          await fetchProfile(session.user.id)
+          await withTimeout(fetchProfile(session.user.id), 5000)
         }
       } catch {
-        // session fetch failed
+        // session fetch failed or timed out — proceed with null
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -82,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event: AuthChangeEvent, session: Session | null) => {
+        accessTokenRef.current = session?.access_token ?? null
         setUser(session?.user ?? null)
         if (session?.user) {
           await fetchProfile(session.user.id)
@@ -109,8 +123,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOutAndClear()
   }
 
+  const getAccessToken = () => accessTokenRef.current
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, refreshProfile, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, refreshProfile, signOut, getAccessToken }}>
       {children}
     </AuthContext.Provider>
   )
