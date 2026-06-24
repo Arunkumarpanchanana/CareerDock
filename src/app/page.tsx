@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import {
-  Building2,
   FileText,
   Kanban,
   Sparkles,
@@ -84,7 +84,7 @@ export default function HomePage() {
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-gray-100/50' : 'bg-transparent'}`}>
         <div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-5 sm:px-8">
           <Link href="/" className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-[#0071e3]" />
+            <Image src="/logo.png" alt="CareerDock" width={20} height={20} className="h-5 w-5 object-contain" />
             <span className="text-sm font-semibold text-[#1d1d1f]">CareerDock</span>
           </Link>
           <div className="flex items-center gap-6">
@@ -289,7 +289,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-5 sm:px-8">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-[#0071e3]" />
+              <Image src="/logo.png" alt="CareerDock" width={16} height={16} className="h-4 w-4 object-contain" />
               <span className="text-xs font-semibold text-[#1d1d1f]">CareerDock</span>
             </div>
             <p className="text-xs text-[#6e6e73]">

@@ -16,6 +16,15 @@ export const metadata: Metadata = {
   title: "CareerDock - Career Acceleration Platform",
   description:
     "Build ATS-optimized resumes, track job applications, and accelerate your career with smart suggestions and expert guidance.",
+  icons: [{ rel: "icon", url: "/logo.png", type: "image/png" }],
+  openGraph: {
+    title: "CareerDock - Career Acceleration Platform",
+    description:
+      "Build ATS-optimized resumes, track job applications, and accelerate your career with smart suggestions and expert guidance.",
+    type: "website",
+    siteName: "CareerDock",
+    images: [{ url: "/logo.png", width: 512, height: 512 }],
+  },
 };
 
 export default function RootLayout({

@@ -1,9 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import { useAuth } from '@/components/auth/AuthProvider'
 import {
   Briefcase,
-  Building2,
   ChevronLeft,
   Globe,
   LayoutDashboard,
@@ -62,13 +62,13 @@ export function Sidebar() {
         <div className="flex h-16 items-center justify-between border-b border-[var(--glass-border)] px-4">
           {!collapsed && (
             <Link href="/dashboard" className="flex items-center gap-2">
-              <Building2 className="h-6 w-6 text-[var(--accent)]" />
+              <Image src="/logo.png" alt="CareerDock" width={24} height={24} className="h-6 w-6 object-contain" />
               <span className="text-lg font-bold text-[var(--text-primary)]">CareerDock</span>
             </Link>
           )}
           {collapsed && (
             <Link href="/dashboard" className="mx-auto">
-              <Building2 className="h-6 w-6 text-[var(--accent)]" />
+              <Image src="/logo.png" alt="CareerDock" width={24} height={24} className="h-6 w-6 object-contain" />
             </Link>
           )}
           <div className="flex items-center gap-1">
