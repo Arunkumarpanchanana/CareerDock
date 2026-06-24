@@ -279,7 +279,7 @@ export default function ProfileForm({ initialProfile }: { initialProfile: Profil
         <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl mb-6">
           <div className="flex items-center gap-3">
             <div className={`rounded-lg p-2 ${
-              activeProfile?.plan_tier === 'premium'
+              activeProfile?.plan_tier === 'premium' || activeProfile?.plan_tier === 'premium_pro'
                 ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
                 : 'bg-[var(--warning)]/15 text-[var(--warning)]'
             }`}>
@@ -287,16 +287,20 @@ export default function ProfileForm({ initialProfile }: { initialProfile: Profil
             </div>
             <div>
               <p className="text-sm font-medium text-[var(--text-primary)]">
-                {activeProfile?.plan_tier === 'premium' ? 'Premium Plan' : 'Free Plan'}
+                {activeProfile?.plan_tier === 'premium_pro' ? 'Premium Pro Plan' 
+                  : activeProfile?.plan_tier === 'premium' ? 'Premium Plan' 
+                  : 'Free Trial Plan'}
               </p>
               <p className="text-xs text-[var(--text-secondary)]">
-                {activeProfile?.plan_tier === 'premium'
+                {activeProfile?.plan_tier === 'premium_pro'
+                  ? 'Unlimited resumes, tracking, expert support & more'
+                  : activeProfile?.plan_tier === 'premium'
                   ? 'Unlimited resumes and job tracking'
-                  : 'Upgrade for unlimited resumes and job tracking'}
+                  : 'Upgrade for unlimited resumes, mock interviews & more'}
               </p>
             </div>
           </div>
-          {activeProfile?.plan_tier !== 'premium' && (
+          {activeProfile?.plan_tier === 'free' && (
             <Link
               href="/upgrade"
               className="flex items-center gap-1 px-4 py-2 bg-[var(--accent)] text-white text-sm font-medium rounded-xl hover:bg-[var(--accent-hover)] transition-all"
@@ -305,8 +309,8 @@ export default function ProfileForm({ initialProfile }: { initialProfile: Profil
               <ChevronRight className="h-4 w-4" />
             </Link>
           )}
-          {activeProfile?.plan_tier === 'premium' && (
-            <Badge variant="accent">Premium</Badge>
+          {(activeProfile?.plan_tier === 'premium' || activeProfile?.plan_tier === 'premium_pro') && (
+            <Badge variant="accent">{activeProfile.plan_tier === 'premium_pro' ? 'Premium Pro' : 'Premium'}</Badge>
           )}
         </div>
 
