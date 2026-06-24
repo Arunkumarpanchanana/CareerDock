@@ -90,7 +90,7 @@ export const adminCreateUserSchema = z.object({
 
 export const adminUpdatePlanSchema = z.object({
   id: z.string().uuid(),
-  plan_tier: z.enum(['free', 'premium']),
+  plan_tier: z.enum(['free', 'premium', 'premium_pro']),
 })
 
 export const adminResetPasswordSchema = z.object({
