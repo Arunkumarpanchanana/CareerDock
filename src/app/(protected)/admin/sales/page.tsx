@@ -8,6 +8,7 @@ interface PlanStats {
   total: number
   free: number
   premium: number
+  premiumPro: number
   conversionRate: string
   referredCount: number
   withReferralCode: number
@@ -42,8 +43,9 @@ export default function SalesDashboardPage() {
     total: users.length,
     free: users.filter(u => u.plan_tier === 'free').length,
     premium: users.filter(u => u.plan_tier === 'premium').length,
+    premiumPro: users.filter(u => u.plan_tier === 'premium_pro').length,
     conversionRate: users.length > 0
-      ? ((users.filter(u => u.plan_tier === 'premium').length / users.length) * 100).toFixed(1)
+      ? (((users.filter(u => u.plan_tier === 'premium' || u.plan_tier === 'premium_pro').length) / users.length) * 100).toFixed(1)
       : '0.0',
     referredCount: users.filter(u => u.referred_by).length,
     withReferralCode: users.filter(u => u.referral_code).length,
@@ -53,6 +55,7 @@ export default function SalesDashboardPage() {
     { label: 'Total Users', value: String(stats.total), sub: 'registered accounts', color: 'text-blue-600 bg-blue-50' },
     { label: 'Free Plan', value: String(stats.free), sub: `${stats.total > 0 ? ((stats.free / stats.total) * 100).toFixed(0) : 0}% of users`, color: 'text-gray-600 bg-gray-50' },
     { label: 'Premium Plan', value: String(stats.premium), sub: `${stats.conversionRate}% conversion rate`, color: 'text-green-600 bg-green-50' },
+    { label: 'Premium Pro', value: String(stats.premiumPro), sub: `${stats.total > 0 ? ((stats.premiumPro / stats.total) * 100).toFixed(0) : 0}% of users`, color: 'text-purple-600 bg-purple-50' },
     { label: 'Referred Users', value: String(stats.referredCount), sub: `${stats.withReferralCode} users with referral codes`, color: 'text-purple-600 bg-purple-50' },
   ]
 
@@ -108,6 +111,18 @@ export default function SalesDashboardPage() {
                 />
               </div>
             </div>
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-gray-600">Premium Pro</span>
+                <span className="font-medium text-gray-900">{stats.premiumPro} ({((stats.premiumPro / stats.total) * 100).toFixed(0)}%)</span>
+              </div>
+              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-purple-500 rounded-full transition-all"
+                  style={{ width: `${(stats.premiumPro / stats.total) * 100}%` }}
+                />
+              </div>
+            </div>
           </div>
         ) : (
           <p className="text-gray-400 text-sm py-4 text-center">No user data available yet.</p>
@@ -125,7 +140,7 @@ export default function SalesDashboardPage() {
                   <p className="text-xs text-gray-500">{u.email}</p>
                 </div>
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                  u.plan_tier === 'premium' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                  u.plan_tier === 'premium_pro' ? 'bg-purple-100 text-purple-700' : u.plan_tier === 'premium' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                 }`}>
                   {u.plan_tier}
                 </span>
