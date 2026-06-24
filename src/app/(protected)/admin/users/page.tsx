@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 const PLAN_COLORS: Record<string, string> = {
   free: 'bg-gray-100 text-gray-700',
   premium: 'bg-green-100 text-green-700',
+  premium_pro: 'bg-purple-100 text-purple-700',
 }
 
 export default function AdminUsersPage() {
@@ -40,8 +41,10 @@ export default function AdminUsersPage() {
     load()
   }, [])
 
-  const togglePlan = async (user: Profile) => {
-    const newTier = user.plan_tier === 'premium' ? 'free' : 'premium'
+  const cyclePlan = async (user: Profile) => {
+    const nextTier = user.plan_tier === 'free' ? 'premium' 
+      : user.plan_tier === 'premium' ? 'premium_pro' 
+      : 'free'
     setUpdating(user.id)
     setError(null)
     try {
@@ -52,10 +55,10 @@ export default function AdminUsersPage() {
       const res = await fetch('/api/admin/users', {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ id: user.id, plan_tier: newTier }),
+        body: JSON.stringify({ id: user.id, plan_tier: nextTier }),
       })
       if (!res.ok) throw new Error('Update failed')
-      setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, plan_tier: newTier } : u)))
+      setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, plan_tier: nextTier } : u)))
     } catch {
       setError('Failed to update plan')
     } finally {
@@ -118,6 +121,7 @@ export default function AdminUsersPage() {
 
   const freeCount = users.filter(u => u.plan_tier === 'free').length
   const premiumCount = users.filter(u => u.plan_tier === 'premium').length
+  const proCount = users.filter(u => u.plan_tier === 'premium_pro').length
 
   return (
     <div className="space-y-6">
@@ -125,7 +129,7 @@ export default function AdminUsersPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
           <p className="mt-1 text-sm text-gray-600">
-            {users.length} total · {freeCount} free · {premiumCount} premium
+            {users.length} total · {freeCount} free · {premiumCount} premium · {proCount} pro
           </p>
         </div>
         <input
@@ -181,15 +185,17 @@ export default function AdminUsersPage() {
                       {updating === u.id ? '...' : u.role === 'admin' ? 'Demote' : 'Make Admin'}
                     </button>
                     <button
-                      onClick={() => togglePlan(u)}
+                      onClick={() => cyclePlan(u)}
                       disabled={updating === u.id}
                       className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
-                        u.plan_tier === 'premium'
-                          ? 'border-red-200 text-red-600 hover:bg-red-50'
-                          : 'border-green-200 text-green-600 hover:bg-green-50'
+                        u.plan_tier === 'free'
+                          ? 'border-green-200 text-green-600 hover:bg-green-50'
+                          : u.plan_tier === 'premium'
+                          ? 'border-purple-200 text-purple-600 hover:bg-purple-50'
+                          : 'border-red-200 text-red-600 hover:bg-red-50'
                       }`}
                     >
-                      {updating === u.id ? '...' : u.plan_tier === 'premium' ? 'Downgrade' : 'Upgrade'}
+                      {updating === u.id ? '...' : u.plan_tier === 'free' ? 'To Premium' : u.plan_tier === 'premium' ? 'To Pro' : 'To Free'}
                     </button>
                     <button
                       onClick={() => { setResetPwUser(u); setNewPassword(''); setPwError('') }}
