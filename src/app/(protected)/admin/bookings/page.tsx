@@ -1,5 +1,6 @@
 'use client'
 
+import { createClient } from '@/lib/supabase/client'
 import type { Booking, ExpertConsultant, Profile } from '@/types/database'
 import { useEffect, useState } from 'react'
 
@@ -19,19 +20,32 @@ export default function AdminBookingsPage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    fetch('/api/admin/bookings').then(r => r.json()).then(data => {
-      if (Array.isArray(data)) setBookings(data)
-      else console.error('Unexpected response format')
-    }).catch(console.error)
+    const load = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+      try {
+        const res = await fetch('/api/admin/bookings', { headers })
+        const data = await res.json()
+        if (Array.isArray(data)) setBookings(data)
+        else console.error('Unexpected response format')
+      } catch (e) { console.error(e) }
+    }
+    load()
   }, [])
 
   const updateStatus = async (id: string, status: string) => {
     setUpdating(id)
     setError(null)
     try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
       const res = await fetch('/api/admin/bookings', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ id, status }),
       })
       if (!res.ok) throw new Error('Update failed')

@@ -1,5 +1,6 @@
 'use client'
 
+import { createClient } from '@/lib/supabase/client'
 import { Button, Input } from '@/components/ui'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import type { ExpertConsultant } from '@/types/database'
@@ -27,10 +28,19 @@ export default function AdminExpertsPage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    fetch('/api/admin/experts').then(r => r.json()).then(data => {
-      if (Array.isArray(data)) setExperts(data)
-      else console.error('Unexpected response format')
-    }).catch(console.error)
+    const load = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+      try {
+        const res = await fetch('/api/admin/experts', { headers })
+        const data = await res.json()
+        if (Array.isArray(data)) setExperts(data)
+        else console.error('Unexpected response format')
+      } catch (e) { console.error(e) }
+    }
+    load()
   }, [])
 
   const openNew = () => { setEditing(null); setForm(EMPTY_FORM); setShowForm(true) }
@@ -45,9 +55,13 @@ export default function AdminExpertsPage() {
     setSaving(true)
     setError(null)
     try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
       const method = editing ? 'PUT' : 'POST'
       const body = editing ? { id: editing.id, ...form, bio: form.bio || null } : { ...form, bio: form.bio || null }
-      const res = await fetch('/api/admin/experts', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const res = await fetch('/api/admin/experts', { method, headers, body: JSON.stringify(body) })
       if (!res.ok) throw new Error('Save failed')
       const saved = await res.json()
       setExperts((prev) => {
@@ -63,7 +77,11 @@ export default function AdminExpertsPage() {
     if (!deleteTarget) return
     setError(null)
     try {
-      const res = await fetch(`/api/admin/experts?id=${deleteTarget}`, { method: 'DELETE' })
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = {}
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+      const res = await fetch(`/api/admin/experts?id=${deleteTarget}`, { method: 'DELETE', headers })
       if (!res.ok) throw new Error('Delete failed')
       setExperts((prev) => prev.filter((e) => e.id !== deleteTarget))
     } catch { setError('Failed to delete expert') }

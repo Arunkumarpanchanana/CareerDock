@@ -1,6 +1,6 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth/AuthProvider'
 import { useEffect, useState } from 'react'
 
 interface Gateway {
@@ -63,17 +63,20 @@ export default function AdminPaymentsPage() {
 
   useEffect(() => { loadAll() }, [])
 
-  const getHeaders = async () => {
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+  const { getAccessToken } = useAuth()
+
+  useEffect(() => { loadAll() }, [])
+
+  const authHeaders = (): Record<string, string> => {
+    const token = getAccessToken()
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+    if (token) headers['Authorization'] = `Bearer ${token}`
     return headers
   }
 
   const loadAll = async () => {
     setLoading(true)
-    const headers = await getHeaders()
+    const headers = authHeaders()
     const [gRes, pRes, cRes, tRes] = await Promise.all([
       fetch('/api/admin/payments/gateways', { headers }),
       fetch('/api/plan-prices'),
@@ -97,7 +100,7 @@ export default function AdminPaymentsPage() {
 
   const savePrices = async () => {
     setSaving(true); setMessage('')
-    const headers = await getHeaders()
+    const headers = authHeaders()
     for (const [tier, vals] of Object.entries(editPrices)) {
       await fetch('/api/admin/payments/prices', {
         method: 'PUT', headers,
@@ -122,7 +125,7 @@ export default function AdminPaymentsPage() {
 
   const saveGateway = async () => {
     setSaving(true); setMessage('')
-    const headers = await getHeaders()
+    const headers = authHeaders()
     const body: any = { ...gatewayForm }
     if (editingGateway) body.id = editingGateway.id
     const res = await fetch('/api/admin/payments/gateways', { method: 'PUT', headers, body: JSON.stringify(body) })
@@ -150,7 +153,7 @@ export default function AdminPaymentsPage() {
 
   const saveCoupon = async () => {
     setSaving(true); setMessage('')
-    const headers = await getHeaders()
+    const headers = authHeaders()
     const body: any = { ...couponForm }
     if (couponForm.max_uses === '') body.max_uses = null
     if (couponForm.plan_tier === '') body.plan_tier = null
@@ -462,11 +465,13 @@ export default function AdminPaymentsPage() {
                   <td className="py-3 text-xs text-gray-500">{formatDate(c.expires_at)}</td>
                   <td className="py-3">
                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                      c.is_active && (!c.expires_at || new Date(c.expires_at) > new Date())
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-600'
+                      !c.is_active ? 'bg-gray-100 text-gray-500' :
+                      c.expires_at && new Date(c.expires_at) <= new Date()
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-green-100 text-green-700'
                     }`}>
-                      {c.is_active && (!c.expires_at || new Date(c.expires_at) > new Date()) ? 'Active' : 'Expired'}
+                      {!c.is_active ? 'Inactive' :
+                       c.expires_at && new Date(c.expires_at) <= new Date() ? 'Expired' : 'Active'}
                     </span>
                   </td>
                   <td className="py-3">

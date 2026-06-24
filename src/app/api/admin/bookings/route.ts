@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { authAsAdmin } from '@/lib/admin-auth'
 import { rateLimitByIp } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import { bookingUpdateSchema } from '@/lib/validation'
@@ -8,19 +8,15 @@ export async function GET(request: Request) {
   if (limit instanceof NextResponse) return limit
 
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { client, error } = await authAsAdmin(request)
+    if (error) return error
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-    const { data, error } = await supabase
+    const { data, error: dbError } = await client
       .from('bookings')
       .select('*, expert_consultants(name, domain_expertise), profiles!inner(full_name, email)')
       .order('scheduled_at', { ascending: false })
 
-    if (error) throw error
+    if (dbError) throw dbError
     return NextResponse.json(data)
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error'
@@ -33,12 +29,8 @@ export async function PUT(request: Request) {
   if (limit instanceof NextResponse) return limit
 
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const { client, error } = await authAsAdmin(request)
+    if (error) return error
 
     const body = await request.json()
     const parsed = bookingUpdateSchema.safeParse(body)
@@ -47,8 +39,8 @@ export async function PUT(request: Request) {
     }
     const { id, ...payload } = parsed.data
 
-    const { data, error } = await supabase.from('bookings').update(payload).eq('id', id).select().single()
-    if (error) throw error
+    const { data, error: dbError } = await client.from('bookings').update(payload).eq('id', id).select().single()
+    if (dbError) throw dbError
     return NextResponse.json(data)
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error'

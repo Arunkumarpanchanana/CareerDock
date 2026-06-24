@@ -1,29 +1,12 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { authAsAdmin } from '@/lib/admin-auth'
 import { NextResponse } from 'next/server'
-
-async function checkAdmin(request: Request) {
-  const adminClient = createAdminClient()
-  if (!adminClient) return null
-
-  const authHeader = request.headers.get('Authorization') || ''
-  const token = authHeader.replace('Bearer ', '')
-  if (!token) return null
-
-  const { data: { user } } = await adminClient.auth.getUser(token)
-  if (!user) return null
-
-  const { data: profile } = await adminClient.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') return null
-
-  return adminClient
-}
 
 export async function GET(request: Request) {
   try {
-    const adminClient = await checkAdmin(request)
-    if (!adminClient) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const { client, error } = await authAsAdmin(request)
+    if (error) return error
 
-    const { data } = await adminClient.from('payment_configs').select('*')
+    const { data } = await client.from('payment_configs').select('*')
     return NextResponse.json(data ?? [])
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error'
@@ -33,8 +16,8 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const adminClient = await checkAdmin(request)
-    if (!adminClient) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const { client, error } = await authAsAdmin(request)
+    if (error) return error
 
     const body = await request.json()
     const { id, gateway, api_key, api_secret, merchant_id, salt_key, is_active } = body
@@ -44,16 +27,16 @@ export async function PUT(request: Request) {
     }
 
     if (id) {
-      const { error } = await adminClient.from('payment_configs').update({
+      const { error: dbError } = await client.from('payment_configs').update({
         gateway, api_key, api_secret, merchant_id, salt_key, is_active,
         updated_at: new Date().toISOString(),
       }).eq('id', id)
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
     } else {
-      const { error } = await adminClient.from('payment_configs').insert({
+      const { error: dbError } = await client.from('payment_configs').insert({
         gateway, api_key, api_secret, merchant_id, salt_key, is_active,
       })
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })

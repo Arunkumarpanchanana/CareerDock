@@ -1,33 +1,42 @@
 'use client'
 
-import { useAuth } from '@/components/auth/AuthProvider'
+import { createClient } from '@/lib/supabase/client'
 import { Briefcase, Calendar, ExternalLink, TrendingUp, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function AdminDashboard() {
-  const { loading } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<{ label: string; value: string; icon: typeof Users; color: string }[]>([])
+  const [loadingStats, setLoadingStats] = useState(true)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    Promise.all([
-      fetch('/api/admin/experts').then(r => r.json()),
-      fetch('/api/admin/admins').then(r => r.json()),
-      fetch('/api/admin/bookings').then(r => r.json()),
-    ]).then(([experts, users, bookings]) => {
-      const adms = (users as { role: string }[]).filter((u) => u.role === 'admin')
-      setStats([
-        { label: 'Total Users', value: String((users as unknown[]).length), icon: Users, color: 'text-blue-600 bg-blue-50' },
-        { label: 'Admins', value: String(adms.length), icon: TrendingUp, color: 'text-purple-600 bg-purple-50' },
-        { label: 'Experts', value: String((experts as unknown[]).length), icon: Briefcase, color: 'text-green-600 bg-green-50' },
-        { label: 'Bookings', value: String((bookings as unknown[]).length), icon: Calendar, color: 'text-orange-600 bg-orange-50' },
-      ])
-    }).catch(console.error)
+    const load = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = {}
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+      try {
+        const [experts, users, bookings] = await Promise.all([
+          fetch('/api/admin/experts', { headers }).then(r => r.json()),
+          fetch('/api/admin/admins', { headers }).then(r => r.json()),
+          fetch('/api/admin/bookings', { headers }).then(r => r.json()),
+        ])
+        const adms = (Array.isArray(users) ? users : []).filter((u: { role: string }) => u.role === 'admin')
+        setStats([
+          { label: 'Total Users', value: String(Array.isArray(users) ? users.length : 0), icon: Users, color: 'text-blue-600 bg-blue-50' },
+          { label: 'Admins', value: String(adms.length), icon: TrendingUp, color: 'text-purple-600 bg-purple-50' },
+          { label: 'Experts', value: String(Array.isArray(experts) ? experts.length : 0), icon: Briefcase, color: 'text-green-600 bg-green-50' },
+          { label: 'Bookings', value: String(Array.isArray(bookings) ? bookings.length : 0), icon: Calendar, color: 'text-orange-600 bg-orange-50' },
+        ])
+      } catch { /* stats will show 0 */ }
+      finally { setLoadingStats(false) }
+    }
+    load()
   }, [])
 
-  if (loading) {
+  if (loadingStats) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="animate-spin h-6 w-6 border-2 border-[var(--accent)] border-t-transparent rounded-full" />
