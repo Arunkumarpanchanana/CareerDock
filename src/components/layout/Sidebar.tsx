@@ -5,6 +5,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import {
   Briefcase,
   ChevronLeft,
+  CreditCard,
   Globe,
   LayoutDashboard,
   Lock,
@@ -40,7 +41,12 @@ export function Sidebar() {
     { href: '/interview', label: 'Mock Interview', icon: MessageSquare, premium: true },
     { href: '/experts', label: 'Experts', icon: Users, premium: true },
     { href: '/profile', label: 'Profile', icon: Settings },
-    ...(profile?.role === 'admin' ? [{ href: '/admin', label: 'Admin', icon: Shield }] : []),
+    ...(profile?.role === 'admin'
+      ? [
+          { href: '/admin', label: 'Admin', icon: Shield },
+          { href: '/admin/payments', label: 'Payments', icon: CreditCard },
+        ]
+      : []),
   ]
 
   return (
