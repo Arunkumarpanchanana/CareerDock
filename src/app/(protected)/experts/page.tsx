@@ -25,7 +25,7 @@ export default function ExpertsPage() {
   }, [])
 
   return (
-    <PremiumGate feature="Expert Consultants">
+    <PremiumGate feature="Expert Consultants" requiredTier="premium_pro">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Expert Consultants</h1>
