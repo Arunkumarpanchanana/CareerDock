@@ -49,7 +49,7 @@ export default async function DashboardPage() {
         <div className="rounded-2xl border border-[var(--warning)]/25 bg-[var(--warning)]/10 backdrop-blur-xl p-4 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-[var(--warning)]">Free Plan</p>
-            <p className="text-xs text-[var(--text-secondary)]">Upgrade to Premium for unlimited resumes and job tracking.</p>
+            <p className="text-xs text-[var(--text-secondary)]">Upgrade to Premium or Premium Pro for unlimited resumes and job tracking.</p>
           </div>
           <Link
             href="/upgrade"
