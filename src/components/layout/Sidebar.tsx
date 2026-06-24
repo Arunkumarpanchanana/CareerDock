@@ -124,7 +124,7 @@ export function Sidebar() {
           {profile && !collapsed && (
             <div className="mb-3 flex items-center gap-3 px-3 py-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)]/15 text-sm font-semibold text-[var(--accent)]">
-                {profile.full_name.charAt(0).toUpperCase()}
+                {(profile.full_name || '?').charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-[var(--text-primary)]">

@@ -166,7 +166,7 @@ export default function ProfileForm({ initialProfile }: { initialProfile: Profil
       <Card>
         <div className="flex items-center gap-4 mb-6 pb-4 border-b border-[var(--glass-border)]">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)]/15 text-xl font-bold text-[var(--accent)]">
-            {fields.full_name.charAt(0).toUpperCase() || '?'}
+            {(fields.full_name || '?').charAt(0).toUpperCase()}
           </div>
           <div>
             <p className="font-medium text-[var(--text-primary)]">{fields.full_name || 'Your Name'}</p>

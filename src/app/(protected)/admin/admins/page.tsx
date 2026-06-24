@@ -115,7 +115,7 @@ export default function AdminAdminsPage() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-700">
-                      {u.full_name.charAt(0).toUpperCase()}
+                      {(u.full_name || '?').charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{u.full_name}</p>
