@@ -29,7 +29,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const { profile, signOut } = useAuth()
 
-  const isFree = profile?.plan_tier !== 'premium'
+  const isFree = profile?.plan_tier !== 'premium' && profile?.plan_tier !== 'premium_pro'
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
