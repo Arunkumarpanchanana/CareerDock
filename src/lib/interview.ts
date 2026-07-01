@@ -1,6 +1,4 @@
-const AI_API_KEY = process.env.AI_API_KEY
-const AI_API_URL = process.env.AI_API_URL ?? 'https://api.groq.com/openai/v1/chat/completions'
-const AI_MODEL = process.env.AI_MODEL ?? 'llama-3.3-70b-versatile'
+import { callAI } from './ai'
 
 interface Message {
   role: 'system' | 'user' | 'assistant'
@@ -50,35 +48,7 @@ export function parseInterviewResponse(content: string): { type: 'question' | 'c
 }
 
 export async function callGemini(messages: Message[], temperature = 0.7): Promise<string | null> {
-  if (!AI_API_KEY) return null
-
-  try {
-    const response = await fetch(AI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${AI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        messages,
-        temperature,
-        max_tokens: 500,
-      }),
-    })
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => '')
-      console.error(`AI API error: ${response.status} ${response.statusText}`, body)
-      return null
-    }
-
-    const data = await response.json()
-    return data.choices?.[0]?.message?.content?.trim() ?? null
-  } catch (e) {
-    console.error('AI API call failed:', e)
-    return null
-  }
+  return callAI(messages, temperature, 500)
 }
 
 export async function handleInterviewTurn(params: {

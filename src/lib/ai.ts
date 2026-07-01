@@ -2,15 +2,54 @@ const AI_API_KEY = process.env.AI_API_KEY
 const AI_API_URL = process.env.AI_API_URL ?? 'https://api.openai.com/v1/chat/completions'
 const AI_MODEL = process.env.AI_MODEL ?? 'gpt-4o-mini'
 
-interface AIConfig {
-  apiKey: string
-  apiUrl: string
-  model: string
-}
+const AI_FALLBACK_KEY = process.env.AI_FALLBACK_API_KEY
+const AI_FALLBACK_URL = process.env.AI_FALLBACK_API_URL ?? 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+const AI_FALLBACK_MODEL = process.env.AI_FALLBACK_MODEL ?? 'gemini-2.0-flash'
 
-function getConfig(): AIConfig | null {
-  if (!AI_API_KEY) return null
-  return { apiKey: AI_API_KEY, apiUrl: AI_API_URL, model: AI_MODEL }
+export async function callAI(
+  messages: { role: string; content: string }[],
+  temperature: number,
+  maxTokens: number
+): Promise<string | null> {
+  const tryProvider = async (key: string, url: string, model: string): Promise<string | null> => {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+      body: JSON.stringify({ model, messages, temperature, max_tokens: maxTokens }),
+    })
+    if (!response.ok) return null
+    const data = await response.json()
+    return data.choices?.[0]?.message?.content?.trim() ?? null
+  }
+
+  if (AI_API_KEY) {
+    try {
+      const result = await tryProvider(AI_API_KEY, AI_API_URL, AI_MODEL)
+      if (result) return result
+    } catch (e) {
+      console.error('Primary AI API failed:', e)
+    }
+  }
+
+  if (AI_FALLBACK_KEY) {
+    try {
+      const result = await tryProvider(AI_FALLBACK_KEY, AI_FALLBACK_URL, AI_FALLBACK_MODEL)
+      if (result) return result
+    } catch (e) {
+      console.error('Fallback AI API failed:', e)
+    }
+  }
+
+  if (AI_API_KEY) {
+    try {
+      const result = await tryProvider(AI_API_KEY, AI_API_URL, AI_MODEL)
+      if (result) return result
+    } catch (e) {
+      console.error('Primary retry AI API failed:', e)
+    }
+  }
+
+  return null
 }
 
 const SYSTEM_PROMPTS: Record<string, string> = {
@@ -71,96 +110,68 @@ Return ONLY the letter text, no other text.`,
 }
 
 export async function generateBullets(role: string, context: string): Promise<string[]> {
-  const config = getConfig()
-  if (!config) return generateFallbackBullets(role, context)
+  const content = await callAI(
+    [
+      { role: 'system', content: SYSTEM_PROMPTS.bullets },
+      { role: 'user', content: `Role: ${role}\nContext: ${context}\n\nGenerate 3 achievement bullet points.` },
+    ],
+    0.7,
+    300
+  )
+  if (!content) {
+    if (AI_API_KEY || AI_FALLBACK_KEY) throw new Error('AI servers are busy, please try again after sometime')
+    return generateFallbackBullets(role, context)
+  }
 
-  const response = await fetch(config.apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPTS.bullets },
-        { role: 'user', content: `Role: ${role}\nContext: ${context}\n\nGenerate 3 achievement bullet points.` },
-      ],
-      temperature: 0.7,
-      max_tokens: 300,
-    }),
-  })
-
-  if (!response.ok) return generateFallbackBullets(role, context)
-
-  const data = await response.json()
   try {
-    const parsed = JSON.parse(data.choices[0].message.content)
+    const parsed = JSON.parse(content)
     return Array.isArray(parsed) ? parsed.slice(0, 3) : generateFallbackBullets(role, context)
   } catch {
+    if (AI_API_KEY || AI_FALLBACK_KEY) throw new Error('AI servers are busy, please try again after sometime')
     return generateFallbackBullets(role, context)
   }
 }
 
 export async function generateSummary(experience: string[], targetRole: string): Promise<string> {
-  const config = getConfig()
-  if (!config) return generateFallbackSummary(experience, targetRole)
-
   const history = experience.length > 0
     ? experience.join('\n')
     : 'No prior experience listed (entry-level candidate)'
 
-  const response = await fetch(config.apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPTS.summary },
-        { role: 'user', content: `Background:\n${history}\n\nTarget Role: ${targetRole}\n\nGenerate a professional summary.` },
-      ],
-      temperature: 0.7,
-      max_tokens: 200,
-    }),
-  })
+  const content = await callAI(
+    [
+      { role: 'system', content: SYSTEM_PROMPTS.summary },
+      { role: 'user', content: `Background:\n${history}\n\nTarget Role: ${targetRole}\n\nGenerate a professional summary.` },
+    ],
+    0.7,
+    200
+  )
+  if (!content) {
+    if (AI_API_KEY || AI_FALLBACK_KEY) throw new Error('AI servers are busy, please try again after sometime')
+    return generateFallbackSummary(experience, targetRole)
+  }
 
-  if (!response.ok) return generateFallbackSummary(experience, targetRole)
-
-  const data = await response.json()
-  return data.choices[0].message.content?.trim() ?? generateFallbackSummary(experience, targetRole)
+  return content
 }
 
 export async function rewriteText(text: string): Promise<string[]> {
-  const config = getConfig()
-  if (!config) return generateFallbackRewrites(text)
+  const content = await callAI(
+    [
+      { role: 'system', content: SYSTEM_PROMPTS.rewrite },
+      { role: 'user', content: `Original: "${text}"\n\nGenerate 3 improved versions.` },
+    ],
+    0.7,
+    300
+  )
+  if (!content) {
+    if (AI_API_KEY || AI_FALLBACK_KEY) throw new Error('AI servers are busy, please try again after sometime')
+    return generateFallbackRewrites(text)
+  }
 
-  const response = await fetch(config.apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPTS.rewrite },
-        { role: 'user', content: `Original: "${text}"\n\nGenerate 3 improved versions.` },
-      ],
-      temperature: 0.7,
-      max_tokens: 300,
-    }),
-  })
-
-  if (!response.ok) return generateFallbackRewrites(text)
-
-  const data = await response.json()
   try {
-    const parsed = JSON.parse(data.choices[0].message.content)
+    const parsed = JSON.parse(content)
     return Array.isArray(parsed) ? parsed.slice(0, 3) : generateFallbackRewrites(text)
   } catch {
+    if (AI_API_KEY || AI_FALLBACK_KEY) throw new Error('AI servers are busy, please try again after sometime')
     return generateFallbackRewrites(text)
   }
 }
@@ -171,33 +182,23 @@ export async function generateCoverLetter(params: {
   company: string
   jobDescription: string
 }): Promise<string> {
-  const config = getConfig()
-  if (!config) return generateFallbackCoverLetter(params)
+  const content = await callAI(
+    [
+      { role: 'system', content: SYSTEM_PROMPTS.coverLetter },
+      {
+        role: 'user',
+        content: `Resume: ${params.resume}\n\nJob Title: ${params.jobTitle}\nCompany: ${params.company}\n\nJob Description: ${params.jobDescription || 'No specific description provided.'}\n\nGenerate a professional cover letter.`,
+      },
+    ],
+    0.7,
+    500
+  )
+  if (!content) {
+    if (AI_API_KEY || AI_FALLBACK_KEY) throw new Error('AI servers are busy, please try again after sometime')
+    return generateFallbackCoverLetter(params)
+  }
 
-  const response = await fetch(config.apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPTS.coverLetter },
-        {
-          role: 'user',
-          content: `Resume: ${params.resume}\n\nJob Title: ${params.jobTitle}\nCompany: ${params.company}\n\nJob Description: ${params.jobDescription || 'No specific description provided.'}\n\nGenerate a professional cover letter.`,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    }),
-  })
-
-  if (!response.ok) return generateFallbackCoverLetter(params)
-
-  const data = await response.json()
-  return data.choices[0].message.content?.trim() ?? generateFallbackCoverLetter(params)
+  return content
 }
 
 export async function analyzeSkillGap(params: {
@@ -213,34 +214,24 @@ export async function analyzeSkillGap(params: {
   missingKeywords: string[]
   suggestions: string[]
 }> {
-  const config = getConfig()
-  if (!config) return generateFallbackSkillGap(params)
+  const content = await callAI(
+    [
+      { role: 'system', content: SYSTEM_PROMPTS.skillGap },
+      {
+        role: 'user',
+        content: `Job Title: ${params.jobTitle}\n\nJob Description:\n${params.jobDescription}\n\nResume:\n${params.resume}\n\nAnalyze the fit.`,
+      },
+    ],
+    0.3,
+    800
+  )
+  if (!content) {
+    if (AI_API_KEY || AI_FALLBACK_KEY) throw new Error('AI servers are busy, please try again after sometime')
+    return generateFallbackSkillGap(params)
+  }
 
   try {
-    const response = await fetch(config.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPTS.skillGap },
-          {
-            role: 'user',
-            content: `Job Title: ${params.jobTitle}\n\nJob Description:\n${params.jobDescription}\n\nResume:\n${params.resume}\n\nAnalyze the fit.`,
-          },
-        ],
-        temperature: 0.3,
-        max_tokens: 800,
-      }),
-    })
-
-    if (!response.ok) return generateFallbackSkillGap(params)
-
-    const data = await response.json()
-    const parsed = JSON.parse(data.choices[0].message.content)
+    const parsed = JSON.parse(content)
     return {
       score: Math.max(0, Math.min(100, parsed.score ?? 50)),
       verdict: parsed.verdict || 'Possible fit',
@@ -251,6 +242,7 @@ export async function analyzeSkillGap(params: {
       suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
     }
   } catch {
+    if (AI_API_KEY || AI_FALLBACK_KEY) throw new Error('AI servers are busy, please try again after sometime')
     return generateFallbackSkillGap(params)
   }
 }
