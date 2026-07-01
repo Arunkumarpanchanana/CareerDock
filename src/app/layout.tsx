@@ -13,17 +13,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CareerDock - Career Acceleration Platform",
+  title: "My Career Dock - Career Acceleration Platform",
   description:
     "Build ATS-optimized resumes, track job applications, and accelerate your career with smart suggestions and expert guidance.",
-  icons: [{ rel: "icon", url: "/logo.png", type: "image/png" }],
+  icons: [{ rel: "icon", url: "/logo.jpg", type: "image/jpeg" }],
   openGraph: {
-    title: "CareerDock - Career Acceleration Platform",
+    title: "My Career Dock - Career Acceleration Platform",
     description:
       "Build ATS-optimized resumes, track job applications, and accelerate your career with smart suggestions and expert guidance.",
     type: "website",
-    siteName: "CareerDock",
-    images: [{ url: "/logo.png", width: 512, height: 512 }],
+    siteName: "My Career Dock",
+    images: [{ url: "/logo.jpg", width: 512, height: 512 }],
   },
 };
 

@@ -149,7 +149,7 @@ function SignupForm() {
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">Create account</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Start building your career with CareerDock
+            Start building your career with My Career Dock
           </p>
         </div>
 

@@ -68,13 +68,13 @@ export function Sidebar() {
         <div className="flex h-16 items-center justify-between border-b border-[var(--glass-border)] px-4">
           {!collapsed && (
             <Link href="/dashboard" className="flex items-center gap-2">
-              <Image src="/logo.png" alt="CareerDock" width={24} height={24} className="h-6 w-6 object-contain" />
-              <span className="text-lg font-bold text-[var(--text-primary)]">CareerDock</span>
+              <Image src="/logo.jpg" alt="My Career Dock" width={24} height={24} className="h-6 w-6 object-contain" />
+              <span className="text-lg font-bold text-[var(--text-primary)]">My Career Dock</span>
             </Link>
           )}
           {collapsed && (
             <Link href="/dashboard" className="mx-auto">
-              <Image src="/logo.png" alt="CareerDock" width={24} height={24} className="h-6 w-6 object-contain" />
+              <Image src="/logo.jpg" alt="My Career Dock" width={24} height={24} className="h-6 w-6 object-contain" />
             </Link>
           )}
           <div className="flex items-center gap-1">

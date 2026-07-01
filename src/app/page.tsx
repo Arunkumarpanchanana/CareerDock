@@ -82,10 +82,10 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-gray-100/50' : 'bg-transparent'}`}>
-        <div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-5 sm:px-8">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-5 sm:px-8">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="CareerDock" width={20} height={20} className="h-5 w-5 object-contain" />
-            <span className="text-sm font-semibold text-[#1d1d1f]">CareerDock</span>
+            <Image src="/logo.jpg" alt="My Career Dock" width={28} height={28} className="h-7 w-7 object-contain" />
+            <span className="text-base font-semibold text-[#1d1d1f]">My Career Dock</span>
           </Link>
           <div className="flex items-center gap-6">
             <Link href="/auth/login" className="text-xs font-medium text-[#6e6e73] hover:text-[#1d1d1f] transition-colors">
@@ -178,7 +178,7 @@ export default function HomePage() {
                 Everything you need to land the role
               </h2>
               <p className="mt-3 text-base sm:text-lg text-[#6e6e73] max-w-xl mx-auto">
-                From resume to offer letter — CareerDock supports every step of your job search.
+                From resume to offer letter — My Career Dock supports every step of your job search.
               </p>
             </AnimatedSection>
 
@@ -233,7 +233,7 @@ export default function HomePage() {
               </div>
               <blockquote className="text-xl sm:text-2xl text-[#1d1d1f] leading-relaxed font-medium">
                 &ldquo;I went from sending out scattered applications to running a structured job search
-                with CareerDock. The resume builder alone saved me hours.&rdquo;
+                with My Career Dock. The resume builder alone saved me hours.&rdquo;
               </blockquote>
               <div className="mt-8 flex items-center justify-center gap-1">
                 {[...Array(5)].map((_, i) => (
@@ -265,7 +265,7 @@ export default function HomePage() {
                 Ready to accelerate your career?
               </h2>
               <p className="mt-3 text-base sm:text-lg text-[#86868b] max-w-lg mx-auto">
-                Join CareerDock for free. No credit card required.
+                Join My Career Dock for free. No credit card required.
               </p>
               <div className="mt-9 flex items-center justify-center gap-3 flex-wrap">
                 <Link
@@ -289,11 +289,11 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-5 sm:px-8">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <div className="flex items-center gap-2">
-              <Image src="/logo.png" alt="CareerDock" width={16} height={16} className="h-4 w-4 object-contain" />
-              <span className="text-xs font-semibold text-[#1d1d1f]">CareerDock</span>
+              <Image src="/logo.jpg" alt="My Career Dock" width={16} height={16} className="h-4 w-4 object-contain" />
+              <span className="text-xs font-semibold text-[#1d1d1f]">My Career Dock</span>
             </div>
             <p className="text-xs text-[#6e6e73]">
-              &copy; {new Date().getFullYear()} CareerDock. All rights reserved.
+              &copy; {new Date().getFullYear()} My Career Dock. All rights reserved.
             </p>
           </div>
         </div>

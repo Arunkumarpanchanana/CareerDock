@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       },
       body: new URLSearchParams({
         amount: String(finalAmount),
-        purpose: `CareerDock ${planTier} - ${billing}`,
+        purpose: `My Career Dock ${planTier} - ${billing}`,
         buyer_name: user.email ?? 'User',
         email: user.email ?? '',
         redirect_url: `${new URL(request.url).origin}/payments/callback?plan=${planTier}`,

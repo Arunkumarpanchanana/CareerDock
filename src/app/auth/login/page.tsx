@@ -59,15 +59,15 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
           <Image
-            src="/logo.png"
-            alt="CareerDock"
+            src="/logo.jpg"
+            alt="My Career Dock"
             width={80}
             height={80}
             className="mx-auto mb-6 rounded-2xl shadow-lg"
           />
           <h1 className="text-3xl font-bold text-gray-900">Welcome back</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Sign in to your CareerDock account
+            Sign in to your My Career Dock account
           </p>
         </div>
 
