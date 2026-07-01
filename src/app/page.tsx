@@ -70,7 +70,7 @@ export default function HomePage() {
   return (
     <div className="anchor-precision flex min-h-screen flex-col bg-surface">
       {/* Navigation */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white border-b border-[#DBEAFE]' : 'bg-transparent'}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white border-b border-blue-100' : 'bg-transparent'}`}>
         <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6 sm:px-8">
           <Link href="/" className="flex items-center gap-3">
             <Image src="/logo.png" alt="My Career Dock" width={520} height={143} className="h-10 w-auto object-contain" />
@@ -172,7 +172,7 @@ export default function HomePage() {
               {features.map(({ icon: Icon, title, desc }) => (
                 <div
                   key={title}
-                  className="group rounded-lg bg-[#ffffff] p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)] hover:shadow-[0_8px_30px_rgba(0,27,61,0.1)] transition-all duration-300 cursor-default"
+                  className="group rounded-lg bg-white p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)] hover:shadow-[0_8px_30px_rgba(0,27,61,0.1)] transition-all duration-300 cursor-default"
                 >
                   <div className="w-10 h-10 rounded-lg bg-growth-green flex items-center justify-center mb-5">
                     <Icon className="h-5 w-5 text-white" />
@@ -244,7 +244,7 @@ export default function HomePage() {
             </AnimatedSection>
 
             <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
-              <div className="rounded-lg bg-[#ffffff] p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)]">
+              <div className="rounded-lg bg-white p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)]">
                 <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>Free Trial</h3>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹0</span>
@@ -272,7 +272,7 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              <div className="rounded-lg bg-[#ffffff] p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)] ring-2 ring-blue-600 relative">
+              <div className="rounded-lg bg-white p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)] ring-2 ring-blue-600 relative">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-blue-600 px-3 py-1">
                   <span
                     className="text-[10px] font-semibold text-white tracking-wider uppercase"
@@ -311,7 +311,7 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              <div className="rounded-lg bg-[#ffffff] p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)]">
+              <div className="rounded-lg bg-white p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)]">
                 <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>Premium Pro</h3>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹500</span>
@@ -417,7 +417,7 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-surface-faint border-t border-[#DBEAFE] py-8">
+      <footer className="bg-surface-faint border-t border-blue-100 py-8">
         <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <div className="flex items-center gap-2">
