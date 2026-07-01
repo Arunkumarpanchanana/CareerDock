@@ -1,3 +1,182 @@
+# Landing Page Redesign — Anchor Precision Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Replace the Apple-inspired landing page at `/` with the Anchor Precision design system.
+
+**Architecture:** Add fonts and color tokens globally, then rewrite the landing page as a single client component using the new tokens. Protected pages remain untouched.
+
+**Tech Stack:** Next.js 16 + React 19 + Tailwind v4 + next/font/google + Lucide icons
+
+---
+
+### Task 1: Add Anchor Precision fonts to root layout
+
+**Files:**
+- Modify: `src/app/layout.tsx`
+
+- [ ] **Step 1: Import Hanken Grotesk, Inter, JetBrains Mono**
+
+```tsx
+// Add alongside existing Geist imports
+import { Hanken_Grotesk, Inter, JetBrains_Mono } from "next/font/google"
+```
+
+- [ ] **Step 2: Initialize font instances as variables**
+
+```tsx
+// Add after Geist initializations
+const hankenGrotesk = Hanken_Grotesk({
+  variable: "--font-hanken-grotesk",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+})
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "600"],
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["600"],
+})
+```
+
+- [ ] **Step 3: Add all font variables to `<html>` className**
+
+```tsx
+// Replace existing className with:
+className={`${geistSans.variable} ${geistMono.variable} ${hankenGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+```
+
+- [ ] **Step 4: Verify fonts load**
+
+Run: `npm run dev`
+Check: Open Chrome DevTools → Computed styles on `<html>` — confirm `--font-hanken-grotesk`, `--font-inter`, `--font-jetbrains-mono` exist.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/app/layout.tsx
+git commit -m "feat: add Hanken Grotesk, Inter, JetBrains Mono fonts"
+```
+
+---
+
+### Task 2: Add Anchor Precision color tokens to globals.css
+
+**Files:**
+- Modify: `src/app/globals.css`
+
+- [ ] **Step 1: Add color tokens to existing `@theme inline` block**
+
+```css
+@theme inline {
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  /* Anchor Precision colors */
+  --color-navy-900: #001B3D;
+  --color-blue-600: #0052FF;
+  --color-blue-400: #60A5FA;
+  --color-blue-100: #DBEAFE;
+  --color-surface: #f8f9ff;
+  --color-surface-faint: #F8FAFC;
+  --color-on-surface: #0b1c30;
+  --color-on-surface-variant: #434656;
+  --color-outline: #737688;
+  --color-growth-green: #0E833E;
+}
+```
+
+- [ ] **Step 2: Add `.anchor-precision` scope to force light mode for landing page**
+
+```css
+/* Add after the light mode theme overrides */
+.anchor-precision {
+  --bg-primary: #f8f9ff;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f3f8;
+  --text-primary: #0b1c30;
+  --text-secondary: #434656;
+  --text-tertiary: #737688;
+  --glass-border: rgba(0, 0, 0, 0.06);
+}
+```
+
+- [ ] **Step 3: Verify tokens work**
+
+Run: `npm run dev`
+Check: Add `className="bg-blue-600 text-navy-900"` temporarily to any element — confirm colors render in browser DevTools.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/app/globals.css
+git commit -m "feat: add Anchor Precision color tokens and landing page scoping"
+```
+
+---
+
+### Task 3: Write render test for the landing page
+
+**Files:**
+- Create: `src/app/__tests__/page.test.tsx`
+
+- [ ] **Step 1: Create test file**
+
+```tsx
+import { describe, it, expect } from "vitest"
+import { render, screen } from "@testing-library/react"
+import HomePage from "../page"
+
+describe("Landing Page", () => {
+  it("renders the main headline", () => {
+    render(<HomePage />)
+    expect(screen.getByText("Career Accelerator")).toBeDefined()
+  })
+
+  it("renders CTA buttons", () => {
+    render(<HomePage />)
+    expect(screen.getByText("Start Free")).toBeDefined()
+  })
+
+  it("renders all feature cards", () => {
+    render(<HomePage />)
+    expect(screen.getByText("ATS Resume Builder")).toBeDefined()
+    expect(screen.getByText("Job Pipeline Tracker")).toBeDefined()
+    expect(screen.getByText("Smart Suggestions")).toBeDefined()
+    expect(screen.getByText("Expert Consultations")).toBeDefined()
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails (page not yet rewritten)**
+
+Run: `npx vitest run src/app/__tests__/page.test.tsx`
+Expected: FAIL — expected text not found
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/app/__tests__/page.test.tsx
+git commit -m "test: add landing page render tests"
+```
+
+---
+
+### Task 4: Rewrite landing page with Anchor Precision design
+
+**Files:**
+- Modify: `src/app/page.tsx`
+
+- [ ] **Step 1: Write structure, fonts helper, animation hook, data constants**
+
+```tsx
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -46,19 +225,16 @@ const features = [
   { icon: Users, title: 'Expert Consultations', desc: 'Book 1:1 sessions with industry professionals for career advice.' },
 ]
 
-const statsData = [
-  { value: '10K+', label: 'Active Users' },
-  { value: '5K+', label: 'Resumes Built' },
-  { value: '500+', label: 'Expert Sessions' },
-  { value: '95%', label: 'Satisfaction' },
-]
-
 const steps = [
-  { title: 'Build Your Resume', desc: 'Fill in your details with our guided editor. Choose from expert-written templates.' },
-  { title: 'Track Applications', desc: 'Add jobs to your pipeline and move them across stages with ease.' },
-  { title: 'Get Expert Help', desc: 'Book 1:1 sessions with professionals who have been where you want to go.' },
+  { step: '01', title: 'Build Your Resume', desc: 'Fill in your details with our guided editor. Choose from expert-written templates.' },
+  { step: '02', title: 'Track Applications', desc: 'Add jobs to your pipeline and move them across stages with ease.' },
+  { step: '03', title: 'Get Expert Help', desc: 'Book 1:1 sessions with professionals who have been where you want to go.' },
 ]
+```
 
+- [ ] **Step 2: Write component shell + navigation**
+
+```tsx
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
@@ -92,7 +268,11 @@ export default function HomePage() {
           </div>
         </div>
       </header>
+```
 
+- [ ] **Step 3: Write Hero section with stats**
+
+```tsx
       <main className="flex-1">
         {/* Hero */}
         <section className="bg-surface pt-36 pb-20 sm:pt-44 sm:pb-28">
@@ -138,7 +318,12 @@ export default function HomePage() {
 
             {/* Hero Stats */}
             <div className="mt-14 flex items-center justify-center gap-8 sm:gap-14 flex-wrap">
-              {statsData.map((s) => (
+              {[
+                { value: '10K+', label: 'Active Users' },
+                { value: '5K+', label: 'Resumes Built' },
+                { value: '500+', label: 'Expert Sessions' },
+                { value: '95%', label: 'Satisfaction' },
+              ].map((s) => (
                 <div key={s.label} className="text-center">
                   <p
                     className="text-[40px] sm:text-[48px] font-extrabold text-navy-900 leading-none"
@@ -152,12 +337,21 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+```
 
+- [ ] **Step 4: Write Trust Bar section**
+
+```tsx
         {/* Trust Bar */}
         <section className="bg-surface-faint py-14">
           <div className="mx-auto max-w-5xl px-5 sm:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {statsData.map((s) => (
+              {[
+                { value: '10K+', label: 'Active Users' },
+                { value: '5K+', label: 'Resumes Built' },
+                { value: '500+', label: 'Expert Sessions' },
+                { value: '95%', label: 'Satisfaction' },
+              ].map((s) => (
                 <div key={s.label} className="text-center">
                   <p
                     className="text-[40px] sm:text-[48px] font-extrabold text-navy-900 leading-none"
@@ -171,7 +365,11 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+```
 
+- [ ] **Step 5: Write Features grid section**
+
+```tsx
         {/* Features */}
         <section className="bg-surface py-20 sm:py-28">
           <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
@@ -208,7 +406,11 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+```
 
+- [ ] **Step 6: Write How It Works (3 steps) section**
+
+```tsx
         {/* How It Works */}
         <section className="bg-surface-faint py-20 sm:py-28">
           <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
@@ -225,8 +427,8 @@ export default function HomePage() {
             </AnimatedSection>
 
             <div className="grid gap-8 md:grid-cols-3">
-              {steps.map(({ title, desc }, i) => (
-                <AnimatedSection key={title}>
+              {steps.map(({ step, title, desc }, i) => (
+                <AnimatedSection key={step}>
                   <div className="text-center">
                     <div className="w-14 h-14 rounded-lg bg-blue-600 text-white text-lg font-bold flex items-center justify-center mx-auto mb-5">
                       {i + 1}
@@ -246,7 +448,11 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+```
 
+- [ ] **Step 7: Write Testimonial, CTA, and Footer sections**
+
+```tsx
         {/* Testimonial */}
         <section className="bg-surface py-20 sm:py-28">
           <div className="mx-auto max-w-2xl px-5 sm:px-8 text-center">
@@ -335,3 +541,45 @@ export default function HomePage() {
     </div>
   )
 }
+```
+
+- [ ] **Step 8: Run tests to verify they all pass**
+
+Run: `npx vitest run src/app/__tests__/page.test.tsx`
+Expected: PASS
+
+- [ ] **Step 9: Visual verification**
+
+Run: `npm run dev`
+Visit: `http://localhost:3000`
+Verify:
+- Hero renders with blue "Career Accelerator" accent
+- Trust bar with 4 stats
+- 3-column feature cards with green icons
+- 3-step process with simple numbered badges
+- Testimonial with 5 gold stars
+- Navy CTA section with blue checkmarks
+- Mobile: sections stack vertically at 16px margin
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add src/app/page.tsx
+git commit -m "feat: redesign landing page with Anchor Precision design system"
+```
+
+---
+
+### Task 5: Verify protected pages are unaffected
+
+**Files:** None (verification only)
+
+- [ ] **Step 1: Check dashboard still renders**
+
+Visit: `http://localhost:3000/auth/login`
+Expected: Login page uses existing styling (not Anchor Precision)
+
+- [ ] **Step 2: Verify no broken references**
+
+Run: `npm run build`
+Expected: Build succeeds with no errors
