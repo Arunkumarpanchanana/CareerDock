@@ -84,7 +84,7 @@ export default function HomePage() {
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-gray-100/50' : 'bg-transparent'}`}>
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
           <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo.jpg" alt="My Career Dock" width={520} height={143} className="h-10 w-auto object-contain" />
+            <Image src="/logo.png" alt="My Career Dock" width={520} height={143} className="h-10 w-auto object-contain" />
             <span className="text-xl font-bold text-[#1d1d1f]">My Career Dock</span>
           </Link>
           <div className="flex items-center gap-6">
@@ -289,7 +289,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-5 sm:px-8">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <div className="flex items-center gap-2">
-              <Image src="/logo.jpg" alt="My Career Dock" width={520} height={143} className="h-8 w-auto object-contain" />
+              <Image src="/logo.png" alt="My Career Dock" width={520} height={143} className="h-8 w-auto object-contain" />
               <span className="text-sm font-semibold text-[#1d1d1f]">My Career Dock</span>
             </div>
             <p className="text-xs text-[#6e6e73]">

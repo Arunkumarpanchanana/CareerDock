@@ -59,10 +59,10 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
           <Image
-            src="/logo.jpg"
+            src="/logo.png"
             alt="My Career Dock"
-            width={260}
-            height={72}
+            width={96}
+            height={96}
             className="mx-auto mb-6"
           />
           <h1 className="text-3xl font-bold text-gray-900">Welcome back</h1>

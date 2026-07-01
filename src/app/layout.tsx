@@ -16,14 +16,14 @@ export const metadata: Metadata = {
   title: "My Career Dock - Career Acceleration Platform",
   description:
     "Build ATS-optimized resumes, track job applications, and accelerate your career with smart suggestions and expert guidance.",
-  icons: [{ rel: "icon", url: "/logo.jpg", type: "image/jpeg" }],
+  icons: [{ rel: "icon", url: "/logo.png", type: "image/png" }],
   openGraph: {
     title: "My Career Dock - Career Acceleration Platform",
     description:
       "Build ATS-optimized resumes, track job applications, and accelerate your career with smart suggestions and expert guidance.",
     type: "website",
     siteName: "My Career Dock",
-    images: [{ url: "/logo.jpg", width: 512, height: 512 }],
+    images: [{ url: "/logo.png", width: 512, height: 512 }],
   },
 };
 
