@@ -153,25 +153,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Trust Bar */}
-        <section className="bg-surface-faint py-14">
-          <div className="mx-auto max-w-5xl px-5 sm:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {statsData.map((s) => (
-                <div key={s.label} className="text-center">
-                  <p
-                    className="text-[40px] sm:text-[48px] font-extrabold text-navy-900 leading-none"
-                    style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
-                  >
-                    {s.value}
-                  </p>
-                  <p className="text-sm text-outline mt-1">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Features */}
         <section className="bg-surface py-20 sm:py-28">
           <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
@@ -243,6 +224,123 @@ export default function HomePage() {
                   </div>
                 </AnimatedSection>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <section className="bg-surface-faint py-20 sm:py-28">
+          <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
+            <AnimatedSection className="text-center mb-16">
+              <h2
+                className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
+                style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
+              >
+                Simple, transparent pricing
+              </h2>
+              <p className="mt-3 text-lg text-on-surface-variant max-w-xl mx-auto">
+                Start free, upgrade when you&apos;re ready.
+              </p>
+            </AnimatedSection>
+
+            <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
+              <div className="rounded-lg bg-[#ffffff] p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)]">
+                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>Free Trial</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹0</span>
+                  <span className="text-on-surface-variant text-sm">/mo</span>
+                </div>
+                <ul className="mt-6 space-y-3">
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 3 resume builds
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Skill gap analysis
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Job search
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 10 AI suggestions / month
+                  </li>
+                </ul>
+                <Link
+                  href="/auth/signup"
+                  className="mt-8 flex w-full items-center justify-center rounded-lg border-2 border-navy-900 px-5 py-2.5 text-sm font-semibold text-navy-900 hover:bg-navy-900 hover:text-white transition-colors"
+                >
+                  Get Started
+                </Link>
+              </div>
+
+              <div className="rounded-lg bg-[#ffffff] p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)] ring-2 ring-blue-600 relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-blue-600 px-3 py-1">
+                  <span
+                    className="text-[10px] font-semibold text-white tracking-wider uppercase"
+                    style={{ fontFamily: 'var(--font-jetbrains-mono)' }}
+                  >
+                    Most Popular
+                  </span>
+                </div>
+                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>Premium</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹299</span>
+                  <span className="text-on-surface-variant text-sm">/mo</span>
+                </div>
+                <ul className="mt-6 space-y-3">
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Unlimited resumes
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> AI mock interview
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 100 AI suggestions / month
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Job pipeline tracker
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> ₹3,000 / year (save 16%)
+                  </li>
+                </ul>
+                <Link
+                  href="/auth/signup"
+                  className="mt-8 flex w-full items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                >
+                  Upgrade
+                </Link>
+              </div>
+
+              <div className="rounded-lg bg-[#ffffff] p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)]">
+                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>Premium Pro</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹500</span>
+                  <span className="text-on-surface-variant text-sm">/mo</span>
+                </div>
+                <ul className="mt-6 space-y-3">
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Everything in Premium
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Unlimited AI suggestions
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 1:1 expert sessions
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Priority support
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> ₹5,500 / year (save 8%)
+                  </li>
+                </ul>
+                <Link
+                  href="/auth/signup"
+                  className="mt-8 flex w-full items-center justify-center rounded-lg border-2 border-navy-900 px-5 py-2.5 text-sm font-semibold text-navy-900 hover:bg-navy-900 hover:text-white transition-colors"
+                >
+                  Go Pro
+                </Link>
+              </div>
             </div>
           </div>
         </section>
