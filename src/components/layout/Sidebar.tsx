@@ -22,8 +22,6 @@ import {
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
-
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -78,7 +76,6 @@ export function Sidebar() {
             </Link>
           )}
           <div className="flex items-center gap-1">
-            <ThemeToggle />
             <button
               onClick={() => setCollapsed(!collapsed)}
               className="hidden rounded-xl p-1.5 text-[var(--text-tertiary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] lg:block"
