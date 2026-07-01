@@ -61,10 +61,25 @@ const steps = [
 
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
+  const [prices, setPrices] = useState<Record<string, { monthly: number; yearly: number }>>({})
+
   useEffect(() => {
     function onScroll() { setScrolled(window.scrollY > 20) }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/plan-prices')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const map: Record<string, { monthly: number; yearly: number }> = {}
+          data.forEach((p: any) => { map[p.plan_tier] = { monthly: p.monthly_price, yearly: p.yearly_price } })
+          setPrices(map)
+        }
+      })
+      .catch(() => {})
   }, [])
 
   return (
@@ -283,7 +298,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>Premium</h3>
                 <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹299</span>
+                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹{prices.premium?.monthly ?? 299}</span>
                   <span className="text-on-surface-variant text-sm">/mo</span>
                 </div>
                 <ul className="mt-6 space-y-3">
@@ -300,7 +315,7 @@ export default function HomePage() {
                     <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Job pipeline tracker
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> ₹3,000 / year (save 16%)
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> ₹{(prices.premium?.yearly ?? 3000).toLocaleString()} / year (save {prices.premium ? Math.round((1 - prices.premium.yearly / (prices.premium.monthly * 12)) * 100) : 16}%)
                   </li>
                 </ul>
                 <Link
@@ -314,7 +329,7 @@ export default function HomePage() {
               <div className="rounded-lg bg-white p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)]">
                 <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>Premium Pro</h3>
                 <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹500</span>
+                    <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹{prices.premium_pro?.monthly ?? 500}</span>
                   <span className="text-on-surface-variant text-sm">/mo</span>
                 </div>
                 <ul className="mt-6 space-y-3">
@@ -331,7 +346,7 @@ export default function HomePage() {
                     <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Priority support
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> ₹5,500 / year (save 8%)
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> ₹{(prices.premium_pro?.yearly ?? 5500).toLocaleString()} / year (save {prices.premium_pro ? Math.round((1 - prices.premium_pro.yearly / (prices.premium_pro.monthly * 12)) * 100) : 8}%)
                   </li>
                 </ul>
                 <Link
