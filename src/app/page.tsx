@@ -17,7 +17,6 @@ import {
 function useInView<T extends HTMLElement>() {
   const ref = useRef<T>(null)
   const [inView, setInView] = useState(false)
-
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -28,7 +27,6 @@ function useInView<T extends HTMLElement>() {
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
-
   return { ref, inView }
 }
 
@@ -42,37 +40,27 @@ function AnimatedSection({ children, className = '' }: { children: React.ReactNo
 }
 
 const features = [
-  {
-    icon: FileText,
-    title: 'ATS Resume Builder',
-    desc: 'Create clean resumes that pass Applicant Tracking Systems. Download as PDF instantly.',
-  },
-  {
-    icon: Kanban,
-    title: 'Job Pipeline Tracker',
-    desc: 'Drag applications across stages — from Wishlist to Offer. Never lose track.',
-  },
-  {
-    icon: Sparkles,
-    title: 'Smart Suggestions',
-    desc: 'Get AI-powered suggestions for bullet points, skills, and summaries.',
-  },
-  {
-    icon: Users,
-    title: 'Expert Consultations',
-    desc: 'Book 1:1 sessions with industry professionals for career advice.',
-  },
+  { icon: FileText, title: 'ATS Resume Builder', desc: 'Create clean resumes that pass Applicant Tracking Systems. Download as PDF instantly.' },
+  { icon: Kanban, title: 'Job Pipeline Tracker', desc: 'Drag applications across stages — from Wishlist to Offer. Never lose track.' },
+  { icon: Sparkles, title: 'Smart Suggestions', desc: 'Get AI-powered suggestions for bullet points, skills, and summaries.' },
+  { icon: Users, title: 'Expert Consultations', desc: 'Book 1:1 sessions with industry professionals for career advice.' },
+]
+
+const statsData = [
+  { value: '10K+', label: 'Active Users' },
+  { value: '5K+', label: 'Resumes Built' },
+  { value: '500+', label: 'Expert Sessions' },
+  { value: '95%', label: 'Satisfaction' },
 ]
 
 const steps = [
-  { step: '01', title: 'Build Your Resume', desc: 'Fill in your details with our guided editor. Choose from expert-written templates.' },
-  { step: '02', title: 'Track Applications', desc: 'Add jobs to your pipeline and move them across stages with ease.' },
-  { step: '03', title: 'Get Expert Help', desc: 'Book 1:1 sessions with professionals who have been where you want to go.' },
+  { title: 'Build Your Resume', desc: 'Fill in your details with our guided editor. Choose from expert-written templates.' },
+  { title: 'Track Applications', desc: 'Add jobs to your pipeline and move them across stages with ease.' },
+  { title: 'Get Expert Help', desc: 'Book 1:1 sessions with professionals who have been where you want to go.' },
 ]
 
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
-
   useEffect(() => {
     function onScroll() { setScrolled(window.scrollY > 20) }
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -80,20 +68,24 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-gray-100/50' : 'bg-transparent'}`}>
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
+    <div className="anchor-precision flex min-h-screen flex-col bg-surface">
+      {/* Navigation */}
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white border-b border-[#DBEAFE]' : 'bg-transparent'}`}>
+        <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6 sm:px-8">
           <Link href="/" className="flex items-center gap-3">
             <Image src="/logo.png" alt="My Career Dock" width={520} height={143} className="h-10 w-auto object-contain" />
-            <span className="text-xl font-bold text-[#1d1d1f]">My Career Dock</span>
+            <span className="text-xl font-bold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>My Career Dock</span>
           </Link>
-          <div className="flex items-center gap-6">
-            <Link href="/auth/login" className="text-xs font-medium text-[#6e6e73] hover:text-[#1d1d1f] transition-colors">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/auth/login"
+              className="text-sm font-medium text-on-surface-variant hover:text-navy-900 transition-colors"
+            >
               Sign In
             </Link>
             <Link
               href="/auth/signup"
-              className="px-4 py-1.5 rounded-full bg-[#0071e3] text-xs font-medium text-white hover:bg-[#0077ed] transition-colors"
+              className="inline-flex items-center px-5 py-2.5 rounded-lg bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
             >
               Get Started
             </Link>
@@ -103,48 +95,58 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="bg-white pt-32 pb-20 sm:pt-40 sm:pb-28">
+        <section className="bg-surface pt-36 pb-20 sm:pt-44 sm:pb-28">
           <div className="mx-auto max-w-4xl px-5 sm:px-8 text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-100 px-3.5 py-1 mb-8">
-              <Sparkles className="h-3 w-3 text-[#0071e3]" />
-              <span className="text-[11px] font-medium text-[#6e6e73] tracking-wide">Your career, accelerated</span>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-4 py-1.5 mb-8">
+              <Sparkles className="h-3 w-3 text-blue-600" />
+              <span
+                className="text-[11px] font-semibold text-blue-600 tracking-[0.05em] uppercase"
+                style={{ fontFamily: 'var(--font-jetbrains-mono)' }}
+              >
+                Your career, accelerated
+              </span>
             </div>
 
-            <h1 className="text-[40px] leading-[1.05] font-semibold tracking-tight text-[#1d1d1f] sm:text-[56px] lg:text-[64px]">
+            <h1
+              className="text-[40px] leading-[1.1] font-extrabold tracking-tight text-navy-900 sm:text-[56px] lg:text-[64px]"
+              style={{ fontFamily: 'var(--font-hanken-grotesk)', letterSpacing: '-0.02em' }}
+            >
               Your{' '}
-              <span className="text-[#0071e3]">Career Accelerator</span>
+              <span className="text-blue-600">Career Accelerator</span>
               <br />
               in One Place
             </h1>
 
-            <p className="mx-auto mt-5 max-w-xl text-base sm:text-lg text-[#6e6e73] leading-relaxed">
+            <p className="mx-auto mt-5 max-w-xl text-lg sm:text-xl text-on-surface-variant leading-relaxed">
               Build ATS-optimized resumes, track every job application, get AI-powered suggestions, and book 1:1 sessions with industry experts.
             </p>
 
-            <div className="mt-9 flex items-center justify-center gap-3">
+            <div className="mt-9 flex items-center justify-center gap-3 flex-wrap">
               <Link
                 href="/auth/signup"
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#0071e3] px-6 py-3 text-sm font-medium text-white hover:bg-[#0077ed] transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-7 py-3.5 text-base font-semibold text-white hover:bg-blue-700 transition-colors"
               >
-                Start Free <ArrowUpRight className="h-3.5 w-3.5" />
+                Start Free <ArrowUpRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/auth/login"
-                className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-100 px-6 py-3 text-sm font-medium text-[#1d1d1f] hover:bg-gray-100 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border-2 border-navy-900 px-7 py-3.5 text-base font-semibold text-navy-900 hover:bg-navy-900 hover:text-white transition-colors"
               >
-                Sign In <ChevronRight className="h-3.5 w-3.5" />
+                Sign In <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
 
-            <div className="mt-14 flex items-center justify-center gap-8 sm:gap-14">
-              {[
-                { label: 'Resume Templates', value: '10+' },
-                { label: 'Job Pipelines', value: 'Unlimited' },
-                { label: 'Expert Sessions', value: '1:1' },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <p className="text-2xl sm:text-3xl font-semibold text-[#1d1d1f]">{stat.value}</p>
-                  <p className="text-xs text-[#6e6e73] mt-0.5 tracking-wide">{stat.label}</p>
+            {/* Hero Stats */}
+            <div className="mt-14 flex items-center justify-center gap-8 sm:gap-14 flex-wrap">
+              {statsData.map((s) => (
+                <div key={s.label} className="text-center">
+                  <p
+                    className="text-[40px] sm:text-[48px] font-extrabold text-navy-900 leading-none"
+                    style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
+                  >
+                    {s.value}
+                  </p>
+                  <p className="text-sm text-outline mt-1">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -152,18 +154,18 @@ export default function HomePage() {
         </section>
 
         {/* Trust Bar */}
-        <section className="bg-[#f5f5f7] border-y border-gray-100/50 py-14">
+        <section className="bg-surface-faint py-14">
           <div className="mx-auto max-w-5xl px-5 sm:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {[
-                { value: '10K+', label: 'Active Users' },
-                { value: '5K+', label: 'Resumes Built' },
-                { value: '500+', label: 'Expert Sessions' },
-                { value: '95%', label: 'Satisfaction' },
-              ].map((s) => (
+              {statsData.map((s) => (
                 <div key={s.label} className="text-center">
-                  <p className="text-2xl sm:text-3xl font-semibold text-[#1d1d1f]">{s.value}</p>
-                  <p className="text-xs text-[#6e6e73] mt-0.5 tracking-wide">{s.label}</p>
+                  <p
+                    className="text-[40px] sm:text-[48px] font-extrabold text-navy-900 leading-none"
+                    style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
+                  >
+                    {s.value}
+                  </p>
+                  <p className="text-sm text-outline mt-1">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -171,25 +173,36 @@ export default function HomePage() {
         </section>
 
         {/* Features */}
-        <section className="bg-white py-20 sm:py-28">
-          <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <section className="bg-surface py-20 sm:py-28">
+          <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
             <AnimatedSection className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-semibold text-[#1d1d1f] tracking-tight">
+              <h2
+                className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
+                style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
+              >
                 Everything you need to land the role
               </h2>
-              <p className="mt-3 text-base sm:text-lg text-[#6e6e73] max-w-xl mx-auto">
+              <p className="mt-3 text-lg text-on-surface-variant max-w-xl mx-auto">
                 From resume to offer letter — My Career Dock supports every step of your job search.
               </p>
             </AnimatedSection>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {features.map(({ icon: Icon, title, desc }) => (
-                <div key={title} className="group rounded-2xl border border-gray-100 bg-white p-7 hover:shadow-md hover:border-gray-200 transition-all duration-300 cursor-default">
-                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-4 group-hover:bg-[#0071e3]/5 transition-colors">
-                    <Icon className="h-5 w-5 text-[#0071e3]" />
+                <div
+                  key={title}
+                  className="group rounded-lg bg-[#ffffff] p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)] hover:shadow-[0_8px_30px_rgba(0,27,61,0.1)] transition-all duration-300 cursor-default"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-growth-green flex items-center justify-center mb-5">
+                    <Icon className="h-5 w-5 text-white" />
                   </div>
-                  <h3 className="text-base font-semibold text-[#1d1d1f]">{title}</h3>
-                  <p className="mt-1.5 text-sm text-[#6e6e73] leading-relaxed">{desc}</p>
+                  <h3
+                    className="text-xl font-semibold text-navy-900"
+                    style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
+                  >
+                    {title}
+                  </h3>
+                  <p className="mt-1.5 text-base text-on-surface-variant leading-relaxed">{desc}</p>
                 </div>
               ))}
             </div>
@@ -197,26 +210,36 @@ export default function HomePage() {
         </section>
 
         {/* How It Works */}
-        <section className="bg-[#f5f5f7] py-20 sm:py-28">
-          <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <section className="bg-surface-faint py-20 sm:py-28">
+          <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
             <AnimatedSection className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-semibold text-[#1d1d1f] tracking-tight">
+              <h2
+                className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
+                style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
+              >
                 Three steps to your next role
               </h2>
-              <p className="mt-3 text-base sm:text-lg text-[#6e6e73] max-w-xl mx-auto">
+              <p className="mt-3 text-lg text-on-surface-variant max-w-xl mx-auto">
                 Get started in minutes, not hours.
               </p>
             </AnimatedSection>
 
             <div className="grid gap-8 md:grid-cols-3">
-              {steps.map(({ step, title, desc }, i) => (
-                <AnimatedSection key={step}>
+              {steps.map(({ title, desc }, i) => (
+                <AnimatedSection key={title}>
                   <div className="text-center">
-                    <div className="w-14 h-14 rounded-full bg-[#0071e3] text-white text-lg font-semibold flex items-center justify-center mx-auto mb-5 shadow-sm">
-                      {step}
+                    <div className="w-14 h-14 rounded-lg bg-blue-600 text-white text-lg font-bold flex items-center justify-center mx-auto mb-5">
+                      {i + 1}
                     </div>
-                    <h3 className="text-xl font-semibold text-[#1d1d1f]">{title}</h3>
-                    <p className="mt-2 text-sm text-[#6e6e73] leading-relaxed max-w-xs mx-auto">{desc}</p>
+                    <h3
+                      className="text-xl font-semibold text-navy-900"
+                      style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
+                    >
+                      {title}
+                    </h3>
+                    <p className="mt-2 text-base text-on-surface-variant leading-relaxed max-w-xs mx-auto">
+                      {desc}
+                    </p>
                   </div>
                 </AnimatedSection>
               ))}
@@ -225,32 +248,39 @@ export default function HomePage() {
         </section>
 
         {/* Testimonial */}
-        <section className="bg-white py-20 sm:py-28">
+        <section className="bg-surface py-20 sm:py-28">
           <div className="mx-auto max-w-2xl px-5 sm:px-8 text-center">
             <AnimatedSection>
-              <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-6">
-                <Star className="h-5 w-5 text-[#0071e3]" />
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6">
+                <Star className="h-5 w-5 text-blue-600" />
               </div>
-              <blockquote className="text-xl sm:text-2xl text-[#1d1d1f] leading-relaxed font-medium">
+              <blockquote className="text-xl sm:text-2xl text-navy-900 leading-relaxed font-medium">
                 &ldquo;I went from sending out scattered applications to running a structured job search
                 with My Career Dock. The resume builder alone saved me hours.&rdquo;
               </blockquote>
               <div className="mt-8 flex items-center justify-center gap-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-[#ff9f0a] text-[#ff9f0a]" />
+                  <Star key={i} className="h-5 w-5 fill-[#ff9f0a] text-[#ff9f0a]" />
                 ))}
               </div>
               <div className="mt-6 flex items-center justify-center gap-3">
                 <div className="flex -space-x-2">
-                  {['bg-[#0071e3]', 'bg-[#34c759]', 'bg-[#af52de]'].map((bg) => (
-                    <div key={bg} className={`h-9 w-9 rounded-full ${bg} ring-2 ring-white flex items-center justify-center text-white text-[11px] font-semibold`}>
-                      {bg.includes('0071e3') ? 'S' : bg.includes('34c759') ? 'J' : 'M'}
+                  {[
+                    { bg: 'bg-blue-600', initial: 'S' },
+                    { bg: 'bg-growth-green', initial: 'J' },
+                    { bg: 'bg-blue-400', initial: 'M' },
+                  ].map(({ bg, initial }) => (
+                    <div
+                      key={initial}
+                      className={`h-9 w-9 rounded-full ${bg} ring-2 ring-white flex items-center justify-center text-white text-xs font-bold`}
+                    >
+                      {initial}
                     </div>
                   ))}
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-[#1d1d1f]">Early Access Users</p>
-                  <p className="text-xs text-[#6e6e73]">Join 10K+ job seekers</p>
+                  <p className="text-sm font-semibold text-navy-900">Early Access Users</p>
+                  <p className="text-xs text-outline">Join 10K+ job seekers</p>
                 </div>
               </div>
             </AnimatedSection>
@@ -258,41 +288,45 @@ export default function HomePage() {
         </section>
 
         {/* CTA */}
-        <section className="bg-[#1d1d1f] py-20 sm:py-28">
+        <section className="bg-navy-900 py-20 sm:py-28">
           <div className="mx-auto max-w-3xl px-5 sm:px-8 text-center">
             <AnimatedSection>
-              <h2 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
+              <h2
+                className="text-[32px] sm:text-[40px] font-bold text-white tracking-tight"
+                style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
+              >
                 Ready to accelerate your career?
               </h2>
-              <p className="mt-3 text-base sm:text-lg text-[#86868b] max-w-lg mx-auto">
+              <p className="mt-3 text-lg text-blue-400 max-w-lg mx-auto">
                 Join My Career Dock for free. No credit card required.
               </p>
               <div className="mt-9 flex items-center justify-center gap-3 flex-wrap">
                 <Link
                   href="/auth/signup"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0071e3] px-6 py-3 text-sm font-medium text-white hover:bg-[#0077ed] transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-7 py-3.5 text-base font-semibold text-white hover:bg-blue-700 transition-colors"
                 >
-                  Create Free Account <ArrowUpRight className="h-3.5 w-3.5" />
+                  Create Free Account <ArrowUpRight className="h-4 w-4" />
                 </Link>
               </div>
-              <div className="mt-8 flex items-center justify-center gap-6 text-xs text-[#86868b]">
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> No credit card</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Cancel anytime</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Free updates</span>
+              <div className="mt-8 flex items-center justify-center gap-6 text-sm text-blue-400 flex-wrap">
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> No credit card</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Cancel anytime</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Free updates</span>
               </div>
             </AnimatedSection>
           </div>
         </section>
       </main>
 
-      <footer className="bg-[#f5f5f7] border-t border-gray-100/50 py-8">
-        <div className="mx-auto max-w-6xl px-5 sm:px-8">
+      {/* Footer */}
+      <footer className="bg-surface-faint border-t border-[#DBEAFE] py-8">
+        <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <div className="flex items-center gap-2">
               <Image src="/logo.png" alt="My Career Dock" width={520} height={143} className="h-8 w-auto object-contain" />
-              <span className="text-sm font-semibold text-[#1d1d1f]">My Career Dock</span>
+              <span className="text-base font-bold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>My Career Dock</span>
             </div>
-            <p className="text-xs text-[#6e6e73]">
+            <p className="text-sm text-outline">
               &copy; {new Date().getFullYear()} My Career Dock. All rights reserved.
             </p>
           </div>
