@@ -61,9 +61,9 @@ export default function LoginPage() {
           <Image
             src="/logo.jpg"
             alt="My Career Dock"
-            width={80}
-            height={80}
-            className="mx-auto mb-6 rounded-2xl shadow-lg"
+            width={260}
+            height={72}
+            className="mx-auto mb-6"
           />
           <h1 className="text-3xl font-bold text-gray-900">Welcome back</h1>
           <p className="mt-2 text-sm text-gray-600">
