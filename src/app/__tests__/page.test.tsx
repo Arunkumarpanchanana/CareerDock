@@ -20,4 +20,10 @@ describe("Landing Page", () => {
     expect(screen.getByText("Smart Suggestions")).toBeInTheDocument()
     expect(screen.getByText("Expert Consultations")).toBeInTheDocument()
   })
+
+  it("renders the FAQ section with questions", () => {
+    render(<HomePage />)
+    expect(screen.getByText("Frequently Asked Questions")).toBeInTheDocument()
+    expect(screen.getByText(/Is My Career Dock really free/)).toBeInTheDocument()
+  })
 })
