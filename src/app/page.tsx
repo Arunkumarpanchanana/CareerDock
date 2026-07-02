@@ -439,9 +439,14 @@ export default function HomePage() {
               <Image src="/logo.png" alt="My Career Dock" width={520} height={143} className="h-8 w-auto object-contain" />
               <span className="text-base font-bold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>My Career Dock</span>
             </div>
-            <p className="text-sm text-outline">
-              &copy; {new Date().getFullYear()} My Career Dock. All rights reserved.
-            </p>
+            <div className="flex items-center gap-6">
+              <Link href="/contact" className="text-sm text-outline hover:text-navy-900 transition-colors">
+                Contact
+              </Link>
+              <p className="text-sm text-outline">
+                &copy; {new Date().getFullYear()} My Career Dock. All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
       </footer>
