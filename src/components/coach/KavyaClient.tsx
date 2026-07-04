@@ -56,6 +56,7 @@ export function KavyaClient() {
   const contextRef = useRef(context)
   const transcriptRef = useRef(transcript)
   const recognitionActiveRef = useRef(false)
+  const submittingRef = useRef(false)
   const audioContextRef = useRef<AudioContext | null>(null)
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null)
   const finishedRef = useRef(false)
@@ -172,6 +173,8 @@ export function KavyaClient() {
   }, [])
 
   const submitAnswer = useCallback(async (text: string) => {
+    if (submittingRef.current) return
+    submittingRef.current = true
     stopListening()
     setInterim('')
 
@@ -202,6 +205,8 @@ export function KavyaClient() {
     } catch {
       setError('Connection lost.')
       setPhase('setup')
+    } finally {
+      submittingRef.current = false
     }
   }, [speak, startListening, stopListening])
 

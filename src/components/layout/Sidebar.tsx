@@ -97,24 +97,28 @@ export function Sidebar() {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
 
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]'
-                }`}
-                onClick={() => setMobileOpen(false)}
-              >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && (
-                  <span className="flex-1">{item.label}</span>
+              <div key={item.href}>
+                {item.href === '/career-coach' && !collapsed && (
+                  <div className="my-3 border-t border-[var(--glass-border)]" />
                 )}
-                {!collapsed && isFree && (item as { premium?: boolean }).premium && (
-                  <Lock className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
-                )}
-              </Link>
+                <Link
+                  href={item.href}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]'
+                  }`}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  {!collapsed && (
+                    <span className="flex-1">{item.label}</span>
+                  )}
+                  {!collapsed && isFree && (item as { premium?: boolean }).premium && (
+                    <Lock className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
+                  )}
+                </Link>
+              </div>
             )
           })}
         </nav>

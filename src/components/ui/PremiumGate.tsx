@@ -39,13 +39,13 @@ export function PremiumGate({ children, feature, requiredTier = 'premium' }: {
   }, [loading])
 
   useEffect(() => {
-    if (!loading && !profile && !checkedRef.current) {
+    if (!loading && !hasAccess && !checkedRef.current) {
       checkedRef.current = true
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 8000)
       fetchPremiumStatus(controller.signal)
     }
-  }, [loading, profile])
+  }, [loading, profile, hasAccess])
 
   if (hasAccess) {
     return <>{children}</>
