@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { handleCoachingTurn, handleCoachingSummary } from '@/lib/coach'
 
+const SESSION_LIMIT = 15
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -24,6 +26,21 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    if (planTier !== 'premium_pro') {
+      const { count } = await supabase
+        .from('ai_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('action', 'coaching_session')
+
+      if ((count ?? 0) >= SESSION_LIMIT) {
+        return NextResponse.json(
+          { error: `You have used all ${SESSION_LIMIT} coaching sessions. Upgrade to Premium Pro for unlimited sessions.` },
+          { status: 403 }
+        )
+      }
+    }
+
     const body = await req.json()
     const { phase, context, history } = body
 
@@ -36,6 +53,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (phase === 'conversation') {
+      if (history.length === 0) {
+        await supabase.from('ai_usage').insert({
+          user_id: user.id,
+          action: 'coaching_session',
+        })
+      }
       const result = await handleCoachingTurn({ context, history })
       return NextResponse.json(result)
     }
