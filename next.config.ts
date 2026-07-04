@@ -4,11 +4,11 @@ const isDev = process.env.NODE_ENV === 'development'
 
 const cspHeader = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://xrqombtevssqznnkohzy.supabase.co",
+  "connect-src 'self' https://xrqombtevssqznnkohzy.supabase.co https://o4504371152748544.ingest.sentry.io",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
