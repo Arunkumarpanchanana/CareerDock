@@ -13,6 +13,7 @@ import {
   Menu,
   MessageSquare,
   ScrollText,
+  Sparkles,
   Search,
   Settings,
   Shield,
@@ -37,6 +38,7 @@ export function Sidebar() {
     { href: '/jobs/search', label: 'Job Search', icon: Globe },
     { href: '/tracker', label: 'Job Tracker', icon: Briefcase },
     { href: '/interview', label: 'Mock Interview', icon: MessageSquare, premium: true },
+    { href: '/career-coach', label: 'Career Coach', icon: Sparkles, premium: true },
     { href: '/experts', label: 'Experts', icon: Users, premium: true },
     { href: '/profile', label: 'Profile', icon: Settings },
     ...(profile?.role === 'admin'
