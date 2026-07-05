@@ -57,8 +57,7 @@ export function KavyaClient() {
   const transcriptRef = useRef(transcript)
   const recognitionActiveRef = useRef(false)
   const submittingRef = useRef(false)
-  const audioContextRef = useRef<AudioContext | null>(null)
-  const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const finishedRef = useRef(false)
 
   useEffect(() => { historyRef.current = history }, [history])
@@ -72,9 +71,8 @@ export function KavyaClient() {
       recognitionRef.current = null
     }
     recognitionActiveRef.current = false
-    if (sourceNodeRef.current) {
-      try { sourceNodeRef.current.stop() } catch {}
-      sourceNodeRef.current = null
+    if (audioRef.current) {
+      try { audioRef.current.pause(); audioRef.current = null } catch {}
     }
   }, [])
 
@@ -84,31 +82,25 @@ export function KavyaClient() {
 
   const speak = useCallback(async (text: string): Promise<void> => {
     if (!voiceEnabled) return
-    if (sourceNodeRef.current) {
-      try { sourceNodeRef.current.stop() } catch {}
-      sourceNodeRef.current = null
-    }
-    if (!audioContextRef.current) return
-    if (audioContextRef.current.state === 'suspended') {
-      await audioContextRef.current.resume()
+    if (audioRef.current) {
+      try { audioRef.current.pause(); audioRef.current = null } catch {}
     }
     setAiSpeaking(true)
     setListening(false)
     try {
       const res = await fetch(`/api/tts?voice=kavya&text=${encodeURIComponent(text)}`)
       if (!res.ok) throw new Error('TTS API error')
-      const arrayBuffer = await res.arrayBuffer()
-      const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer)
-      const source = audioContextRef.current.createBufferSource()
-      sourceNodeRef.current = source
-      source.buffer = audioBuffer
-      source.connect(audioContextRef.current.destination)
-      source.start(0)
-      await new Promise<void>((resolve) => {
-        const timeout = setTimeout(() => resolve(), 30000)
-        source.onended = () => { clearTimeout(timeout); resolve() }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      audioRef.current = audio
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => { URL.revokeObjectURL(url); resolve() }, 30000)
+        audio.onended = () => { clearTimeout(timeout); URL.revokeObjectURL(url); resolve() }
+        audio.onerror = () => { clearTimeout(timeout); URL.revokeObjectURL(url); reject(new Error('Audio playback failed')) }
+        audio.play().catch(() => { clearTimeout(timeout); URL.revokeObjectURL(url); resolve() })
       })
-      if (sourceNodeRef.current === source) sourceNodeRef.current = null
+      if (audioRef.current === audio) audioRef.current = null
     } catch (e) {
       console.error('TTS error:', e)
     }
@@ -230,9 +222,6 @@ export function KavyaClient() {
   }, [stopListening])
 
   const startSession = async () => {
-    if (typeof AudioContext !== 'undefined' && !audioContextRef.current) {
-      audioContextRef.current = new AudioContext()
-    }
     setError(null)
     finishedRef.current = false
 
