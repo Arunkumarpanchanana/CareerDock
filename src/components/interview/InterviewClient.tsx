@@ -62,8 +62,7 @@ export function InterviewClient() {
   const jobDescriptionRef = useRef(jobDescription)
   const transcriptRef = useRef(transcript)
   const recognitionActiveRef = useRef(false)
-  const audioContextRef = useRef<AudioContext | null>(null)
-  const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null)
+  const speakResolveRef = useRef<(() => void) | null>(null)
 
   useEffect(() => { historyRef.current = history }, [history])
   useEffect(() => { resumeRef.current = resume }, [resume])
@@ -82,14 +81,6 @@ export function InterviewClient() {
       recognitionRef.current = null
     }
     recognitionActiveRef.current = false
-    if (audioContextRef.current) {
-      audioContextRef.current.close()
-      audioContextRef.current = null
-    }
-    if (sourceNodeRef.current) {
-      try { sourceNodeRef.current.stop() } catch {}
-      sourceNodeRef.current = null
-    }
   }, [])
 
   useEffect(() => {
@@ -107,32 +98,29 @@ export function InterviewClient() {
     }
   }, [])
 
+  const [speakUrl, setSpeakUrl] = useState<string | null>(null)
+  const [speakKey, setSpeakKey] = useState(0)
+
+  const onAudioEnded = useCallback(() => {
+    speakResolveRef.current?.()
+    speakResolveRef.current = null
+  }, [])
+
   const speak = useCallback(async (text: string): Promise<void> => {
-    if (!voiceEnabled || !audioContextRef.current) return
-    if (sourceNodeRef.current) {
-      try { sourceNodeRef.current.stop() } catch {}
-      sourceNodeRef.current = null
-    }
-    if (audioContextRef.current.state === 'suspended') {
-      await audioContextRef.current.resume()
-    }
+    if (!voiceEnabled) return
     setAiSpeaking(true)
     const start = Date.now()
     try {
       const res = await fetch(`/api/tts?text=${encodeURIComponent(text)}`)
       if (!res.ok) throw new Error('TTS API error')
-      const arrayBuffer = await res.arrayBuffer()
-      const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer)
-      const source = audioContextRef.current.createBufferSource()
-      sourceNodeRef.current = source
-      source.buffer = audioBuffer
-      source.connect(audioContextRef.current.destination)
-      source.start(0)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      setSpeakUrl(url)
+      setSpeakKey((k) => k + 1)
       await new Promise<void>((resolve) => {
-        const timeout = setTimeout(() => resolve(), 30000)
-        source.onended = () => { clearTimeout(timeout); resolve() }
+        speakResolveRef.current = resolve
       })
-      if (sourceNodeRef.current === source) sourceNodeRef.current = null
+      URL.revokeObjectURL(url)
     } catch (e) {
       console.error('TTS error:', e)
     }
@@ -265,9 +253,6 @@ export function InterviewClient() {
 
   const startCall = async () => {
     if (!resume.trim() || !jobDescription.trim()) return
-    if (typeof AudioContext !== 'undefined' && !audioContextRef.current) {
-      audioContextRef.current = new AudioContext()
-    }
     setError(null)
     finishedRef.current = false
     setPhase('connecting')
@@ -306,6 +291,7 @@ export function InterviewClient() {
 
   const endCall = () => {
     cleanup()
+    setSpeakUrl(null)
     setPhase('setup')
     setError(null)
   }
@@ -394,6 +380,9 @@ export function InterviewClient() {
 
     return (
       <div className="fixed inset-0 bg-gray-900 flex flex-col">
+        {speakUrl && (
+          <audio key={speakKey} src={speakUrl} autoPlay onEnded={onAudioEnded} />
+        )}
         {showCamera && (
           <div className="absolute top-4 right-4 z-10 w-32 h-24 rounded-lg overflow-hidden border-2 border-gray-700 shadow-lg">
             <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
