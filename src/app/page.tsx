@@ -352,43 +352,72 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Testimonial */}
-        <section className="bg-surface py-20 sm:py-28">
-          <div className="mx-auto max-w-2xl px-5 sm:px-8 text-center">
-            <AnimatedSection>
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6">
-                <Star className="h-5 w-5 text-blue-600" />
-              </div>
-              <blockquote className="text-xl sm:text-2xl text-navy-900 leading-relaxed font-medium">
-                &ldquo;I went from sending out scattered applications to running a structured job search
-                with My Career Dock. The resume builder alone saved me hours.&rdquo;
-              </blockquote>
-              <div className="mt-8 flex items-center justify-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 fill-[#ff9f0a] text-[#ff9f0a]" />
-                ))}
-              </div>
-              <div className="mt-6 flex items-center justify-center gap-3">
-                <div className="flex -space-x-2">
-                  {[
-                    { bg: 'bg-blue-600', initial: 'S' },
-                    { bg: 'bg-growth-green', initial: 'J' },
-                    { bg: 'bg-blue-400', initial: 'M' },
-                  ].map(({ bg, initial }) => (
-                    <div
-                      key={initial}
-                      className={`h-9 w-9 rounded-full ${bg} ring-2 ring-white flex items-center justify-center text-white text-xs font-bold`}
-                    >
-                      {initial}
+        {/* Testimonials */}
+        <section id="testimonials" className="bg-surface py-20 sm:py-28">
+          <div className="mx-auto max-w-4xl px-5 sm:px-8">
+            <div className="text-center mb-16">
+              <h2
+                className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
+                style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
+              >
+                What Our Clients Say
+              </h2>
+              <p className="mt-3 text-lg text-on-surface-variant max-w-xl mx-auto">
+                Real results from real professionals who transformed their careers.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
+              <div>
+                <div className="rounded-xl bg-white p-8" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-5 w-5 fill-[#ff9f0a] text-[#ff9f0a]" />
+                    ))}
+                  </div>
+                  <blockquote className="text-base text-navy-900 leading-relaxed">
+                    &ldquo;I went from sending out scattered applications to running a structured job search
+                    with My Career Dock. The resume builder alone saved me hours.&rdquo;
+                  </blockquote>
+                  <div className="mt-6 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
+                      S
                     </div>
-                  ))}
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-semibold text-navy-900">Early Access Users</p>
-                  <p className="text-xs text-outline">Join 10K+ job seekers</p>
+                    <div>
+                      <p className="text-sm font-semibold text-navy-900">Sarah K.</p>
+                      <p className="text-xs text-outline">Product Manager, Bangalore</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </AnimatedSection>
+
+              <div>
+                <div className="rounded-xl bg-white p-8" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-5 w-5 fill-[#ff9f0a] text-[#ff9f0a]" />
+                    ))}
+                  </div>
+                  <blockquote className="text-base text-navy-900 leading-relaxed">
+                    &ldquo;The interview coaching was a game-changer. I went from nervous to confident,
+                    and landed an offer within 2 weeks of my sessions.&rdquo;
+                  </blockquote>
+                  <div className="mt-6 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-growth-green flex items-center justify-center text-white text-sm font-bold">
+                      R
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-navy-900">Rahul M.</p>
+                      <p className="text-xs text-outline">Software Engineer, Pune</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10 text-center">
+              <p className="text-sm text-outline">Join <strong className="text-navy-900">10,000+</strong> professionals who accelerated their careers</p>
+            </div>
           </div>
         </section>
 
@@ -440,20 +469,21 @@ export default function HomePage() {
         {/* CTA */}
         <section className="bg-navy-900 py-20 sm:py-28">
           <div className="mx-auto max-w-3xl px-5 sm:px-8 text-center">
-            <AnimatedSection>
+            <div>
               <h2
                 className="text-[32px] sm:text-[40px] font-bold text-white tracking-tight"
                 style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
               >
-                Ready to accelerate your career?
+                Ready to transform your career?
               </h2>
               <p className="mt-3 text-lg text-blue-400 max-w-lg mx-auto">
-                Join My Career Dock for free. No credit card required.
+                Join thousands of professionals who landed their dream job with our help.
               </p>
               <div className="mt-9 flex items-center justify-center gap-3 flex-wrap">
                 <Link
                   href="/auth/signup"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-7 py-3.5 text-base font-semibold text-white hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-7 py-3.5 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(59,130,246,0.4)]"
+                  style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
                 >
                   Create Free Account <ArrowUpRight className="h-4 w-4" />
                 </Link>
@@ -463,7 +493,7 @@ export default function HomePage() {
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Cancel anytime</span>
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Free updates</span>
               </div>
-            </AnimatedSection>
+            </div>
           </div>
         </section>
       </main>
