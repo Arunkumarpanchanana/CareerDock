@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -12,7 +12,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid webhook' }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
+    if (!supabase) {
+      return NextResponse.json({ error: 'Server config error' }, { status: 500 })
+    }
+
+    // Idempotency: check if this payment_id was already processed
+    const { data: existing } = await supabase
+      .from('payment_transactions')
+      .select('id')
+      .eq('gateway_payment_id', paymentId)
+      .maybeSingle()
+
+    if (existing) {
+      return NextResponse.json({ success: true })
+    }
 
     const { data: tx } = await supabase
       .from('payment_transactions')
@@ -20,12 +34,8 @@ export async function POST(request: Request) {
       .eq('gateway_order_id', orderId)
       .single()
 
-    if (!tx) {
-      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
-    }
-
-    if (tx.status !== 'pending') {
-      return NextResponse.json({ error: 'Already processed' }, { status: 200 })
+    if (!tx || tx.status !== 'pending') {
+      return NextResponse.json({ success: true })
     }
 
     await supabase

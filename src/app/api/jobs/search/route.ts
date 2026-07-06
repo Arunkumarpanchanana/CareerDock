@@ -35,7 +35,7 @@ function parseIndeedSalary(text: string | undefined): { salary_min: number | nul
   return { salary_min: nums[0], salary_max: nums[1] }
 }
 
-function mapIndeedItems(items: Record<string, unknown>[] | Record<string, unknown> | undefined) {
+function mapIndeedItems(items: unknown) {
   if (!items) return []
   const arr = Array.isArray(items) ? items : [items]
   return arr.map((item) => {
@@ -60,8 +60,9 @@ function mapIndeedItems(items: Record<string, unknown>[] | Record<string, unknow
   })
 }
 
-function mapIndianItems(results: Record<string, unknown>[]) {
-  return (results ?? []).map((r) => ({
+function mapIndianItems(results: unknown) {
+  if (!Array.isArray(results)) return []
+  return (results as Record<string, unknown>[]).map((r) => ({
     source: 'indian' as const,
     adzuna_id: `indian-${r.id}`,
     title: (r.title as string) ?? '',
@@ -155,7 +156,7 @@ export async function POST(request: Request) {
       }),
       (async () => {
         try {
-          const res = await fetch(`https://rss.indeed.com/rss?q=${encodeURIComponent(keyword)}&l=${encodeURIComponent(location ?? '')}${INDEED_PUBLISHER_ID ? `&publisher=${INDEED_PUBLISHER_ID}` : ''}`)
+          const res = await fetch(`https://rss.indeed.com/rss?q=${encodeURIComponent(keyword)}&l=${encodeURIComponent(location ?? '')}${INDEED_PUBLISHER_ID ? `&publisher=${INDEED_PUBLISHER_ID}` : ''}`, { next: { revalidate: 3600 } })
           if (!res.ok) {
             console.error('Indeed error:', res.status)
             return null
@@ -163,7 +164,8 @@ export async function POST(request: Request) {
           const xml = await res.text()
           const parser = new XMLParser({ ignoreAttributes: false })
           const data = parser.parse(xml)
-          return data?.rss?.channel?.item ?? null
+          const item = data?.rss?.channel?.item
+          return item ?? null
         } catch (e) {
           console.error('Indeed error:', e)
           return null
@@ -176,6 +178,7 @@ export async function POST(request: Request) {
           const results = await Promise.all(titles.map((title) =>
             fetch(`https://jobs.indianapi.in/jobs?title=${encodeURIComponent(title)}&limit=20${location ? `&location=${encodeURIComponent(location)}` : ''}`, {
               headers: { 'X-Api-Key': INDIAN_API_KEY },
+              next: { revalidate: 3600 },
             }).then(async (r) => {
               if (!r.ok) { console.error('IndianAPI error:', r.status); return [] }
               return r.json()
@@ -193,7 +196,7 @@ export async function POST(request: Request) {
     if (postedWithin) {
       indeedItems = indeedItems.filter((item) => item.daysAgo !== null && item.daysAgo <= postedWithin)
     }
-    const indianItems = mapIndianItems(indianResponse as Record<string, unknown>[])
+    const indianItems = mapIndianItems(indianResponse)
     let allListings = deduplicate([...adzunaListings, ...indeedItems, ...indianItems])
 
     if (company) {
@@ -229,6 +232,11 @@ export async function POST(request: Request) {
       results: allListings,
       total: allListings.length,
       page: adzunaResponse.page ?? page,
+      cached_at: new Date().toISOString(),
+    }, {
+      headers: {
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+      },
     })
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error'

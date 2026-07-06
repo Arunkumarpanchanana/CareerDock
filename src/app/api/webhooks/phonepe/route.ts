@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
@@ -14,19 +14,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid webhook' }, { status: 400 })
     }
 
-    const supabase = await createClient()
-
-    const { data: tx } = await supabase
-      .from('payment_transactions')
-      .select('*')
-      .eq('gateway_order_id', orderId)
-      .single()
-
-    if (!tx) {
-      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+    const supabase = createAdminClient()
+    if (!supabase) {
+      return NextResponse.json({ error: 'Server config error' }, { status: 500 })
     }
 
-    if (tx.status !== 'pending') {
+    // Idempotency: check if this transactionId was already processed
+    const { data: existing } = await supabase
+      .from('payment_transactions')
+      .select('id')
+      .eq('gateway_payment_id', transactionId)
+      .maybeSingle()
+
+    if (existing) {
       return NextResponse.json({ success: true })
     }
 
@@ -45,6 +45,16 @@ export async function POST(request: Request) {
       if (checksum !== expectedChecksum) {
         return NextResponse.json({ error: 'Invalid signature' }, { status: 403 })
       }
+    }
+
+    const { data: tx } = await supabase
+      .from('payment_transactions')
+      .select('*')
+      .eq('gateway_order_id', orderId)
+      .single()
+
+    if (!tx || tx.status !== 'pending') {
+      return NextResponse.json({ success: true })
     }
 
     await supabase

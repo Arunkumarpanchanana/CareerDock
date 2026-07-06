@@ -4,6 +4,9 @@ import { handleCoachingTurn, handleCoachingSummary } from '@/lib/coach'
 
 const SESSION_LIMIT = 15
 
+export const maxDuration = 60
+export const runtime = 'nodejs'
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()

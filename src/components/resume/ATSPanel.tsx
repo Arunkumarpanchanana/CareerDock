@@ -87,6 +87,13 @@ export function ATSPanel({
         {scanning ? 'Scanning...' : 'Scan Resume'}
       </button>
 
+      {scanning && (
+        <div className="flex items-center gap-3 text-gray-500 text-sm py-8">
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+          Analyzing your resume against ATS criteria...
+        </div>
+      )}
+
       {score && (
         <div className="space-y-4">
           {/* Overall score */}

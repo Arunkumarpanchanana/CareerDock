@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { analyzeSkillGap } from '@/lib/ai'
 import { rateLimitByIp } from '@/lib/rate-limit'
 
+export const maxDuration = 60
+export const runtime = 'nodejs'
+
 export async function POST(request: Request) {
   const limit = rateLimitByIp(request, 10, 60_000)
   if (limit instanceof NextResponse) return limit

@@ -4,6 +4,9 @@ import { NextResponse } from 'next/server'
 import { analyzeSkillGap, generateCoverLetter } from '@/lib/ai'
 import { jobPrepareSchema } from '@/lib/validation'
 
+export const maxDuration = 60
+export const runtime = 'nodejs'
+
 export async function POST(request: Request) {
   const limit = rateLimitByIp(request, 10, 60_000)
   if (limit instanceof NextResponse) return limit
