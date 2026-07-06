@@ -57,9 +57,10 @@ export function KavyaClient() {
   const transcriptRef = useRef(transcript)
   const recognitionActiveRef = useRef(false)
   const submittingRef = useRef(false)
-  const audioContextRef = useRef<AudioContext | null>(null)
-  const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null)
+  const speakResolveRef = useRef<(() => void) | null>(null)
   const finishedRef = useRef(false)
+  const [speakUrl, setSpeakUrl] = useState<string | null>(null)
+  const [speakKey, setSpeakKey] = useState(0)
 
   useEffect(() => { historyRef.current = history }, [history])
   useEffect(() => { contextRef.current = context }, [context])
@@ -72,10 +73,7 @@ export function KavyaClient() {
       recognitionRef.current = null
     }
     recognitionActiveRef.current = false
-    if (sourceNodeRef.current) {
-      try { sourceNodeRef.current.stop() } catch {}
-      sourceNodeRef.current = null
-    }
+    setSpeakUrl(null)
   }, [])
 
   useEffect(() => {
@@ -84,35 +82,20 @@ export function KavyaClient() {
 
   const speak = useCallback(async (text: string): Promise<void> => {
     if (!voiceEnabled) return
-    if (sourceNodeRef.current) {
-      try { sourceNodeRef.current.stop() } catch {}
-      sourceNodeRef.current = null
-    }
-    if (!audioContextRef.current) return
-    if (audioContextRef.current.state === 'suspended') {
-      await audioContextRef.current.resume()
-    }
-    // Create a GainNode as a simple passthrough to ensure AudioContext stays active
-    const gain = audioContextRef.current.createGain()
-    gain.gain.value = 1
-    gain.connect(audioContextRef.current.destination)
+    setSpeakUrl(null)
     setAiSpeaking(true)
     setListening(false)
     try {
       const res = await fetch(`/api/tts?voice=kavya&text=${encodeURIComponent(text)}`)
       if (!res.ok) throw new Error('TTS API error')
-      const arrayBuffer = await res.arrayBuffer()
-      const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer.slice(0))
-      const source = audioContextRef.current.createBufferSource()
-      sourceNodeRef.current = source
-      source.buffer = audioBuffer
-      source.connect(gain)
-      source.start(0)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      setSpeakUrl(url)
+      setSpeakKey((k) => k + 1)
       await new Promise<void>((resolve) => {
-        const timeout = setTimeout(() => resolve(), 30000)
-        source.onended = () => { clearTimeout(timeout); resolve() }
+        speakResolveRef.current = resolve
       })
-      if (sourceNodeRef.current === source) sourceNodeRef.current = null
+      URL.revokeObjectURL(url)
     } catch (e) {
       console.error('TTS error:', e)
     }
@@ -234,9 +217,6 @@ export function KavyaClient() {
   }, [stopListening])
 
   const startSession = async () => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext()
-    }
     setError(null)
     finishedRef.current = false
 
@@ -269,6 +249,7 @@ export function KavyaClient() {
 
   const endSession = () => {
     cleanup()
+    setSpeakUrl(null)
     setPhase('setup')
     setError(null)
   }
@@ -318,6 +299,11 @@ export function KavyaClient() {
     )
   }
 
+  const onAudioEnded = useCallback(() => {
+    speakResolveRef.current?.()
+    speakResolveRef.current = null
+  }, [])
+
   // Conversation phase
   if (phase === 'session') {
     const displayText = currentQuestion
@@ -328,6 +314,9 @@ export function KavyaClient() {
 
     return (
       <div className="fixed inset-0 flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        {speakUrl && (
+          <audio key={speakKey} src={speakUrl} autoPlay onEnded={onAudioEnded} />
+        )}
         <div className="flex-1 flex flex-col items-center justify-center px-6">
           <Avatar speaking={aiSpeaking} listening={listening} />
 
