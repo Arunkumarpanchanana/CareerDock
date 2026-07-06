@@ -66,6 +66,11 @@ export function KavyaClient() {
   useEffect(() => { contextRef.current = context }, [context])
   useEffect(() => { transcriptRef.current = transcript }, [transcript])
 
+  const onAudioEnded = useCallback(() => {
+    speakResolveRef.current?.()
+    speakResolveRef.current = null
+  }, [])
+
   const cleanup = useCallback(() => {
     if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null }
     if (recognitionRef.current) {
@@ -298,11 +303,6 @@ export function KavyaClient() {
       </div>
     )
   }
-
-  const onAudioEnded = useCallback(() => {
-    speakResolveRef.current?.()
-    speakResolveRef.current = null
-  }, [])
 
   // Conversation phase
   if (phase === 'session') {
