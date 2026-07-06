@@ -89,7 +89,14 @@ export default function HomePage() {
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white border-b border-blue-100' : 'bg-transparent'}`}>
         <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6 sm:px-8">
           <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo.png" alt="My Career Dock" width={520} height={143} className="h-10 w-auto object-contain" />
+            <Image
+              src="/logo.png"
+              alt="My Career Dock"
+              width={256}
+              height={256}
+              className="h-9 w-auto object-contain transition-all duration-300"
+              style={{ filter: scrolled ? 'none' : 'brightness(0) invert(1)' }}
+            />
             <span className="text-xl font-bold" style={{ fontFamily: 'var(--font-hanken-grotesk)', color: scrolled ? '#001B3D' : '#ffffff' }}>My Career Dock</span>
           </Link>
           <div className="flex items-center gap-4">
@@ -115,7 +122,7 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative overflow-hidden bg-[linear-gradient(135deg,#0a1628_0%,#1a2744_50%,#0f1f3a_100%)] pt-28 pb-16 sm:pt-36 sm:pb-24">
+        <section className="relative overflow-hidden bg-[linear-gradient(135deg,#0a1628_0%,#1a2744_50%,#0f1f3a_100%)] pt-24 pb-12 sm:pt-28 sm:pb-20">
           {/* Animated background shapes */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl animate-pulse" />
@@ -127,7 +134,7 @@ export default function HomePage() {
             {/* Social Proof Badge */}
             <a
               href="#testimonials"
-              className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 mb-8 transition-colors hover:bg-[rgba(59,130,246,0.25)]"
+              className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 mb-6 transition-colors hover:bg-[rgba(59,130,246,0.25)]"
               style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}
             >
               <span className="text-sm">🔥</span>
@@ -150,7 +157,7 @@ export default function HomePage() {
             </h1>
 
             <p
-              className="mx-auto mt-5 max-w-xl text-lg sm:text-xl leading-relaxed"
+              className="mx-auto mt-4 max-w-xl text-lg sm:text-xl leading-relaxed"
               style={{ color: '#94a3b8', fontFamily: 'var(--font-inter)' }}
             >
               Land your dream job faster with ATS-optimized resumes, AI mock interviews, and 1:1 expert sessions.
@@ -175,7 +182,7 @@ export default function HomePage() {
 
             {/* Success Metrics */}
             <div
-              className="mt-14 flex items-center justify-center gap-8 sm:gap-14 flex-wrap pt-10"
+              className="mt-10 flex items-center justify-center gap-6 sm:gap-10 flex-wrap pt-6"
               style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
             >
               {[
@@ -200,9 +207,9 @@ export default function HomePage() {
         </section>
 
         {/* Pricing */}
-        <section id="services" className="bg-surface-faint py-20 sm:py-28">
+        <section id="services" className="bg-surface-faint py-14 sm:py-20">
           <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
-            <div className="text-center mb-16">
+            <div className="text-center mb-10">
               <div className="inline-flex items-center gap-2 mb-4">
                 <span
                   className="text-[11px] font-semibold tracking-[0.05em] uppercase"
@@ -221,7 +228,7 @@ export default function HomePage() {
               <p className="mt-3 text-lg text-on-surface-variant max-w-xl mx-auto">
                 Start free, upgrade when you&apos;re ready.
               </p>
-              <div className="mt-6 flex items-center justify-center gap-3">
+              <div className="mt-4 flex items-center justify-center gap-3">
                 <span className={`text-sm font-medium transition-colors ${!yearly ? 'text-navy-900' : 'text-on-surface-variant'}`}>Monthly</span>
                 <button
                   onClick={() => setYearly(!yearly)}
@@ -235,17 +242,17 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
+            <div className="grid gap-5 md:grid-cols-3 max-w-5xl mx-auto">
               {/* Free Trial */}
               <div
-                className="group rounded-xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                className="group rounded-xl bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}
               >
-                <div className="text-3xl mb-4">✨</div>
-                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
+                <div className="text-2xl mb-3">✨</div>
+                <h3 className="text-lg font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
                   Free Trial
                 </h3>
-                <p className="text-sm text-on-surface-variant mt-1 mb-4">Get started</p>
+                <p className="text-sm text-on-surface-variant mt-1 mb-3">Get started</p>
                 <div className="flex items-baseline gap-1 mb-6">
                   <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹0</span>
                   <span className="text-sm text-on-surface-variant">/mo</span>
@@ -274,7 +281,7 @@ export default function HomePage() {
 
               {/* Premium (Most Popular) */}
               <div
-                className="group rounded-xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
+                className="group rounded-xl bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
                 style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)', border: '2px solid #3b82f6' }}
               >
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full px-3 py-1" style={{ background: '#3b82f6' }}>
@@ -285,11 +292,11 @@ export default function HomePage() {
                     Most Popular
                   </span>
                 </div>
-                <div className="text-3xl mb-4">⚡</div>
-                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
+                <div className="text-2xl mb-3">⚡</div>
+                <h3 className="text-lg font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
                   Premium
                 </h3>
-                <p className="text-sm text-on-surface-variant mt-1 mb-4">For serious job seekers</p>
+                <p className="text-sm text-on-surface-variant mt-1 mb-3">For serious job seekers</p>
                 {(() => {
                   const monthlyPrice = prices.premium?.monthly ?? 299
                   const yearlyPrice = prices.premium?.yearly ?? 3000
@@ -336,7 +343,7 @@ export default function HomePage() {
 
               {/* Premium Pro */}
               <div
-                className="group rounded-xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
+                className="group rounded-xl bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
                 style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}
               >
                 <div
@@ -349,11 +356,11 @@ export default function HomePage() {
                     maskComposite: 'exclude',
                   }}
                 />
-                <div className="text-3xl mb-4">👑</div>
-                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
+                <div className="text-2xl mb-3">👑</div>
+                <h3 className="text-lg font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
                   Premium Pro
                 </h3>
-                <p className="text-sm text-on-surface-variant mt-1 mb-4">Everything plus expert guidance</p>
+                <p className="text-sm text-on-surface-variant mt-1 mb-3">Everything plus expert guidance</p>
                 {(() => {
                   const monthlyPrice = prices.premium_pro?.monthly ?? 500
                   const yearlyPrice = prices.premium_pro?.yearly ?? 5500
@@ -400,7 +407,7 @@ export default function HomePage() {
             </div>
 
             {/* Limited-Time Offer Banner */}
-            <div className="mt-8 text-center">
+            <div className="mt-6 text-center">
               <p className="text-base font-semibold" style={{ color: '#334155' }}>
                 <span style={{ color: '#ef4444' }}>🔥</span>{' '}
                 Limited: Book before July 15th and get <strong>20% off</strong> any package.
@@ -410,9 +417,9 @@ export default function HomePage() {
         </section>
 
         {/* Testimonials */}
-        <section id="testimonials" className="bg-surface py-20 sm:py-28">
+        <section id="testimonials" className="bg-surface py-14 sm:py-20">
           <div className="mx-auto max-w-4xl px-5 sm:px-8">
-            <AnimatedSection className="text-center mb-16">
+            <AnimatedSection className="text-center mb-10">
               <h2
                 className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
                 style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
@@ -426,8 +433,8 @@ export default function HomePage() {
 
             <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
               <AnimatedSection>
-                <div className="rounded-xl bg-white p-8 hover:-translate-y-1 hover:shadow-xl transition-all duration-300" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
-                  <div className="flex items-center gap-1 mb-4">
+                <div className="rounded-xl bg-white p-6 hover:-translate-y-1 hover:shadow-xl transition-all duration-300" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
+                  <div className="flex items-center gap-1 mb-3">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-5 w-5 fill-[#ff9f0a] text-[#ff9f0a]" />
                     ))}
@@ -449,8 +456,8 @@ export default function HomePage() {
               </AnimatedSection>
 
               <AnimatedSection>
-                <div className="rounded-xl bg-white p-8 hover:-translate-y-1 hover:shadow-xl transition-all duration-300" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
-                  <div className="flex items-center gap-1 mb-4">
+                <div className="rounded-xl bg-white p-6 hover:-translate-y-1 hover:shadow-xl transition-all duration-300" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
+                  <div className="flex items-center gap-1 mb-3">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-5 w-5 fill-[#ff9f0a] text-[#ff9f0a]" />
                     ))}
@@ -479,9 +486,9 @@ export default function HomePage() {
         </section>
 
         {/* FAQ */}
-        <section className="bg-surface-faint py-20 sm:py-28">
+        <section className="bg-surface-faint py-14 sm:py-20">
           <div className="mx-auto max-w-3xl px-5 sm:px-8">
-            <AnimatedSection className="text-center mb-16">
+            <AnimatedSection className="text-center mb-10">
               <h2
                 className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
                 style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
@@ -524,7 +531,7 @@ export default function HomePage() {
         </section>
 
         {/* CTA */}
-        <section className="bg-navy-900 py-20 sm:py-28">
+        <section className="bg-navy-900 py-14 sm:py-20">
           <div className="mx-auto max-w-3xl px-5 sm:px-8 text-center">
             <AnimatedSection>
               <h2
@@ -536,7 +543,7 @@ export default function HomePage() {
               <p className="mt-3 text-lg text-blue-400 max-w-lg mx-auto">
                 Join thousands of professionals who landed their dream job with our help.
               </p>
-              <div className="mt-9 flex items-center justify-center gap-3 flex-wrap">
+            <div className="mt-7 flex items-center justify-center gap-3 flex-wrap">
                 <Link
                   href="/auth/signup"
                   className="inline-flex items-center gap-1.5 rounded-lg px-7 py-3.5 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(59,130,246,0.4)]"
