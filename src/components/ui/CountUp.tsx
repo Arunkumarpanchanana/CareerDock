@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-interface CountUpProps {
+export interface CountUpProps {
   end: number
   suffix?: string
   duration?: number
 }
 
-export function CountUp({ end, suffix = '', duration = 2000 }: CountUpProps) {
+export function CountUp({ end: rawEnd, suffix = '', duration = 2000 }: CountUpProps) {
+  const end = Math.max(0, rawEnd)
   const [count, setCount] = useState(0)
   const ref = useRef<HTMLSpanElement>(null)
   const started = useRef(false)
