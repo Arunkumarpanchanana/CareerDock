@@ -59,11 +59,28 @@ const faqs = [
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [prices, setPrices] = useState<Record<string, { monthly: number; yearly: number }>>({})
+  const [yearly, setYearly] = useState(false)
 
   useEffect(() => {
     function onScroll() { setScrolled(window.scrollY > 20) }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/plan-prices')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const map: Record<string, { monthly: number; yearly: number }> = {}
+          data.forEach((p: { plan_tier: string; monthly_price: number; yearly_price: number }) => {
+            map[p.plan_tier] = { monthly: p.monthly_price, yearly: p.yearly_price }
+          })
+          setPrices(map)
+        }
+      })
+      .catch(() => {})
   }, [])
 
   return (
@@ -182,7 +199,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Services */}
+        {/* Pricing */}
         <section id="services" className="bg-surface-faint py-20 sm:py-28">
           <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
             <div className="text-center mb-16">
@@ -191,7 +208,7 @@ export default function HomePage() {
                   className="text-[11px] font-semibold tracking-[0.05em] uppercase"
                   style={{ color: '#3b82f6', fontFamily: 'var(--font-jetbrains-mono)' }}
                 >
-                  Services
+                  Pricing
                 </span>
                 <div className="w-12 h-px" style={{ background: 'linear-gradient(90deg, #3b82f6, transparent)' }} />
               </div>
@@ -199,54 +216,63 @@ export default function HomePage() {
                 className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
                 style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
               >
-                Start with a Free Consultation,<br />
-                then choose your path.
+                Simple, transparent pricing
               </h2>
               <p className="mt-3 text-lg text-on-surface-variant max-w-xl mx-auto">
-                Every plan includes a 30-minute strategy session — pick the level of support that fits your goals.
+                Start free, upgrade when you&apos;re ready.
               </p>
+              <div className="mt-6 flex items-center justify-center gap-3">
+                <span className={`text-sm font-medium transition-colors ${!yearly ? 'text-navy-900' : 'text-on-surface-variant'}`}>Monthly</span>
+                <button
+                  onClick={() => setYearly(!yearly)}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${yearly ? 'bg-blue-600' : 'bg-blue-200'}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${yearly ? 'translate-x-6' : ''}`} />
+                </button>
+                <span className={`text-sm font-medium transition-colors ${yearly ? 'text-navy-900' : 'text-on-surface-variant'}`}>
+                  Yearly <span className="text-xs text-blue-600 font-semibold">Save up to 16%</span>
+                </span>
+              </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
-              {/* Card 1: Resume Review */}
+              {/* Free Trial */}
               <div
                 className="group rounded-xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}
               >
-                <div className="text-3xl mb-4">📝</div>
+                <div className="text-3xl mb-4">✨</div>
                 <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
-                  Resume Review
+                  Free Trial
                 </h3>
-                <p className="text-sm text-on-surface-variant mt-1 mb-4">Expert ATS audit + rewrite</p>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-sm text-on-surface-variant">₹</span>
-                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>4,999</span>
+                <p className="text-sm text-on-surface-variant mt-1 mb-4">Get started</p>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹0</span>
+                  <span className="text-sm text-on-surface-variant">/mo</span>
                 </div>
-                <p className="text-xs text-outline mb-6">One-time payment</p>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> ATS compatibility check
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 3 resume builds
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Expert rewrite with keywords
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Skill gap analysis
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Cover letter included
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Job search
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 48-hour turnaround
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 10 AI suggestions / month
                   </li>
                 </ul>
                 <Link
                   href="/auth/signup"
-                  className="flex w-full items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(59,130,246,0.4)]"
-                  style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
+                  className="flex w-full items-center justify-center rounded-lg border-2 border-navy-900 px-5 py-2.5 text-sm font-semibold text-navy-900 transition-colors hover:bg-navy-900 hover:text-white"
                 >
-                  Book Now <ArrowUpRight className="h-4 w-4 ml-1" />
+                  Get Started
                 </Link>
               </div>
 
-              {/* Card 2: Interview Coaching (Most Popular) */}
+              {/* Premium (Most Popular) */}
               <div
                 className="group rounded-xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
                 style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)', border: '2px solid #3b82f6' }}
@@ -259,28 +285,44 @@ export default function HomePage() {
                     Most Popular
                   </span>
                 </div>
-                <div className="text-3xl mb-4">🎯</div>
+                <div className="text-3xl mb-4">⚡</div>
                 <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
-                  Interview Coaching
+                  Premium
                 </h3>
-                <p className="text-sm text-on-surface-variant mt-1 mb-4">3 mock sessions + feedback</p>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-sm text-on-surface-variant">₹</span>
-                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>9,999</span>
-                </div>
-                <p className="text-xs text-outline mb-6">One-time payment</p>
+                <p className="text-sm text-on-surface-variant mt-1 mb-4">For serious job seekers</p>
+                {(() => {
+                  const monthlyPrice = prices.premium?.monthly ?? 299
+                  const yearlyPrice = prices.premium?.yearly ?? 3000
+                  const displayPrice = yearly ? Math.round(yearlyPrice / 12) : monthlyPrice
+                  const savingsPercent = prices.premium ? Math.round((1 - yearlyPrice / (monthlyPrice * 12)) * 100) : 16
+                  return (
+                    <>
+                      <div className="flex items-baseline gap-1 mb-1">
+                        <span className="text-sm text-on-surface-variant">₹</span>
+                        <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>{displayPrice.toLocaleString('en-IN')}</span>
+                        <span className="text-sm text-on-surface-variant">/mo</span>
+                      </div>
+                      {yearly && (
+                        <p className="text-xs text-blue-600 font-medium mb-5">
+                          ₹{yearlyPrice.toLocaleString('en-IN')}/year — Save {savingsPercent}%
+                        </p>
+                      )}
+                      {!yearly && <div className="mb-5" />}
+                    </>
+                  )
+                })()}
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 3 x 45-min mock interviews
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Unlimited resumes
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> AI-powered feedback report
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> AI mock interview
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Industry-specific questions
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 100 AI suggestions / month
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Salary negotiation guide
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Job pipeline tracker
                   </li>
                 </ul>
                 <Link
@@ -288,16 +330,15 @@ export default function HomePage() {
                   className="flex w-full items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(59,130,246,0.4)]"
                   style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
                 >
-                  Book Now <ArrowUpRight className="h-4 w-4 ml-1" />
+                  Upgrade <ArrowUpRight className="h-4 w-4 ml-1" />
                 </Link>
               </div>
 
-              {/* Card 3: Career Strategy */}
+              {/* Premium Pro */}
               <div
                 className="group rounded-xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
                 style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}
               >
-                {/* Gradient border overlay */}
                 <div
                   className="absolute inset-0 rounded-xl pointer-events-none"
                   style={{
@@ -308,28 +349,44 @@ export default function HomePage() {
                     maskComposite: 'exclude',
                   }}
                 />
-                <div className="text-3xl mb-4">🚀</div>
+                <div className="text-3xl mb-4">👑</div>
                 <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
-                  Career Strategy
+                  Premium Pro
                 </h3>
-                <p className="text-sm text-on-surface-variant mt-1 mb-4">End-to-end career transformation</p>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-sm text-on-surface-variant">₹</span>
-                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>14,999</span>
-                </div>
-                <p className="text-xs text-outline mb-6">One-time payment</p>
+                <p className="text-sm text-on-surface-variant mt-1 mb-4">Everything plus expert guidance</p>
+                {(() => {
+                  const monthlyPrice = prices.premium_pro?.monthly ?? 500
+                  const yearlyPrice = prices.premium_pro?.yearly ?? 5500
+                  const displayPrice = yearly ? Math.round(yearlyPrice / 12) : monthlyPrice
+                  const savingsPercent = prices.premium_pro ? Math.round((1 - yearlyPrice / (monthlyPrice * 12)) * 100) : 8
+                  return (
+                    <>
+                      <div className="flex items-baseline gap-1 mb-1">
+                        <span className="text-sm text-on-surface-variant">₹</span>
+                        <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>{displayPrice.toLocaleString('en-IN')}</span>
+                        <span className="text-sm text-on-surface-variant">/mo</span>
+                      </div>
+                      {yearly && (
+                        <p className="text-xs text-blue-600 font-medium mb-5">
+                          ₹{yearlyPrice.toLocaleString('en-IN')}/year — Save {savingsPercent}%
+                        </p>
+                      )}
+                      {!yearly && <div className="mb-5" />}
+                    </>
+                  )
+                })()}
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Resume + cover letter + LinkedIn
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Everything in Premium
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 5 mock interview sessions
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Unlimited AI suggestions
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Custom job search strategy
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 1:1 expert sessions
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 30 days email/chat support
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Priority support
                   </li>
                 </ul>
                 <Link
@@ -337,7 +394,7 @@ export default function HomePage() {
                   className="flex w-full items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(59,130,246,0.4)]"
                   style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
                 >
-                  Book Now <ArrowUpRight className="h-4 w-4 ml-1" />
+                  Go Pro <ArrowUpRight className="h-4 w-4 ml-1" />
                 </Link>
               </div>
             </div>

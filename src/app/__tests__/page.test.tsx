@@ -13,11 +13,11 @@ describe("Landing Page", () => {
     expect(screen.getByText("Book Your Free Consultation")).toBeInTheDocument()
   })
 
-  it("renders all service cards", () => {
+  it("renders all pricing plans", () => {
     render(<HomePage />)
-    expect(screen.getByText("Resume Review")).toBeInTheDocument()
-    expect(screen.getByText("Interview Coaching")).toBeInTheDocument()
-    expect(screen.getByText("Career Strategy")).toBeInTheDocument()
+    expect(screen.getByText("Free Trial")).toBeInTheDocument()
+    expect(screen.getByText("Premium")).toBeInTheDocument()
+    expect(screen.getByText("Premium Pro")).toBeInTheDocument()
   })
 
   it("renders the FAQ section with questions", () => {
