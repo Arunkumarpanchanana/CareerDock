@@ -4,10 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
-  FileText,
-  Kanban,
-  Sparkles,
-  Users,
   ChevronRight,
   ChevronDown,
   ArrowDown,
@@ -42,19 +38,6 @@ function AnimatedSection({ children, className = '' }: { children: React.ReactNo
   )
 }
 
-const features = [
-  { icon: FileText, title: 'ATS Resume Builder', desc: 'Create clean resumes that pass Applicant Tracking Systems. Download as PDF instantly.' },
-  { icon: Kanban, title: 'Job Pipeline Tracker', desc: 'Drag applications across stages — from Wishlist to Offer. Never lose track.' },
-  { icon: Sparkles, title: 'Smart Suggestions', desc: 'Get AI-powered suggestions for bullet points, skills, and summaries.' },
-  { icon: Users, title: 'Expert Consultations', desc: 'Book 1:1 sessions with industry professionals for career advice.' },
-]
-
-const steps = [
-  { title: 'Build Your Resume', desc: 'Fill in your details with our guided editor. Choose from expert-written templates.' },
-  { title: 'Track Applications', desc: 'Add jobs to your pipeline and move them across stages with ease.' },
-  { title: 'Get Expert Help', desc: 'Book 1:1 sessions with professionals who have been where you want to go.' },
-]
-
 const faqs = [
   { q: 'Is My Career Dock really free to start?', a: 'Yes, absolutely. You can create a free account and start building resumes, tracking applications, and using AI suggestions right away — no credit card required.' },
   { q: "What's included in the Free plan?", a: 'The Free plan includes 3 resume builds, skill gap analysis, job search tools, and 10 AI suggestions per month. Enough to get a feel for the platform and make real progress.' },
@@ -75,26 +58,12 @@ const faqs = [
 
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
-  const [prices, setPrices] = useState<Record<string, { monthly: number; yearly: number }>>({})
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   useEffect(() => {
     function onScroll() { setScrolled(window.scrollY > 20) }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  useEffect(() => {
-    fetch('/api/plan-prices')
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          const map: Record<string, { monthly: number; yearly: number }> = {}
-          data.forEach((p: any) => { map[p.plan_tier] = { monthly: p.monthly_price, yearly: p.yearly_price } })
-          setPrices(map)
-        }
-      })
-      .catch(() => {})
   }, [])
 
   return (
@@ -213,127 +182,76 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Features */}
-        <section className="bg-surface py-20 sm:py-28">
+        {/* Services */}
+        <section id="services" className="bg-surface-faint py-20 sm:py-28">
           <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
-            <AnimatedSection className="text-center mb-16">
-              <h2
-                className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
-                style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
-              >
-                Everything you need to land the role
-              </h2>
-              <p className="mt-3 text-lg text-on-surface-variant max-w-xl mx-auto">
-                From resume to offer letter — My Career Dock supports every step of your job search.
-              </p>
-            </AnimatedSection>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {features.map(({ icon: Icon, title, desc }) => (
-                <div
-                  key={title}
-                  className="group rounded-lg bg-white p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)] hover:shadow-[0_8px_30px_rgba(0,27,61,0.1)] transition-all duration-300 cursor-default"
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 mb-4">
+                <span
+                  className="text-[11px] font-semibold tracking-[0.05em] uppercase"
+                  style={{ color: '#3b82f6', fontFamily: 'var(--font-jetbrains-mono)' }}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-growth-green flex items-center justify-center mb-5">
-                    <Icon className="h-5 w-5 text-white" />
-                  </div>
-                  <h3
-                    className="text-xl font-semibold text-navy-900"
-                    style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
-                  >
-                    {title}
-                  </h3>
-                  <p className="mt-1.5 text-base text-on-surface-variant leading-relaxed">{desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* How It Works */}
-        <section className="bg-surface-faint py-20 sm:py-28">
-          <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
-            <AnimatedSection className="text-center mb-16">
+                  Services
+                </span>
+                <div className="w-12 h-px" style={{ background: 'linear-gradient(90deg, #3b82f6, transparent)' }} />
+              </div>
               <h2
                 className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
                 style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
               >
-                Three steps to your next role
+                Start with a Free Consultation,<br />
+                then choose your path.
               </h2>
               <p className="mt-3 text-lg text-on-surface-variant max-w-xl mx-auto">
-                Get started in minutes, not hours.
+                Every plan includes a 30-minute strategy session — pick the level of support that fits your goals.
               </p>
-            </AnimatedSection>
-
-            <div className="grid gap-8 md:grid-cols-3">
-              {steps.map(({ title, desc }, i) => (
-                <AnimatedSection key={title}>
-                  <div className="text-center">
-                    <div className="w-14 h-14 rounded-lg bg-blue-600 text-white text-lg font-bold flex items-center justify-center mx-auto mb-5">
-                      {i + 1}
-                    </div>
-                    <h3
-                      className="text-xl font-semibold text-navy-900"
-                      style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
-                    >
-                      {title}
-                    </h3>
-                    <p className="mt-2 text-base text-on-surface-variant leading-relaxed max-w-xs mx-auto">
-                      {desc}
-                    </p>
-                  </div>
-                </AnimatedSection>
-              ))}
             </div>
-          </div>
-        </section>
-
-        {/* Pricing */}
-        <section className="bg-surface-faint py-20 sm:py-28">
-          <div className="mx-auto max-w-[1280px] px-5 sm:px-8">
-            <AnimatedSection className="text-center mb-16">
-              <h2
-                className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
-                style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
-              >
-                Simple, transparent pricing
-              </h2>
-              <p className="mt-3 text-lg text-on-surface-variant max-w-xl mx-auto">
-                Start free, upgrade when you&apos;re ready.
-              </p>
-            </AnimatedSection>
 
             <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
-              <div className="rounded-lg bg-white p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)]">
-                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>Free Trial</h3>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹0</span>
-                  <span className="text-on-surface-variant text-sm">/mo</span>
+              {/* Card 1: Resume Review */}
+              <div
+                className="group rounded-xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}
+              >
+                <div className="text-3xl mb-4">📝</div>
+                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
+                  Resume Review
+                </h3>
+                <p className="text-sm text-on-surface-variant mt-1 mb-4">Expert ATS audit + rewrite</p>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-sm text-on-surface-variant">₹</span>
+                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>4,999</span>
                 </div>
-                <ul className="mt-6 space-y-3">
+                <p className="text-xs text-outline mb-6">One-time payment</p>
+                <ul className="space-y-3 mb-8">
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 3 resume builds
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> ATS compatibility check
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Skill gap analysis
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Expert rewrite with keywords
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Job search
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Cover letter included
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 10 AI suggestions / month
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 48-hour turnaround
                   </li>
                 </ul>
                 <Link
                   href="/auth/signup"
-                  className="mt-8 flex w-full items-center justify-center rounded-lg border-2 border-navy-900 px-5 py-2.5 text-sm font-semibold text-navy-900 hover:bg-navy-900 hover:text-white transition-colors"
+                  className="flex w-full items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(59,130,246,0.4)]"
+                  style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
                 >
-                  Get Started
+                  Book Now <ArrowUpRight className="h-4 w-4 ml-1" />
                 </Link>
               </div>
 
-              <div className="rounded-lg bg-white p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)] ring-2 ring-blue-600 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-blue-600 px-3 py-1">
+              {/* Card 2: Interview Coaching (Most Popular) */}
+              <div
+                className="group rounded-xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
+                style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)', border: '2px solid #3b82f6' }}
+              >
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full px-3 py-1 animate-pulse" style={{ background: '#3b82f6' }}>
                   <span
                     className="text-[10px] font-semibold text-white tracking-wider uppercase"
                     style={{ fontFamily: 'var(--font-jetbrains-mono)' }}
@@ -341,66 +259,95 @@ export default function HomePage() {
                     Most Popular
                   </span>
                 </div>
-                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>Premium</h3>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹{prices.premium?.monthly ?? 299}</span>
-                  <span className="text-on-surface-variant text-sm">/mo</span>
+                <div className="text-3xl mb-4">🎯</div>
+                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
+                  Interview Coaching
+                </h3>
+                <p className="text-sm text-on-surface-variant mt-1 mb-4">3 mock sessions + feedback</p>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-sm text-on-surface-variant">₹</span>
+                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>9,999</span>
                 </div>
-                <ul className="mt-6 space-y-3">
+                <p className="text-xs text-outline mb-6">One-time payment</p>
+                <ul className="space-y-3 mb-8">
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Unlimited resumes
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 3 x 45-min mock interviews
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> AI mock interview
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> AI-powered feedback report
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 100 AI suggestions / month
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Industry-specific questions
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Job pipeline tracker
-                  </li>
-                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> ₹{(prices.premium?.yearly ?? 3000).toLocaleString()} / year (save {prices.premium ? Math.round((1 - prices.premium.yearly / (prices.premium.monthly * 12)) * 100) : 16}%)
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Salary negotiation guide
                   </li>
                 </ul>
                 <Link
                   href="/auth/signup"
-                  className="mt-8 flex w-full items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                  className="flex w-full items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(59,130,246,0.4)]"
+                  style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
                 >
-                  Upgrade
+                  Book Now <ArrowUpRight className="h-4 w-4 ml-1" />
                 </Link>
               </div>
 
-              <div className="rounded-lg bg-white p-8 shadow-[0_4px_20px_rgba(0,27,61,0.05)]">
-                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>Premium Pro</h3>
-                <div className="mt-4 flex items-baseline gap-1">
-                    <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹{prices.premium_pro?.monthly ?? 500}</span>
-                  <span className="text-on-surface-variant text-sm">/mo</span>
+              {/* Card 3: Career Strategy */}
+              <div
+                className="group rounded-xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
+                style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}
+              >
+                {/* Gradient border overlay */}
+                <div
+                  className="absolute inset-0 rounded-xl pointer-events-none"
+                  style={{
+                    padding: '1px',
+                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                    WebkitMaskComposite: 'xor',
+                    maskComposite: 'exclude',
+                  }}
+                />
+                <div className="text-3xl mb-4">🚀</div>
+                <h3 className="text-xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
+                  Career Strategy
+                </h3>
+                <p className="text-sm text-on-surface-variant mt-1 mb-4">End-to-end career transformation</p>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-sm text-on-surface-variant">₹</span>
+                  <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>14,999</span>
                 </div>
-                <ul className="mt-6 space-y-3">
+                <p className="text-xs text-outline mb-6">One-time payment</p>
+                <ul className="space-y-3 mb-8">
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Everything in Premium
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Resume + cover letter + LinkedIn
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Unlimited AI suggestions
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 5 mock interview sessions
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 1:1 expert sessions
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Custom job search strategy
                   </li>
                   <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> Priority support
-                  </li>
-                  <li className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> ₹{(prices.premium_pro?.yearly ?? 5500).toLocaleString()} / year (save {prices.premium_pro ? Math.round((1 - prices.premium_pro.yearly / (prices.premium_pro.monthly * 12)) * 100) : 8}%)
+                    <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> 30 days email/chat support
                   </li>
                 </ul>
                 <Link
                   href="/auth/signup"
-                  className="mt-8 flex w-full items-center justify-center rounded-lg border-2 border-navy-900 px-5 py-2.5 text-sm font-semibold text-navy-900 hover:bg-navy-900 hover:text-white transition-colors"
+                  className="flex w-full items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(59,130,246,0.4)]"
+                  style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
                 >
-                  Go Pro
+                  Book Now <ArrowUpRight className="h-4 w-4 ml-1" />
                 </Link>
               </div>
+            </div>
+
+            {/* Limited-Time Offer Banner */}
+            <div className="mt-8 text-center">
+              <p className="text-base font-semibold" style={{ color: '#334155' }}>
+                <span style={{ color: '#ef4444' }}>🔥</span>{' '}
+                Limited: Book before July 15th and get <strong>20% off</strong> any package.
+              </p>
             </div>
           </div>
         </section>
