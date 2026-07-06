@@ -251,7 +251,7 @@ export default function HomePage() {
                 className="group rounded-xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
                 style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)', border: '2px solid #3b82f6' }}
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full px-3 py-1 animate-pulse" style={{ background: '#3b82f6' }}>
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full px-3 py-1" style={{ background: '#3b82f6' }}>
                   <span
                     className="text-[10px] font-semibold text-white tracking-wider uppercase"
                     style={{ fontFamily: 'var(--font-jetbrains-mono)' }}
