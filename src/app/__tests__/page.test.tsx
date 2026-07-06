@@ -5,20 +5,19 @@ import HomePage from "../page"
 describe("Landing Page", () => {
   it("renders the main headline", () => {
     render(<HomePage />)
-    expect(screen.getByText("Career Accelerator")).toBeInTheDocument()
+    expect(screen.getByText("Unlock Your Career Potential")).toBeInTheDocument()
   })
 
   it("renders CTA buttons", () => {
     render(<HomePage />)
-    expect(screen.getByText("Start Free")).toBeInTheDocument()
+    expect(screen.getByText("Book Your Free Consultation")).toBeInTheDocument()
   })
 
-  it("renders all feature cards", () => {
+  it("renders all service cards", () => {
     render(<HomePage />)
-    expect(screen.getByText("ATS Resume Builder")).toBeInTheDocument()
-    expect(screen.getByText("Job Pipeline Tracker")).toBeInTheDocument()
-    expect(screen.getByText("Smart Suggestions")).toBeInTheDocument()
-    expect(screen.getByText("Expert Consultations")).toBeInTheDocument()
+    expect(screen.getByText("Resume Review")).toBeInTheDocument()
+    expect(screen.getByText("Interview Coaching")).toBeInTheDocument()
+    expect(screen.getByText("Career Strategy")).toBeInTheDocument()
   })
 
   it("renders the FAQ section with questions", () => {
