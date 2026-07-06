@@ -49,13 +49,6 @@ const features = [
   { icon: Users, title: 'Expert Consultations', desc: 'Book 1:1 sessions with industry professionals for career advice.' },
 ]
 
-const statsData = [
-  { value: '10K+', label: 'Active Users' },
-  { value: '5K+', label: 'Resumes Built' },
-  { value: '500+', label: 'Expert Sessions' },
-  { value: '95%', label: 'Satisfaction' },
-]
-
 const steps = [
   { title: 'Build Your Resume', desc: 'Fill in your details with our guided editor. Choose from expert-written templates.' },
   { title: 'Track Applications', desc: 'Add jobs to your pipeline and move them across stages with ease.' },
@@ -140,8 +133,8 @@ export default function HomePage() {
           {/* Animated background shapes */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl animate-pulse" />
-            <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl animate-pulse animation-delay-1000" />
-            <div className="absolute top-1/3 left-1/4 w-64 h-64 rounded-full bg-cyan-500/5 blur-3xl animate-pulse animation-delay-2000" />
+            <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+            <div className="absolute top-1/3 left-1/4 w-64 h-64 rounded-full bg-cyan-500/5 blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
           </div>
 
           <div className="mx-auto max-w-4xl px-5 sm:px-8 text-center relative z-10">
