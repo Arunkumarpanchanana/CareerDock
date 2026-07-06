@@ -10,10 +10,12 @@ import {
   Users,
   ChevronRight,
   ChevronDown,
+  ArrowDown,
   CheckCircle2,
   ArrowUpRight,
   Star,
 } from 'lucide-react'
+import { CountUp } from '@/components/ui/CountUp'
 
 function useInView<T extends HTMLElement>() {
   const ref = useRef<T>(null)
@@ -114,13 +116,17 @@ export default function HomePage() {
           <div className="flex items-center gap-4">
             <Link
               href="/auth/login"
-              className="text-sm font-medium text-on-surface-variant hover:text-navy-900 transition-colors"
+              className="text-sm font-medium transition-colors"
+              style={{ color: scrolled ? '#434656' : '#ffffff' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#001B3D' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = scrolled ? '#434656' : '#ffffff' }}
             >
               Sign In
             </Link>
             <Link
               href="/auth/signup"
-              className="inline-flex items-center px-5 py-2.5 rounded-lg bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-300 hover:shadow-[0_4px_15px_rgba(59,130,246,0.4)]"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
             >
               Get Started
             </Link>
@@ -130,58 +136,84 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="bg-surface pt-36 pb-20 sm:pt-44 sm:pb-28">
-          <div className="mx-auto max-w-4xl px-5 sm:px-8 text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-4 py-1.5 mb-8">
-              <Sparkles className="h-3 w-3 text-blue-600" />
+        <section className="relative overflow-hidden bg-[linear-gradient(135deg,#0a1628_0%,#1a2744_50%,#0f1f3a_100%)] pt-36 pb-20 sm:pt-44 sm:pb-28">
+          {/* Animated background shapes */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl animate-pulse" />
+            <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl animate-pulse animation-delay-1000" />
+            <div className="absolute top-1/3 left-1/4 w-64 h-64 rounded-full bg-cyan-500/5 blur-3xl animate-pulse animation-delay-2000" />
+          </div>
+
+          <div className="mx-auto max-w-4xl px-5 sm:px-8 text-center relative z-10">
+            {/* Social Proof Badge */}
+            <a
+              href="#testimonials"
+              className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 mb-8 transition-colors hover:bg-[rgba(59,130,246,0.25)]"
+              style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}
+            >
+              <span className="text-sm">🔥</span>
               <span
-                className="text-[11px] font-semibold text-blue-600 tracking-[0.05em] uppercase"
-                style={{ fontFamily: 'var(--font-jetbrains-mono)' }}
+                className="text-[11px] font-semibold tracking-[0.05em] uppercase"
+                style={{ color: '#93bbff', fontFamily: 'var(--font-jetbrains-mono)' }}
               >
-                Your career, accelerated
+                85% of clients land interviews within 3 weeks
               </span>
-            </div>
+              <ArrowDown className="h-3 w-3 ml-1" style={{ color: '#93bbff' }} />
+            </a>
 
             <h1
-              className="text-[40px] leading-[1.1] font-extrabold tracking-tight text-navy-900 sm:text-[56px] lg:text-[64px]"
-              style={{ fontFamily: 'var(--font-hanken-grotesk)', letterSpacing: '-0.02em' }}
+              className="text-[40px] leading-[1.1] font-extrabold tracking-tight sm:text-[56px] lg:text-[64px]"
+              style={{ fontFamily: 'var(--font-hanken-grotesk)', letterSpacing: '-0.02em', color: '#ffffff' }}
             >
-              Your{' '}
-              <span className="text-blue-600">Career Accelerator</span>
+              <span className="text-white">Unlock Your Career Potential</span>
               <br />
-              in One Place
+              <span style={{ color: '#94a3b8', fontWeight: 300 }}>with Expert Coaching</span>
             </h1>
 
-            <p className="mx-auto mt-5 max-w-xl text-lg sm:text-xl text-on-surface-variant leading-relaxed">
-              Build ATS-optimized resumes, track every job application, get AI-powered suggestions, and book 1:1 sessions with industry experts.
+            <p
+              className="mx-auto mt-5 max-w-xl text-lg sm:text-xl leading-relaxed"
+              style={{ color: '#94a3b8', fontFamily: 'var(--font-inter)' }}
+            >
+              Land your dream job faster with ATS-optimized resumes, AI mock interviews, and 1:1 expert sessions.
             </p>
 
             <div className="mt-9 flex items-center justify-center gap-3 flex-wrap">
               <Link
                 href="/auth/signup"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-7 py-3.5 text-base font-semibold text-white hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg px-7 py-3.5 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(59,130,246,0.4)]"
+                style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
               >
-                Start Free <ArrowUpRight className="h-4 w-4" />
+                Book Your Free Consultation <ArrowUpRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/auth/login"
-                className="inline-flex items-center gap-1.5 rounded-lg border-2 border-navy-900 px-7 py-3.5 text-base font-semibold text-navy-900 hover:bg-navy-900 hover:text-white transition-colors"
+                href="#services"
+                className="inline-flex items-center gap-1.5 rounded-lg px-7 py-3.5 text-base font-semibold transition-colors"
+                style={{ color: '#ffffff', border: '2px solid rgba(255,255,255,0.2)', background: 'transparent' }}
               >
-                Sign In <ChevronRight className="h-4 w-4" />
+                See How It Works <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
 
-            {/* Hero Stats */}
-            <div className="mt-14 flex items-center justify-center gap-8 sm:gap-14 flex-wrap">
-              {statsData.map((s) => (
+            {/* Success Metrics */}
+            <div
+              className="mt-14 flex items-center justify-center gap-8 sm:gap-14 flex-wrap pt-10"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              {[
+                { icon: '👥', value: 10000, suffix: '+', label: 'Active Users' },
+                { icon: '📄', value: 5000, suffix: '+', label: 'Resumes Built' },
+                { icon: '⭐', value: 95, suffix: '%', label: 'Satisfaction Rate' },
+                { icon: '🎓', value: 500, suffix: '+', label: 'Expert Sessions' },
+              ].map((s) => (
                 <div key={s.label} className="text-center">
+                  <span className="text-2xl">{s.icon}</span>
                   <p
-                    className="text-[40px] sm:text-[48px] font-extrabold text-navy-900 leading-none"
-                    style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
+                    className="text-[40px] sm:text-[48px] font-extrabold leading-none mt-1"
+                    style={{ fontFamily: 'var(--font-hanken-grotesk)', color: '#ffffff' }}
                   >
-                    {s.value}
+                    <CountUp end={s.value} suffix={s.suffix} />
                   </p>
-                  <p className="text-sm text-outline mt-1">{s.label}</p>
+                  <p className="text-sm mt-1" style={{ color: '#94a3b8' }}>{s.label}</p>
                 </div>
               ))}
             </div>
