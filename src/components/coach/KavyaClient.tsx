@@ -92,17 +92,21 @@ export function KavyaClient() {
     if (audioContextRef.current.state === 'suspended') {
       await audioContextRef.current.resume()
     }
+    // Create a GainNode as a simple passthrough to ensure AudioContext stays active
+    const gain = audioContextRef.current.createGain()
+    gain.gain.value = 1
+    gain.connect(audioContextRef.current.destination)
     setAiSpeaking(true)
     setListening(false)
     try {
       const res = await fetch(`/api/tts?voice=kavya&text=${encodeURIComponent(text)}`)
       if (!res.ok) throw new Error('TTS API error')
       const arrayBuffer = await res.arrayBuffer()
-      const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer)
+      const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer.slice(0))
       const source = audioContextRef.current.createBufferSource()
       sourceNodeRef.current = source
       source.buffer = audioBuffer
-      source.connect(audioContextRef.current.destination)
+      source.connect(gain)
       source.start(0)
       await new Promise<void>((resolve) => {
         const timeout = setTimeout(() => resolve(), 30000)
