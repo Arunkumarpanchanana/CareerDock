@@ -355,7 +355,7 @@ export default function HomePage() {
         {/* Testimonials */}
         <section id="testimonials" className="bg-surface py-20 sm:py-28">
           <div className="mx-auto max-w-4xl px-5 sm:px-8">
-            <div className="text-center mb-16">
+            <AnimatedSection className="text-center mb-16">
               <h2
                 className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
                 style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
@@ -365,11 +365,11 @@ export default function HomePage() {
               <p className="mt-3 text-lg text-on-surface-variant max-w-xl mx-auto">
                 Real results from real professionals who transformed their careers.
               </p>
-            </div>
+            </AnimatedSection>
 
             <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
-              <div>
-                <div className="rounded-xl bg-white p-8" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
+              <AnimatedSection>
+                <div className="rounded-xl bg-white p-8 hover:-translate-y-1 hover:shadow-xl transition-all duration-300" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
                   <div className="flex items-center gap-1 mb-4">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-5 w-5 fill-[#ff9f0a] text-[#ff9f0a]" />
@@ -389,10 +389,10 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </AnimatedSection>
 
-              <div>
-                <div className="rounded-xl bg-white p-8" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
+              <AnimatedSection>
+                <div className="rounded-xl bg-white p-8 hover:-translate-y-1 hover:shadow-xl transition-all duration-300" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
                   <div className="flex items-center gap-1 mb-4">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-5 w-5 fill-[#ff9f0a] text-[#ff9f0a]" />
@@ -412,7 +412,7 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </AnimatedSection>
             </div>
 
             <div className="mt-10 text-center">
@@ -469,7 +469,7 @@ export default function HomePage() {
         {/* CTA */}
         <section className="bg-navy-900 py-20 sm:py-28">
           <div className="mx-auto max-w-3xl px-5 sm:px-8 text-center">
-            <div>
+            <AnimatedSection>
               <h2
                 className="text-[32px] sm:text-[40px] font-bold text-white tracking-tight"
                 style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
@@ -493,7 +493,7 @@ export default function HomePage() {
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Cancel anytime</span>
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Free updates</span>
               </div>
-            </div>
+            </AnimatedSection>
           </div>
         </section>
       </main>
