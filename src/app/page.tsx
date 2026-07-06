@@ -90,7 +90,7 @@ export default function HomePage() {
         <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6 sm:px-8">
           <Link href="/" className="flex items-center gap-3">
             <Image src="/logo.png" alt="My Career Dock" width={520} height={143} className="h-10 w-auto object-contain" />
-            <span className="text-xl font-bold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>My Career Dock</span>
+            <span className="text-xl font-bold" style={{ fontFamily: 'var(--font-hanken-grotesk)', color: scrolled ? '#001B3D' : '#ffffff' }}>My Career Dock</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link
@@ -115,7 +115,7 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative overflow-hidden bg-[linear-gradient(135deg,#0a1628_0%,#1a2744_50%,#0f1f3a_100%)] pt-36 pb-20 sm:pt-44 sm:pb-28">
+        <section className="relative overflow-hidden bg-[linear-gradient(135deg,#0a1628_0%,#1a2744_50%,#0f1f3a_100%)] pt-28 pb-16 sm:pt-36 sm:pb-24">
           {/* Animated background shapes */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl animate-pulse" />
