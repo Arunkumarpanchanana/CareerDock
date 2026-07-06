@@ -6,7 +6,7 @@ const GEMINI_API_KEY = process.env.AI_FALLBACK_API_KEY
 const GEMINI_TTS_MODEL = 'gemini-3.1-flash-tts-preview'
 
 const VOICES: Record<string, string> = {
-  default: 'en-IN-Standard-A',
+  default: 'en-IN-Prabhat',
   kavya: 'en-IN-Neerja',
 }
 
