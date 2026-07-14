@@ -3,20 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockFetch = vi.hoisted(() => vi.fn())
 global.fetch = mockFetch
 
-// Mock WebSocket
-vi.stubGlobal('WebSocket', vi.fn(() => ({
-  readyState: 1,
-  send: vi.fn(),
-  close: vi.fn(),
+const mockSpeechSynthesis = vi.hoisted(() => ({
+  speak: vi.fn(),
+  cancel: vi.fn(),
+  getVoices: vi.fn().mockReturnValue([]),
   addEventListener: vi.fn(),
-})))
-
-// Mock getUserMedia
-vi.stubGlobal('navigator', {
-  mediaDevices: {
-    getUserMedia: vi.fn().mockRejectedValue(new Error('No mic')),
-  },
-})
+  removeEventListener: vi.fn(),
+}))
+Object.defineProperty(window, 'speechSynthesis', { value: mockSpeechSynthesis, writable: true })
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { InterviewClient } from '../InterviewClient'
@@ -32,27 +26,48 @@ describe('InterviewClient', () => {
     expect(screen.getByText('Start Call →')).toBeInTheDocument()
   })
 
-  it('renders textareas for job description and resume', () => {
+  it('has textarea for job description', () => {
     render(<InterviewClient />)
     expect(screen.getByPlaceholderText('Paste the full job description here...')).toBeInTheDocument()
+  })
+
+  it('has textarea for resume', () => {
+    render(<InterviewClient />)
     expect(screen.getByPlaceholderText('Paste your full resume text here...')).toBeInTheDocument()
   })
 
-  it('shows error on token fetch failure', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Network error'))
+  it('shows error on API failure', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('API down'))
 
     render(<InterviewClient />)
 
-    fireEvent.change(screen.getByPlaceholderText('Paste the full job description here...'), {
-      target: { value: 'Senior Engineer role' },
-    })
-    fireEvent.change(screen.getByPlaceholderText('Paste your full resume text here...'), {
-      target: { value: 'SWE at Google' },
-    })
+    const jdInput = screen.getByPlaceholderText('Paste the full job description here...')
+    fireEvent.change(jdInput, { target: { value: 'Senior Engineer role' } })
+
+    const resumeInput = screen.getByPlaceholderText('Paste your full resume text here...')
+    fireEvent.change(resumeInput, { target: { value: 'SWE at Google' } })
+
     fireEvent.click(screen.getByText('Start Call →'))
 
     await waitFor(() => {
-      expect(screen.getByText(/Token fetch failed|Failed to start/)).toBeInTheDocument()
+      expect(screen.getByText('Failed to start.')).toBeInTheDocument()
+    }, { timeout: 3000 })
+  })
+
+  it('shows error when API returns error type', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ type: 'error', content: 'AI unavailable.' }),
+    })
+
+    render(<InterviewClient />)
+
+    fireEvent.change(screen.getByPlaceholderText('Paste the full job description here...'), { target: { value: 'Senior Engineer role' } })
+    fireEvent.change(screen.getByPlaceholderText('Paste your full resume text here...'), { target: { value: 'SWE at Google' } })
+    fireEvent.click(screen.getByText('Start Call →'))
+
+    await waitFor(() => {
+      expect(screen.getByText(/AI unavailable/)).toBeInTheDocument()
     }, { timeout: 3000 })
   })
 })
