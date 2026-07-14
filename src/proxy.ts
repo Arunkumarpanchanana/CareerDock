@@ -2,6 +2,7 @@ import { updateSession } from '@/lib/supabase/proxy'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+const MARKETING_DOMAIN = 'mycareerdock.com'
 const APP_DOMAIN = 'app.mycareerdock.com'
 const MARKETING_PREFIXES = ['/articles', '/offers']
 const APP_ROUTES = [
@@ -12,23 +13,26 @@ const APP_ROUTES = [
 
 export async function proxy(request: NextRequest) {
   const host = request.headers.get('host') || ''
-  const isAppDomain = host.startsWith('app.') || host === APP_DOMAIN
+  const isMarketingDomain = host === MARKETING_DOMAIN || host === 'www.' + MARKETING_DOMAIN
+  const isAppDomain = host === APP_DOMAIN || host.startsWith('app.')
   const { pathname } = request.nextUrl
+
+  if (isMarketingDomain) {
+    if (pathname === '/' || pathname === '/admin' || MARKETING_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/marketing${pathname === '/' ? '' : pathname}`
+      return NextResponse.rewrite(url)
+    }
+    const isAppRoute = APP_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
+    if (isAppRoute) {
+      return NextResponse.redirect(new URL(pathname, `https://${APP_DOMAIN}`))
+    }
+  }
 
   if (isAppDomain) {
     const isMarketingPath = MARKETING_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))
     if (isMarketingPath || pathname === '/admin') {
       return NextResponse.redirect(new URL(pathname, 'https://mycareerdock.com'))
-    }
-  } else {
-    const isAppRoute = APP_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
-    if (isAppRoute) {
-      return NextResponse.redirect(new URL(pathname, `https://${APP_DOMAIN}`))
-    }
-    if (pathname === '/' || pathname === '/admin' || MARKETING_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))) {
-      const url = request.nextUrl.clone()
-      url.pathname = `/marketing${pathname === '/' ? '' : pathname}`
-      return NextResponse.rewrite(url)
     }
   }
 
