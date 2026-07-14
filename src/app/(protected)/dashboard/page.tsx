@@ -1,5 +1,7 @@
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner'
 import { createClient, getProfile } from '@/lib/supabase/server'
+
+export const dynamic = 'force-dynamic'
 import ReferralCard from '@/components/referral/ReferralCard'
 import { Briefcase, FileText, TrendingUp, Users } from 'lucide-react'
 import Link from 'next/link'

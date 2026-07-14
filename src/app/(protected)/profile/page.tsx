@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import ProfileForm from './ProfileForm'
 import type { Profile } from '@/types/database'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProfilePage() {
   let initialProfile: Profile | null = null
   try {
