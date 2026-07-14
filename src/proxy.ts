@@ -1,23 +1,53 @@
 import { updateSession } from '@/lib/supabase/proxy'
+import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+const APP_DOMAIN = 'app.mycareerdock.com'
+const MARKETING_PREFIXES = ['/articles', '/offers']
+const APP_ROUTES = [
+  '/career-coach', '/interview', '/jobs', '/skill-gap',
+  '/tracker', '/experts', '/contact', '/upgrade',
+  '/profile', '/dashboard', '/resume', '/auth',
+]
+
 export async function proxy(request: NextRequest) {
+  const host = request.headers.get('host') || ''
+  const isAppDomain = host.startsWith('app.') || host === APP_DOMAIN
+  const { pathname } = request.nextUrl
+
+  if (isAppDomain) {
+    const isMarketingPath = MARKETING_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))
+    if (isMarketingPath || pathname === '/admin') {
+      return NextResponse.redirect(new URL(pathname, 'https://mycareerdock.com'))
+    }
+  } else {
+    const isAppRoute = APP_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
+    if (isAppRoute) {
+      return NextResponse.redirect(new URL(pathname, `https://${APP_DOMAIN}`))
+    }
+    if (pathname === '/' || pathname === '/admin' || MARKETING_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/marketing${pathname === '/' ? '' : pathname}`
+      return NextResponse.rewrite(url)
+    }
+  }
+
   const { supabaseResponse, user } = await updateSession(request)
 
-  const { pathname } = new URL(request.url)
   const isApiRoute = pathname.startsWith('/api')
   const isAuthPage = pathname.startsWith('/auth')
-  const isLandingPage = pathname === '/'
-  const isPublicPath = isAuthPage || isApiRoute || isLandingPage
+  const isLandingPage = pathname === '/' || pathname === '/marketing'
+  const isMarketingPage = pathname.startsWith('/marketing')
+  const isPublicPath = isApiRoute || isAuthPage || isLandingPage || isMarketingPage
 
   if (!user && !isPublicPath) {
     const url = new URL('/auth/login', request.url)
     url.searchParams.set('redirect', pathname)
-    return Response.redirect(url)
+    return NextResponse.redirect(url)
   }
 
   if (user && isAuthPage) {
-    return Response.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return supabaseResponse
