@@ -30,11 +30,12 @@ export default function CMSList() {
     if (!confirm('Delete this article?')) return
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
-    await fetch('/api/cms/articles', {
+    const res = await fetch('/api/cms/articles', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
       body: JSON.stringify({ id }),
     })
+    if (!res.ok) return
     setArticles(prev => prev.filter(a => a.id !== id))
   }
 

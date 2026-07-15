@@ -50,6 +50,10 @@ CREATE POLICY "Auth users can insert comments"
     ON article_comments FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+CREATE POLICY "Users can update own comments"
+    ON article_comments FOR UPDATE
+    USING (auth.uid() = user_id);
+
 CREATE POLICY "Users can delete own comments"
     ON article_comments FOR DELETE
     USING (auth.uid() = user_id);

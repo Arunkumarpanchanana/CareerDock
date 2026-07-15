@@ -35,6 +35,7 @@ function SignupForm() {
   const [password, setPassword] = useState('')
   const [referralCode, setReferralCode] = useState('')
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
   const [loading, setLoading] = useState(false)
   const [touched, setTouched] = useState(false)
   const router = useRouter()
@@ -79,6 +80,7 @@ function SignupForm() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setInfo('')
     setTouched(true)
 
     const passwordError = validatePassword(password)
@@ -118,7 +120,7 @@ function SignupForm() {
 
       // If no session returned, email confirmation is needed
       if (!data.session) {
-        setError('Account created! Please check your email to verify your account before signing in.')
+        setInfo('Account created! Please check your email to verify your account before signing in.')
         setLoading(false)
         return
       }
@@ -237,6 +239,9 @@ function SignupForm() {
             onChange={(e) => setReferralCode(e.target.value)}
           />
 
+          {info && (
+            <p className="text-sm text-green-600">{info}</p>
+          )}
           {error && (
             <p className="text-sm text-red-600">{error}</p>
           )}
