@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 
 const MARKETING_DOMAIN = 'mycareerdock.com'
 const APP_DOMAIN = 'app.mycareerdock.com'
-const MARKETING_PREFIXES = ['/articles', '/offers']
+const MARKETING_PREFIXES = ['/articles', '/offers', '/cms']
 const APP_ROUTES = [
   '/career-coach', '/interview', '/jobs', '/skill-gap',
   '/tracker', '/experts', '/contact', '/upgrade',
