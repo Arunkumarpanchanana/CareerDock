@@ -89,62 +89,66 @@ function SignupForm() {
 
     setLoading(true)
 
-    const { exists: emailTaken } = await fetch('/api/auth/check-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    }).then(r => r.json())
+    try {
+      const { exists: emailTaken } = await fetch('/api/auth/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      }).then(r => r.json())
 
-    if (emailTaken) {
-      setError('An account with this email already exists. Please sign in instead.')
-      setLoading(false)
-      return
-    }
-
-    const { data, error } = await getSupabase().auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-      },
-    })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
-
-    const newUserId = data.user?.id
-    if (newUserId) {
-      try {
-        const supabase = getSupabase()
-
-        if (referralCode) {
-          const { data: referrer } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('referral_code', referralCode)
-            .single()
-
-          if (referrer) {
-            await supabase.from('profiles').upsert({ id: newUserId, referred_by: referrer.id })
-            await supabase.from('referrals').insert({
-              referrer_id: referrer.id,
-              referee_id: newUserId,
-            })
-          }
-        }
-
-        const newCode = `ref-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
-        await supabase.from('profiles').upsert({ id: newUserId, referral_code: newCode })
-      } catch (e) {
-        console.error('Profile setup error:', e)
+      if (emailTaken) {
+        setError('An account with this email already exists. Please sign in instead.')
+        setLoading(false)
+        return
       }
-    }
 
-    router.push('/dashboard')
-    router.refresh()
+      const { data, error } = await getSupabase().auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName },
+        },
+      })
+
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
+
+      // If no session returned, email confirmation is needed
+      if (!data.session) {
+        setError('Account created! Please check your email to verify your account before signing in.')
+        setLoading(false)
+        return
+      }
+
+      const newUserId = data.user?.id
+      if (newUserId) {
+        try {
+          const supabase = getSupabase()
+          if (referralCode) {
+            const { data: referrer } = await supabase
+              .from('profiles').select('id').eq('referral_code', referralCode).single()
+            if (referrer) {
+              await supabase.from('profiles').upsert({ id: newUserId, referred_by: referrer.id })
+              await supabase.from('referrals').insert({ referrer_id: referrer.id, referee_id: newUserId })
+            }
+          }
+          const newCode = `ref-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+          await supabase.from('profiles').upsert({ id: newUserId, referral_code: newCode })
+        } catch (e) {
+          console.error('Profile setup error:', e)
+        }
+      }
+
+      router.push('/dashboard')
+      router.refresh()
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Something went wrong. Please try again.'
+      setError(message)
+      setLoading(false)
+    }
   }
 
   return (
