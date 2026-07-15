@@ -155,6 +155,27 @@ export interface CoverLetter {
   updated_at: string
 }
 
+export interface Article {
+  id: string
+  title: string
+  slug: string
+  content: Record<string, unknown>
+  excerpt: string | null
+  image_url: string | null
+  published: boolean
+  author_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ArticleComment {
+  id: string
+  article_id: string
+  user_id: string
+  content: string
+  created_at: string
+}
+
 export interface Booking {
   id: string
   user_id: string
