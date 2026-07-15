@@ -117,26 +117,30 @@ function SignupForm() {
 
     const newUserId = data.user?.id
     if (newUserId) {
-      const supabase = getSupabase()
+      try {
+        const supabase = getSupabase()
 
-      if (referralCode) {
-        const { data: referrer } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('referral_code', referralCode)
-          .single()
+        if (referralCode) {
+          const { data: referrer } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('referral_code', referralCode)
+            .single()
 
-        if (referrer) {
-          await supabase.from('profiles').upsert({ id: newUserId, referred_by: referrer.id })
-          await supabase.from('referrals').insert({
-            referrer_id: referrer.id,
-            referee_id: newUserId,
-          })
+          if (referrer) {
+            await supabase.from('profiles').upsert({ id: newUserId, referred_by: referrer.id })
+            await supabase.from('referrals').insert({
+              referrer_id: referrer.id,
+              referee_id: newUserId,
+            })
+          }
         }
-      }
 
-      const newCode = `ref-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
-      await supabase.from('profiles').upsert({ id: newUserId, referral_code: newCode })
+        const newCode = `ref-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+        await supabase.from('profiles').upsert({ id: newUserId, referral_code: newCode })
+      } catch (e) {
+        console.error('Profile setup error:', e)
+      }
     }
 
     router.push('/dashboard')
