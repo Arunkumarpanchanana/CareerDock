@@ -6,9 +6,10 @@ import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import type { Article } from '@/types/database'
 
 interface Props {
-  article?: any
+  article?: Article
 }
 
 export function ArticleEditor({ article }: Props) {

@@ -5,9 +5,10 @@ import { createClient } from '@/lib/supabase/client'
 import { Pencil, Trash2, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import type { Article } from '@/types/database'
 
 export default function CMSList() {
-  const [articles, setArticles] = useState<any[]>([])
+  const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
