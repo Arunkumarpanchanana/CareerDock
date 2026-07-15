@@ -1,3 +1,157 @@
+# Marketing Homepage Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Replace the marketing homepage placeholder with a full brand + conversion page at mycareerdock.com
+
+**Architecture:** Two files: `marketing/layout.tsx` updated with sticky nav and footer, `marketing/page.tsx` rewritten as a client component with Hero → Features → How It Works → Pricing → Testimonials → FAQ → CTA sections. Reuses existing CSS custom properties and scroll-animate classes from `globals.css`.
+
+**Tech Stack:** Next.js (client component), Lucide icons, Tailwind CSS v4 (CSS-based config)
+
+## Global Constraints
+
+- No new npm dependencies
+- Use only existing CSS custom properties (`--color-navy-900`, `--accent`, etc.) and global classes (`.scroll-animate`, `.animate-float`, etc.) from `src/app/globals.css`
+- Match the root page.tsx's scroll-animation pattern: `useInView` hook → `AnimatedSection` wrapper
+- All brand colors referenced by CSS variable names, not hex values
+- Logo as `<Image>` from `public/logo.png`
+
+---
+
+### Task 1: Enhance Marketing Layout with Sticky Nav and Improved Footer
+
+**Files:**
+- Modify: `src/app/marketing/layout.tsx` — full rewrite
+
+**Interfaces:**
+- Produces: `<MarketingLayout>` — wraps children with sticky nav + footer; nav has `href="/"` (logo + text), `/articles`, `/offers`, and external `app.mycareerdock.com` CTA
+
+- [ ] **Step 1: Write the new layout**
+
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import type { ReactNode } from 'react'
+
+export default function MarketingLayout({ children }: { children: ReactNode }) {
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    function onScroll() { setScrolled(window.scrollY > 20) }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? 'bg-white border-b border-blue-100 shadow-sm'
+            : 'bg-transparent'
+        }`}
+      >
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="CareerDock"
+              width={256}
+              height={256}
+              className="h-8 w-auto object-contain transition-all duration-300"
+              style={{ filter: scrolled ? 'none' : 'brightness(0) invert(1)' }}
+            />
+            <span
+              className="text-lg font-bold transition-colors duration-300"
+              style={{
+                fontFamily: 'var(--font-hanken-grotesk)',
+                color: scrolled ? 'var(--color-navy-900)' : '#ffffff',
+              }}
+            >
+              CareerDock
+            </span>
+          </Link>
+          <div className="flex items-center gap-6 text-sm">
+            <Link
+              href="/articles"
+              className="font-medium transition-colors"
+              style={{
+                color: scrolled ? 'var(--color-on-surface-variant)' : 'rgba(255,255,255,0.8)',
+              }}
+            >
+              Articles
+            </Link>
+            <Link
+              href="/offers"
+              className="font-medium transition-colors"
+              style={{
+                color: scrolled ? 'var(--color-on-surface-variant)' : 'rgba(255,255,255,0.8)',
+              }}
+            >
+              Offers
+            </Link>
+            <a
+              href="https://app.mycareerdock.com"
+              className="inline-flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all duration-300 hover:shadow-[0_4px_15px_rgba(59,130,246,0.4)]"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
+            >
+              Get Started
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 pt-16">{children}</main>
+
+      <footer className="border-t border-blue-100 bg-surface-faint py-8">
+        <div className="mx-auto max-w-5xl px-4">
+          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+            <div className="flex items-center gap-2">
+              <Image src="/logo.png" alt="CareerDock" width={256} height={256} className="h-7 w-auto object-contain" />
+              <span className="text-base font-bold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>CareerDock</span>
+            </div>
+            <div className="flex items-center gap-6">
+              <Link href="/articles" className="text-sm text-outline hover:text-navy-900 transition-colors">Articles</Link>
+              <Link href="/offers" className="text-sm text-outline hover:text-navy-900 transition-colors">Offers</Link>
+              <span className="text-sm text-outline">&copy; {new Date().getFullYear()} CareerDock</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Verify it builds**
+
+Run: `npm run typecheck 2>&1 | head -5`
+Expected: No type errors in `marketing/layout.tsx`
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/app/marketing/layout.tsx
+git commit -m "feat: enhance marketing layout with sticky nav and improved footer"
+```
+
+---
+
+### Task 2: Build Marketing Homepage
+
+**Files:**
+- Rewrite: `src/app/marketing/page.tsx`
+
+**Interfaces:**
+- Consumes: `<MarketingLayout>` from Task 1 (wraps this page's content in `<main>`)
+- Produces: Full homepage with all sections
+
+- [ ] **Step 1: Write the marketing homepage**
+
+```tsx
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -464,3 +618,25 @@ export default function MarketingHome() {
     </>
   )
 }
+```
+
+- [ ] **Step 2: Verify build + typecheck**
+
+Run: `npm run typecheck 2>&1 | tail -5`
+Expected: No type errors
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/app/marketing/page.tsx
+git commit -m "feat: build marketing homepage with all sections"
+```
+
+---
+
+### Verification
+
+- [ ] **Typecheck**: `npm run typecheck` — should pass with only pre-existing errors
+- [ ] **Lint**: `npm run lint` — no new errors from our files
+- [ ] **Test**: `npm test` — all 149 tests still pass
+- [ ] **Visual inspection**: Load `mycareerdock.com/` locally and verify all sections render correctly
