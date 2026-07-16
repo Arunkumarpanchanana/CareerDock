@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 
 const MARKETING_DOMAIN = 'mycareerdock.com'
 const APP_DOMAIN = 'app.mycareerdock.com'
-const MARKETING_PREFIXES = ['/articles', '/offers', '/cms']
+const MARKETING_PREFIXES = ['/articles', '/offers']
 const APP_ROUTES = [
   '/career-coach', '/interview', '/jobs', '/skill-gap',
   '/tracker', '/experts', '/contact', '/upgrade',
@@ -25,7 +25,15 @@ export async function proxy(request: NextRequest) {
     }
     const isLocalhost = host.startsWith('localhost') || host.startsWith('127.0.0.1')
     if (isLocalhost) {
+      if (pathname === '/cms' || pathname.startsWith('/cms/')) {
+        const url = request.nextUrl.clone()
+        url.pathname = `/marketing${pathname}`
+        return NextResponse.rewrite(url)
+      }
       return NextResponse.next()
+    }
+    if (pathname === '/cms' || pathname.startsWith('/cms/')) {
+      return NextResponse.redirect(new URL(pathname, `https://${APP_DOMAIN}`))
     }
     const isAppRoute = APP_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
     if (isAppRoute) {
@@ -40,6 +48,11 @@ export async function proxy(request: NextRequest) {
     const isMarketingPath = MARKETING_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))
     if (isMarketingPath || pathname === '/admin') {
       return NextResponse.redirect(new URL(pathname, 'https://mycareerdock.com'))
+    }
+    if (pathname === '/cms' || pathname.startsWith('/cms/')) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/marketing${pathname}`
+      return NextResponse.rewrite(url)
     }
   }
 
