@@ -104,31 +104,49 @@ function SignupForm() {
         return
       }
 
-      const { data, error } = await getSupabase().auth.signUp({
+      console.log('[signup] calling signUp()')
+      const signUpResult = await getSupabase().auth.signUp({
         email,
         password,
         options: {
           data: { full_name: fullName },
         },
       })
+      console.log('[signup] signUp() result:', {
+        hasData: !!signUpResult.data,
+        hasUser: !!signUpResult.data?.user,
+        hasSession: !!signUpResult.data?.session,
+        error: signUpResult.error?.message ?? null,
+      })
 
-      if (error) {
-        setError(error.message)
+      if (signUpResult.error) {
+        setError(signUpResult.error.message)
         setLoading(false)
         return
       }
 
       // If no session returned, email confirmation is needed
-      if (!data.session) {
+      if (!signUpResult.data?.session) {
+        console.log('[signup] no session returned — user may need email confirmation')
         setInfo('Account created! Please check your email to verify your account before signing in.')
         setLoading(false)
         return
       }
 
+      console.log('[signup] session received, cookies should be set')
+      const data = signUpResult.data
+
       const newUserId = data.user?.id
       if (newUserId) {
         try {
           const supabase = getSupabase()
+          // Verify session is properly stored
+          const { data: { session: storedSession } } = await supabase.auth.getSession()
+          console.log('[signup] stored session check:', !!storedSession)
+          if (!storedSession) {
+            console.warn('[signup] session not found in storage after signUp!')
+          }
+
           if (referralCode) {
             const { data: referrer } = await supabase
               .from('profiles').select('id').eq('referral_code', referralCode).single()
@@ -144,6 +162,7 @@ function SignupForm() {
         }
       }
 
+      console.log('[signup] redirecting to /dashboard')
       router.push('/dashboard')
       router.refresh()
     } catch (e) {
