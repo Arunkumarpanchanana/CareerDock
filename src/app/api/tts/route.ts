@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { EdgeTTS } from 'node-edge-tts'
+import { writeFile, readFile, unlink } from 'node:fs/promises'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
+import { randomUUID } from 'node:crypto'
 
 export const runtime = 'nodejs'
 
-const GEMINI_API_KEY = process.env.AI_FALLBACK_API_KEY
-const GEMINI_TTS_MODEL = 'gemini-3.1-flash-tts-preview'
-
-const VOICES: Record<string, string> = {
-  default: 'en-IN-Prabhat',
-  kavya: 'en-IN-Neerja',
+const VOICES: Record<string, { voice: string; lang: string }> = {
+  default: { voice: 'en-IN-NeerjaNeural', lang: 'en-IN' },
+  kavya: { voice: 'en-IN-NeerjaNeural', lang: 'en-IN' },
 }
+
+const audioCache = new Map<string, ArrayBuffer>()
 
 export async function GET(req: NextRequest) {
   const text = req.nextUrl.searchParams.get('text')
@@ -18,53 +22,42 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing text param' }, { status: 400 })
   }
 
-  if (!GEMINI_API_KEY) {
-    return NextResponse.json({ error: 'TTS not configured' }, { status: 500 })
+  const cfg = VOICES[voice] || VOICES.default
+  const truncated = text.slice(0, 1000)
+
+  const cacheKey = cfg.voice + truncated
+  const cached = audioCache.get(cacheKey)
+  if (cached) {
+    return new NextResponse(cached, {
+      headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=86400' },
+    })
   }
 
-  const voiceName = VOICES[voice] || VOICES.default
+  const tmpPath = join(tmpdir(), `tts-${randomUUID()}.mp3`)
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TTS_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text }] }],
-          generationConfig: {
-            responseModalities: ['audio'],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName },
-              },
-            },
-          },
-        }),
-      }
-    )
+    const tts = new EdgeTTS({
+      voice: cfg.voice,
+      lang: cfg.lang,
+      outputFormat: 'audio-24khz-48kbitrate-mono-mp3',
+      timeout: 15000,
+    })
 
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => '')
-      console.error(`Gemini TTS error (${res.status}):`, errBody.slice(0, 200))
-      return NextResponse.json({ error: 'TTS synthesis failed' }, { status: 502 })
+    await tts.ttsPromise(truncated, tmpPath)
+    const buf = await readFile(tmpPath)
+    const audio = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+
+    if (audioCache.size < 200) {
+      audioCache.set(cacheKey, audio)
     }
 
-    const data = await res.json()
-    const audioPart = data?.candidates?.[0]?.content?.parts?.find(
-      (p: { inlineData?: { mimeType: string; data: string } }) => p.inlineData?.mimeType?.startsWith('audio/')
-    )
-
-    if (!audioPart?.inlineData?.data) {
-      return NextResponse.json({ error: 'No audio in response' }, { status: 502 })
-    }
-
-    const audio = new Uint8Array(Buffer.from(audioPart.inlineData.data, 'base64'))
-    return new NextResponse(audio as BodyInit, {
-      headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=3600' },
+    return new NextResponse(audio, {
+      headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=86400' },
     })
   } catch (e) {
-    console.error('Gemini TTS exception:', e)
-    return NextResponse.json({ error: 'TTS synthesis failed' }, { status: 502 })
+    console.error('TTS exception:', e)
+    return NextResponse.json({ error: 'TTS failed' }, { status: 502 })
+  } finally {
+    unlink(tmpPath).catch(() => {})
   }
 }

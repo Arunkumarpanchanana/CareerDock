@@ -52,6 +52,7 @@ export function InterviewClient() {
   const [aiSpeaking, setAiSpeaking] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -64,6 +65,8 @@ export function InterviewClient() {
   const recognitionActiveRef = useRef(false)
   const submittingRef = useRef(false)
   const speakResolveRef = useRef<(() => void) | null>(null)
+  const speechBufferRef = useRef('')
+  const lastSubmittedRef = useRef('')
 
   useEffect(() => { historyRef.current = history }, [history])
   useEffect(() => { resumeRef.current = resume }, [resume])
@@ -85,7 +88,15 @@ export function InterviewClient() {
   }, [])
 
   useEffect(() => {
-    return () => cleanup()
+    if ('speechSynthesis' in window && window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.getVoices()
+    }
+    const handleVoices = () => {}
+    window.speechSynthesis?.addEventListener?.('voiceschanged', handleVoices)
+    return () => {
+      cleanup()
+      window.speechSynthesis?.removeEventListener?.('voiceschanged', handleVoices)
+    }
   }, [cleanup])
 
   const startCamera = useCallback(async () => {
@@ -122,8 +133,26 @@ export function InterviewClient() {
         speakResolveRef.current = resolve
       })
       URL.revokeObjectURL(url)
-    } catch (e) {
-      console.error('TTS error:', e)
+    } catch {
+      try {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel()
+          window.speechSynthesis.resume()
+          const voices = window.speechSynthesis.getVoices()
+          await new Promise<void>((resolve) => {
+            const utterance = new SpeechSynthesisUtterance(text)
+            utterance.rate = 1.1
+            utterance.pitch = 1.0
+            utterance.volume = 1.0
+            const indianVoice = voices.find((v) => v.lang.startsWith('en-IN'))
+            const englishVoice = voices.find((v) => v.lang.startsWith('en'))
+            utterance.voice = indianVoice ?? englishVoice ?? null
+            utterance.onend = () => resolve()
+            utterance.onerror = () => resolve()
+            window.speechSynthesis.speak(utterance)
+          })
+        }
+      } catch {}
     }
     setAiSpeaking(false)
     const elapsed = Date.now() - start
@@ -135,6 +164,8 @@ export function InterviewClient() {
 
   const startListening = useCallback(() => {
     if (recognitionActiveRef.current) return
+    speechBufferRef.current = ''
+    lastSubmittedRef.current = ''
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognitionAPI) {
       setError('Speech recognition is not supported in this browser. Type your answers or try Chrome/Edge.')
@@ -148,25 +179,26 @@ export function InterviewClient() {
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       if (!recognitionActiveRef.current) return
-      let final = ''
-      let interimText = ''
+      let newFinal = ''
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript
         if (event.results[i].isFinal) {
-          final += t
-        } else {
-          interimText += t
+          newFinal += event.results[i][0].transcript
         }
       }
-      if (final) setTranscript((prev) => (prev ? prev + ' ' + final.trim() : final.trim()))
-      setInterim(interimText)
+      if (newFinal) {
+        speechBufferRef.current += (speechBufferRef.current ? ' ' : '') + newFinal.trim()
+        setTranscript(speechBufferRef.current)
+      }
 
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
       silenceTimerRef.current = setTimeout(() => {
-        if (!recognitionActiveRef.current) return
-        const full = (transcriptRef.current + ' ' + final).trim()
-        if (full && full !== transcriptRef.current) submitAnswer(full)
-      }, 1500)
+        if (!recognitionActiveRef.current || submittingRef.current) return
+        const current = speechBufferRef.current
+        if (current && current !== lastSubmittedRef.current) {
+          lastSubmittedRef.current = current
+          submitAnswer(current)
+        }
+      }, 3000)
     }
 
     recognition.onerror = () => {

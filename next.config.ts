@@ -8,6 +8,7 @@ const cspHeader = [
   `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
+  "media-src 'self' blob:",
   "font-src 'self' data: https://fonts.gstatic.com",
   `connect-src 'self' ${supabaseUrl} https://o4504371152748544.ingest.sentry.io`,
   "object-src 'none'",
