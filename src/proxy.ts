@@ -30,6 +30,9 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isAppDomain) {
+    if (pathname === '/') {
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
     const isMarketingPath = MARKETING_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))
     if (isMarketingPath || pathname === '/admin') {
       return NextResponse.redirect(new URL(pathname, 'https://mycareerdock.com'))
@@ -40,7 +43,7 @@ export async function proxy(request: NextRequest) {
 
   const isApiRoute = pathname.startsWith('/api')
   const isAuthPage = pathname.startsWith('/auth')
-  const isLandingPage = pathname === '/' || pathname === '/marketing'
+  const isLandingPage = pathname === '/marketing'
   const isMarketingPage = pathname.startsWith('/marketing')
   const isPublicPath = isApiRoute || isAuthPage || isLandingPage || isMarketingPage
 
