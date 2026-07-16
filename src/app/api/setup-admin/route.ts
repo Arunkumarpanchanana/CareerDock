@@ -9,6 +9,10 @@ export async function POST() {
   }
 
   const adminClient = createAdminClient()
+  if (!adminClient) {
+    return Response.json({ error: 'Service role key not configured' }, { status: 500 })
+  }
+
   const { error } = await adminClient
     .from('profiles')
     .update({ role: 'admin' })
