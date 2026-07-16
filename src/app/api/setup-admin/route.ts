@@ -1,11 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-export async function POST() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return Response.json({ error: 'Not logged in' }, { status: 401 })
+export async function POST(request: Request) {
+  const { email } = await request.json()
+  if (!email || typeof email !== 'string') {
+    return Response.json({ error: 'Email required' }, { status: 400 })
   }
 
   const adminClient = createAdminClient()
@@ -13,14 +11,37 @@ export async function POST() {
     return Response.json({ error: 'Service role key not configured' }, { status: 500 })
   }
 
-  const { error } = await adminClient
-    .from('profiles')
-    .update({ role: 'admin' })
-    .eq('id', user.id)
+  const { data: users } = await adminClient.auth.admin.listUsers()
+  const existing = users?.users.find(u => u.email === email)
 
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 })
+  let userId: string
+
+  if (existing) {
+    userId = existing.id
+  } else {
+    const { data, error: createError } = await adminClient.auth.admin.createUser({
+      email,
+      password: 'Admin@123',
+      email_confirm: true,
+    })
+    if (createError) {
+      return Response.json({ error: createError.message }, { status: 500 })
+    }
+    userId = data.user.id
   }
 
-  return Response.json({ success: true, user_id: user.id })
+  const { error: upsertError } = await adminClient
+    .from('profiles')
+    .upsert({ id: userId, full_name: 'Admin', role: 'admin' }, { onConflict: 'id' })
+
+  if (upsertError) {
+    return Response.json({ error: upsertError.message }, { status: 500 })
+  }
+
+  return Response.json({
+    success: true,
+    email,
+    created: !existing,
+    password: existing ? undefined : 'Admin@123',
+  })
 }
