@@ -20,7 +20,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
             ? 'bg-white border-b border-blue-100 shadow-sm'
-            : 'bg-transparent'
+            : 'bg-[#0a1628]'
         }`}
       >
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
