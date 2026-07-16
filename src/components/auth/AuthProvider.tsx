@@ -47,13 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single()
       if (error) {
         console.error('Profile fetch error:', error)
-        setProfile({ id: userId, plan_tier: 'free' } as Profile)
+        setProfile({ id: userId, full_name: '', role_title: null, location: null, email: null, phone: null, linkedin: null, website: null, role: 'user', plan_tier: 'free', persona: 'professional', referral_code: null, referred_by: null, updated_at: new Date().toISOString() })
         return
       }
       setProfile(data as Profile | null)
     } catch (e) {
       console.error('Profile fetch exception:', e)
-      setProfile({ id: userId, plan_tier: 'free' } as Profile)
+      setProfile({ id: userId, full_name: '', role_title: null, location: null, email: null, phone: null, linkedin: null, website: null, role: 'user', plan_tier: 'free', persona: 'professional', referral_code: null, referred_by: null, updated_at: new Date().toISOString() })
     }
   }
 
@@ -124,6 +124,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const getAccessToken = () => accessTokenRef.current
+
+  if (loading && !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+      </div>
+    )
+  }
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, refreshProfile, signOut, getAccessToken }}>

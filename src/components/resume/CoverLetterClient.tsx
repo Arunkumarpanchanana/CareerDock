@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Profile } from '@/types/database'
 import type { ResumeFormData } from '@/lib/resume'
 
@@ -111,6 +111,8 @@ export function CoverLetterClient({ profile, resumeData }: CoverLetterClientProp
       // non-critical
     }
   }, [])
+
+  useEffect(() => { loadHistory(); loadedRef.current = true }, [loadHistory])
 
   const loadLetter = useCallback((letter: SavedLetter) => {
     setContent(letter.content)

@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 interface CoachingSummary {
   insights: string[]
   strengths: string[]
@@ -8,6 +10,8 @@ interface CoachingSummary {
 }
 
 export function CoachSummary({ summary }: { summary: CoachingSummary }) {
+  const [copied, setCopied] = useState(false)
+
   const textContent = [
     '=== Kavya Coaching Summary ===',
     '',
@@ -28,6 +32,8 @@ export function CoachSummary({ summary }: { summary: CoachingSummary }) {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(textContent)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
@@ -54,7 +60,7 @@ export function CoachSummary({ summary }: { summary: CoachingSummary }) {
           className="px-4 py-2 text-sm font-medium text-white rounded-lg"
           style={{ backgroundColor: 'var(--accent)' }}
         >
-          Copy Summary
+          {copied ? 'Copied!' : 'Copy Summary'}
         </button>
       </div>
 

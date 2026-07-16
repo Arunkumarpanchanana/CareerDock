@@ -183,6 +183,13 @@ export default function JobSearchPage() {
             <p className="text-sm text-gray-500">
               {searchResult.total.toLocaleString()} jobs found
             </p>
+            {searchResult.results.length === 0 && (
+              <div className="text-center py-16 text-gray-400">
+                <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium">No jobs match your search</p>
+                <p className="text-sm mt-1">Try adjusting your filters or keywords</p>
+              </div>
+            )}
             <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
               {searchResult.results.map((job) => (
                 <JobCard

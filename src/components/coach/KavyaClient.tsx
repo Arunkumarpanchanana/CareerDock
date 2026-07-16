@@ -110,7 +110,10 @@ export function KavyaClient() {
   const startListening = useCallback(() => {
     if (recognitionActiveRef.current) return
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognitionAPI) return
+    if (!SpeechRecognitionAPI) {
+      setError('Speech recognition is not supported in this browser. Type your responses or try Chrome/Edge.')
+      return
+    }
 
     const recognition = new SpeechRecognitionAPI()
     recognition.continuous = true
@@ -136,8 +139,8 @@ export function KavyaClient() {
       silenceTimerRef.current = setTimeout(() => {
         if (!recognitionActiveRef.current) return
         const full = (transcriptRef.current + ' ' + final).trim()
-        if (full) submitAnswer(full)
-      }, 1500)
+        if (full && full !== transcriptRef.current) submitAnswer(full)
+      }, 2500)
     }
 
     recognition.onerror = () => {

@@ -55,7 +55,7 @@ function initFields(p: Profile | null): FormFields {
 }
 
 export default function ProfileForm({ initialProfile }: { initialProfile: Profile | null }) {
-  const { profile, refreshProfile, loading: authLoading } = useAuth()
+  const { profile, refreshProfile, loading: authLoading, user } = useAuth()
   const [fields, setFields] = useState<FormFields>(() => initFields(initialProfile))
   const [initialized, setInitialized] = useState(!!initialProfile)
   const [saving, setSaving] = useState(false)
@@ -390,8 +390,10 @@ export default function ProfileForm({ initialProfile }: { initialProfile: Profil
                 setPwSaving(true)
                 try {
                   const supabase = createClient()
+                  const email = activeProfile?.email || user?.email
+                  if (!email) { setPwError('No email on file. Use forgot password instead.'); setPwSaving(false); return }
                   const { error: signInError } = await supabase.auth.signInWithPassword({
-                    email: activeProfile?.email || '',
+                    email,
                     password: pwCurrent,
                   })
                   if (signInError) { setPwError('Current password is incorrect'); setPwSaving(false); return }

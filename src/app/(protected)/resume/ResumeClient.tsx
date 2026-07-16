@@ -99,15 +99,19 @@ export function ResumeClient({
   }
 
   async function save() {
-    if (!activeResume && !activeId) {
-      await createNew()
-      return
-    }
     setError(null)
     setSaving(true)
     try {
+      let resumeId = activeResume?.id
+
+      if (!resumeId) {
+        const created = await createNewResume()
+        if (!created) { setSaving(false); return }
+        resumeId = created.id
+      }
+
       const payload = {
-        id: activeResume?.id,
+        id: resumeId,
         title: data.title,
         summary: data.summary,
         experience: data.experience,
@@ -118,7 +122,7 @@ export function ResumeClient({
       }
 
       const res = await fetch('/api/resume', {
-        method: activeResume?.id ? 'PUT' : 'POST',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
@@ -128,8 +132,7 @@ export function ResumeClient({
         return
       }
 
-      const savedRes = await res.json()
-      const savedResume = savedRes as Resume
+      const savedResume = (await res.json()) as Resume
       setResumes((prev) => {
         const exists = prev.find((r) => r.id === savedResume.id)
         if (exists) {
@@ -145,6 +148,21 @@ export function ResumeClient({
     } finally {
       setSaving(false)
       router.refresh()
+    }
+  }
+
+  async function createNewResume() {
+    try {
+      const res = await fetch('/api/resume', { method: 'POST' })
+      if (!res.ok) return null
+      const created = (await res.json()) as Resume
+      setResumes((prev) => [created, ...prev])
+      setActiveId(created.id)
+      setActiveTab('summary')
+      return created
+    } catch {
+      setError('Failed to create resume')
+      return null
     }
   }
 
@@ -425,8 +443,14 @@ export function ResumeClient({
           data={data}
           currentTemplate="professional-classic"
           currentPersona={persona}
-          onSelect={(templateId) => {
-            // Template selection is primarily visual — content is preserved
+          onSelect={async (templateId) => {
+            try {
+              await fetch('/api/resume', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: activeId, persona: templateId.split('-')[0] }),
+              })
+            } catch {}
             setShowGallery(false)
           }}
           onClose={() => setShowGallery(false)}
@@ -436,6 +460,4 @@ export function ResumeClient({
   )
 }
 
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
+

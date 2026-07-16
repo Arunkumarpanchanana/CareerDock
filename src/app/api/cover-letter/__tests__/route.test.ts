@@ -32,11 +32,20 @@ function setupDb() {
   mockLimit.mockResolvedValue({ data: [], error: null })
   mockSingle.mockResolvedValue({ data: { id: 'cl-1', content: 'Generated letter...' }, error: null })
 
-  const mockFrom = vi.fn(() => ({
-    select: mockSelect,
-    insert: mockInsert,
-    update: mockUpdate,
-  }))
+  const mockFrom = vi.fn((table: string) => {
+    if (table === 'profiles') {
+      return {
+        select: vi.fn(() => ({ eq: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data: { plan_tier: 'premium' }, error: null }) }) ) })),
+      }
+    }
+    if (table === 'ai_usage') {
+      return {
+        select: vi.fn(() => ({ eq: vi.fn(() => ({ gte: vi.fn(() => ({ count: 0 })) }) ) })),
+        insert: vi.fn(),
+      }
+    }
+    return { select: mockSelect, insert: mockInsert, update: mockUpdate }
+  })
 
   mockCreateClient.mockReturnValue({
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }) },

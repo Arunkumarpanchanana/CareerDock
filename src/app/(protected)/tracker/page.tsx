@@ -39,6 +39,7 @@ export default function TrackerPage() {
   const [dragOverCol, setDragOverCol] = useState<Status | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [trackerError, setTrackerError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/jobs')
@@ -107,8 +108,9 @@ export default function TrackerPage() {
       if (!res.ok) throw new Error('Save failed')
       await fetchJobs()
       setShowForm(false)
+      setTrackerError(null)
     } catch (e) {
-      console.error(e)
+      setTrackerError(e instanceof Error ? e.message : 'Save failed')
     } finally {
       setSaving(false)
     }
@@ -120,8 +122,9 @@ export default function TrackerPage() {
       const res = await fetch(`/api/jobs?id=${deleteTarget}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Delete failed')
       await fetchJobs()
+      setTrackerError(null)
     } catch (e) {
-      console.error(e)
+      setTrackerError(e instanceof Error ? e.message : 'Delete failed')
     } finally {
       setDeleteTarget(null)
     }
@@ -282,6 +285,12 @@ export default function TrackerPage() {
           </div>
         ))}
       </div>
+
+      {trackerError && (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          {trackerError}
+        </div>
+      )}
 
       <ConfirmModal
         open={!!deleteTarget}

@@ -21,8 +21,23 @@ import { POST } from '../route'
 describe('POST /api/skill-gap', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    const mockFrom = vi.fn((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn(() => ({ eq: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data: { plan_tier: 'premium' }, error: null }) }) ) })),
+        }
+      }
+      if (table === 'ai_usage') {
+        return {
+          select: vi.fn(() => ({ eq: vi.fn(() => ({ gte: vi.fn(() => ({ count: 0 })) }) ) })),
+          insert: vi.fn(),
+        }
+      }
+      return { select: vi.fn(), insert: vi.fn() }
+    })
     mockCreateClient.mockReturnValue({
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }) },
+      from: mockFrom,
     })
   })
 

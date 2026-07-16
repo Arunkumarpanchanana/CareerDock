@@ -75,6 +75,7 @@ export default function UpgradePage() {
   const [couponResult, setCouponResult] = useState<any>(null)
   const [applying, setApplying] = useState(false)
   const [paying, setPaying] = useState<string | null>(null)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
 
   const currentTier: PlanTier = (profile?.plan_tier as PlanTier) || 'free'
 
@@ -130,6 +131,7 @@ export default function UpgradePage() {
   const handleUpgrade = async (tier: string) => {
     if (tier === 'free') return
     setPaying(tier)
+    setPaymentError(null)
     try {
       const amount = yearly ? getYearlyPrice(tier) : getPrice(tier)
       const res = await fetch('/api/payments/create-order', {
@@ -145,10 +147,10 @@ export default function UpgradePage() {
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl
       } else {
-        alert(data.error || 'Failed to create payment')
+        setPaymentError(data.error || 'Failed to create payment')
       }
     } catch {
-      alert('Payment failed. Please try again.')
+      setPaymentError('Payment failed. Please try again.')
     }
     setPaying(null)
   }
@@ -173,7 +175,7 @@ export default function UpgradePage() {
           <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${yearly ? 'translate-x-6' : ''}`} />
         </button>
         <span className={`text-sm font-medium ${yearly ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`}>
-          Yearly <span className="text-xs text-[var(--accent)] font-semibold">Save up to 16%</span>
+          Yearly <span className="text-xs text-[var(--accent)] font-semibold">{savingsPercent('premium') > 0 ? `Save up to ${savingsPercent('premium_pro')}%` : ''}</span>
         </span>
       </div>
 
@@ -271,6 +273,12 @@ export default function UpgradePage() {
           )
         })}
       </div>
+
+      {paymentError && (
+        <div className="max-w-md mx-auto rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 text-center">
+          {paymentError}
+        </div>
+      )}
     </div>
   )
 }

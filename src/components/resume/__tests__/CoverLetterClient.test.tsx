@@ -26,6 +26,7 @@ describe('CoverLetterClient', () => {
   })
 
   it('renders job details form', () => {
+    mockFetch.mockResolvedValue({ ok: true, json: async () => [] })
     render(<CoverLetterClient profile={mockProfile} resumeData={mockData} />)
     expect(screen.getByText('Cover Letter Generator')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('e.g. Senior Frontend Engineer')).toBeInTheDocument()
@@ -33,10 +34,12 @@ describe('CoverLetterClient', () => {
   })
 
   it('generates a cover letter on button click', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ id: '1', content: 'Dear Hiring Manager, I am excited to apply for this position...' }),
-    })
+    mockFetch
+      .mockResolvedValueOnce({ ok: true, json: async () => [] })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: '1', content: 'Dear Hiring Manager, I am excited to apply for this position...' }),
+      })
 
     render(<CoverLetterClient profile={mockProfile} resumeData={mockData} />)
 
@@ -55,10 +58,12 @@ describe('CoverLetterClient', () => {
   })
 
   it('shows download and save buttons after generation', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ id: '1', content: 'Dear Hiring Manager...' }),
-    })
+    mockFetch
+      .mockResolvedValueOnce({ ok: true, json: async () => [] })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: '1', content: 'Dear Hiring Manager...' }),
+      })
 
     render(<CoverLetterClient profile={mockProfile} resumeData={mockData} />)
 

@@ -13,15 +13,18 @@ export default function ExpertsPage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+    const abort = new AbortController()
     setLoading(true)
-    fetch('/api/experts')
+    setError(null)
+    fetch('/api/experts', { signal: abort.signal })
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load experts')
         return res.json()
       })
-      .then((data) => setExperts(data))
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false))
+      .then((data) => { setExperts(data); setError(null) })
+      .catch((e) => { if (!abort.signal.aborted) setError(e.message) })
+      .finally(() => { if (!abort.signal.aborted) setLoading(false) })
+    return () => abort.abort()
   }, [])
 
   return (
@@ -76,13 +79,13 @@ export default function ExpertsPage() {
         </div>
         )}
 
-        {error && (
+        {error && !loading && (
           <div className="text-center py-8">
             <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
 
-        {!error && experts.length === 0 && (
+        {!error && !loading && experts.length === 0 && (
           <div className="text-center py-16 text-gray-400">
             <GraduationCap className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p className="font-medium">No experts available yet</p>

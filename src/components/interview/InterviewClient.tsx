@@ -62,6 +62,7 @@ export function InterviewClient() {
   const jobDescriptionRef = useRef(jobDescription)
   const transcriptRef = useRef(transcript)
   const recognitionActiveRef = useRef(false)
+  const submittingRef = useRef(false)
   const speakResolveRef = useRef<(() => void) | null>(null)
 
   useEffect(() => { historyRef.current = history }, [history])
@@ -135,7 +136,10 @@ export function InterviewClient() {
   const startListening = useCallback(() => {
     if (recognitionActiveRef.current) return
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognitionAPI) return
+    if (!SpeechRecognitionAPI) {
+      setError('Speech recognition is not supported in this browser. Type your answers or try Chrome/Edge.')
+      return
+    }
 
     const recognition = new SpeechRecognitionAPI()
     recognition.continuous = true
@@ -161,7 +165,7 @@ export function InterviewClient() {
       silenceTimerRef.current = setTimeout(() => {
         if (!recognitionActiveRef.current) return
         const full = (transcriptRef.current + ' ' + final).trim()
-        if (full) submitAnswer(full)
+        if (full && full !== transcriptRef.current) submitAnswer(full)
       }, 1500)
     }
 
@@ -187,6 +191,8 @@ export function InterviewClient() {
   }, [])
 
   const submitAnswer = useCallback(async (text: string) => {
+    if (submittingRef.current) return
+    submittingRef.current = true
     stopListening()
     setPhase('connecting')
     setInterim('')
@@ -220,6 +226,8 @@ export function InterviewClient() {
     } catch {
       setError('Connection lost.')
       setPhase('setup')
+    } finally {
+      submittingRef.current = false
     }
   }, [speak, startListening, stopListening])
 
