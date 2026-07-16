@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useRef, useState, useMemo, useEffect } from 'react'
+import { AuthHeader } from '@/components/layout/AuthHeader'
 
 const PASSWORD_RULES = {
   minLength: 8,
@@ -154,7 +155,7 @@ function SignupForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-14">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">Create account</h1>
@@ -264,8 +265,11 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-gray-500">Loading...</div>}>
-      <SignupForm />
-    </Suspense>
+    <>
+      <AuthHeader />
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-gray-500">Loading...</div>}>
+        <SignupForm />
+      </Suspense>
+    </>
   )
 }

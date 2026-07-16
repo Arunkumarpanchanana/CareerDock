@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { getPublishedArticles } from '@/lib/cms'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ArticlesPage() {
   const articles = (await getPublishedArticles()) ?? []
   return (

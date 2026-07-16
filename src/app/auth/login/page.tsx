@@ -7,6 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
+import { AuthHeader } from '@/components/layout/AuthHeader'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -55,7 +56,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <>
+      <AuthHeader />
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-14">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
           <Image
@@ -148,6 +151,9 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
+
+

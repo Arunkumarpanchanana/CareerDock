@@ -13,7 +13,7 @@ const APP_ROUTES = [
 
 export async function proxy(request: NextRequest) {
   const host = request.headers.get('host') || ''
-  const isMarketingDomain = host === MARKETING_DOMAIN || host === 'www.' + MARKETING_DOMAIN
+  const isMarketingDomain = host === MARKETING_DOMAIN || host === 'www.' + MARKETING_DOMAIN || host.startsWith('localhost')
   const isAppDomain = host === APP_DOMAIN || host.startsWith('app.')
   const { pathname } = request.nextUrl
 
@@ -22,6 +22,10 @@ export async function proxy(request: NextRequest) {
       const url = request.nextUrl.clone()
       url.pathname = `/marketing${pathname === '/' ? '' : pathname}`
       return NextResponse.rewrite(url)
+    }
+    const isLocalhost = host.startsWith('localhost') || host.startsWith('127.0.0.1')
+    if (isLocalhost) {
+      return NextResponse.next()
     }
     const isAppRoute = APP_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
     if (isAppRoute) {

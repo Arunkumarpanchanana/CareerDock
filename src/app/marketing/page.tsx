@@ -40,7 +40,7 @@ const features = [
 ]
 
 const faqs = [
-  { q: 'Is CareerDock really free to start?', a: 'Yes. Create a free account and start building resumes, tracking applications, and using AI suggestions right away — no credit card required.' },
+  { q: 'Is My Career Dock really free to start?', a: 'Yes. Create a free account and start building resumes, tracking applications, and using AI suggestions right away — no credit card required.' },
   { q: "What's included in the Free plan?", a: 'The Free plan includes 3 resume builds, skill gap analysis, job search tools, and 10 AI suggestions per month.' },
   { q: 'How is Premium different from Free?', a: 'Premium unlocks unlimited resumes, AI mock interviews, 100 AI suggestions per month, and the full job pipeline tracker.' },
   { q: 'How do AI suggestions work?', a: 'As you build your resume, our AI analyzes your content and suggests stronger bullet points, better action verbs, and relevant skills based on your target role.' },
@@ -53,7 +53,7 @@ export default function MarketingHome() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#0a1628_0%,#1a2744_50%,#0f1f3a_100%)] pt-16 pb-12 sm:pt-20 sm:pb-16">
+      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#0a1628_0%,#1a2744_50%,#0f1f3a_100%)] pt-20 pb-8 sm:pt-24 sm:pb-10">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl animate-pulse" />
           <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
@@ -62,7 +62,7 @@ export default function MarketingHome() {
 
         <div className="mx-auto max-w-4xl px-5 sm:px-8 text-center relative z-10">
           <div
-            className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 mb-6"
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 mb-4"
             style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}
           >
             <span className="text-sm">🔥</span>
@@ -83,23 +83,23 @@ export default function MarketingHome() {
           </h1>
 
           <p
-            className="mx-auto mt-4 max-w-xl text-lg sm:text-xl leading-relaxed"
+            className="mx-auto mt-3 max-w-xl text-base sm:text-lg leading-relaxed"
             style={{ color: '#94a3b8', fontFamily: 'var(--font-inter)' }}
           >
             Practice interviews, optimize your resume, get expert coaching — all in one place.
           </p>
 
-          <div className="mt-9 flex items-center justify-center gap-3 flex-wrap">
+          <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
             <a
               href="https://app.mycareerdock.com"
-              className="inline-flex items-center gap-1.5 rounded-lg px-7 py-3.5 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(59,130,246,0.4)]"
+              className="inline-flex items-center gap-1.5 rounded-lg px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(59,130,246,0.4)]"
               style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
             >
               Get Started Free <ArrowUpRight className="h-4 w-4" />
             </a>
             <Link
               href="/articles"
-              className="inline-flex items-center gap-1.5 rounded-lg px-7 py-3.5 text-base font-semibold transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg px-6 py-3 text-sm font-semibold transition-colors"
               style={{ color: '#ffffff', border: '2px solid rgba(255,255,255,0.2)', background: 'transparent' }}
             >
               Read Articles <ChevronRight className="h-4 w-4" />
@@ -107,7 +107,7 @@ export default function MarketingHome() {
           </div>
 
           <div
-            className="mt-10 flex items-center justify-center gap-6 sm:gap-10 flex-wrap pt-6"
+            className="mt-8 flex items-center justify-center gap-5 sm:gap-8 flex-wrap pt-4"
             style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
           >
             {[
@@ -118,8 +118,8 @@ export default function MarketingHome() {
             ].map((s) => (
               <div key={s.label} className="text-center">
                 <span className="text-2xl">{s.icon}</span>
-                <p
-                  className="text-[32px] sm:text-[40px] font-extrabold leading-none mt-1"
+                  <p
+                    className="text-2xl sm:text-3xl font-extrabold leading-none mt-1"
                   style={{ fontFamily: 'var(--font-hanken-grotesk)', color: '#ffffff' }}
                 >
                   {s.value}
@@ -132,10 +132,10 @@ export default function MarketingHome() {
       </section>
 
       {/* Features */}
-      <section className="bg-surface-faint py-14 sm:py-20">
+      <section className="bg-surface-faint py-10 sm:py-14">
         <div className="mx-auto max-w-5xl px-5 sm:px-8">
-          <AnimatedSection className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 mb-4">
+          <AnimatedSection className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 mb-3">
               <span
                 className="text-[11px] font-semibold tracking-[0.05em] uppercase"
                 style={{ color: '#3b82f6', fontFamily: 'var(--font-jetbrains-mono)' }}
@@ -155,9 +155,9 @@ export default function MarketingHome() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((feat, i) => (
               <AnimatedSection key={feat.title}>
-                <div className="rounded-xl bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg" style={{ background: 'var(--accent-gradient)' }}>
-                    <feat.icon className="h-6 w-6 text-white" />
+                  <div className="rounded-xl bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
+                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: 'var(--accent-gradient)' }}>
+                      <feat.icon className="h-5 w-5 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>{feat.title}</h3>
                   <p className="mt-2 text-sm text-on-surface-variant leading-relaxed">{feat.description}</p>
@@ -169,9 +169,9 @@ export default function MarketingHome() {
       </section>
 
       {/* How It Works */}
-      <section className="bg-surface py-14 sm:py-20">
+      <section className="bg-surface py-10 sm:py-14">
         <div className="mx-auto max-w-4xl px-5 sm:px-8">
-          <AnimatedSection className="text-center mb-14">
+          <AnimatedSection className="text-center mb-10">
             <h2
               className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
               style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
@@ -183,7 +183,7 @@ export default function MarketingHome() {
             </p>
           </AnimatedSection>
 
-          <div className="grid gap-8 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-3">
             {[
               { num: '01', icon: '🎯', title: 'Assess', desc: 'Tell us about your career goals and current situation. We\'ll build a personalized plan.' },
               { num: '02', icon: '🚀', title: 'Practice', desc: 'Use AI interviews, resume tools, and coaching to prepare with confidence.' },
@@ -210,10 +210,10 @@ export default function MarketingHome() {
       </section>
 
       {/* Pricing */}
-      <section className="bg-surface-faint py-14 sm:py-20">
+      <section className="bg-surface-faint py-10 sm:py-14">
         <div className="mx-auto max-w-5xl px-5 sm:px-8">
-          <AnimatedSection className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 mb-4">
+          <AnimatedSection className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 mb-3">
               <span
                 className="text-[11px] font-semibold tracking-[0.05em] uppercase"
                 style={{ color: '#3b82f6', fontFamily: 'var(--font-jetbrains-mono)' }}
@@ -233,10 +233,10 @@ export default function MarketingHome() {
             </p>
           </AnimatedSection>
 
-          <div className="grid gap-5 md:grid-cols-3 max-w-4xl mx-auto">
+          <div className="grid gap-4 md:grid-cols-3 max-w-4xl mx-auto">
             {/* Free Trial */}
             <div
-              className="group rounded-xl bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+              className="group rounded-xl bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
               style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}
             >
               <div className="text-2xl mb-3">✨</div>
@@ -244,11 +244,11 @@ export default function MarketingHome() {
                 Free Trial
               </h3>
               <p className="text-sm text-on-surface-variant mt-1 mb-3">Get started</p>
-              <div className="flex items-baseline gap-1 mb-6">
+              <div className="flex items-baseline gap-1 mb-4">
                 <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>₹0</span>
                 <span className="text-sm text-on-surface-variant">/mo</span>
               </div>
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-2 mb-6">
                 {['3 resume builds', 'Skill gap analysis', 'Job search tools', '10 AI suggestions / month'].map(f => (
                   <li key={f} className="flex items-center gap-2 text-sm text-on-surface-variant">
                     <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> {f}
@@ -265,7 +265,7 @@ export default function MarketingHome() {
 
             {/* Premium */}
             <div
-              className="group rounded-xl bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
+              className="group rounded-xl bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
               style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)', border: '2px solid #3b82f6' }}
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full px-3 py-1" style={{ background: '#3b82f6' }}>
@@ -278,12 +278,12 @@ export default function MarketingHome() {
                 Premium
               </h3>
               <p className="text-sm text-on-surface-variant mt-1 mb-3">For serious job seekers</p>
-              <div className="flex items-baseline gap-1 mb-6">
+              <div className="flex items-baseline gap-1 mb-4">
                 <span className="text-sm text-on-surface-variant">₹</span>
                 <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>299</span>
                 <span className="text-sm text-on-surface-variant">/mo</span>
               </div>
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-2 mb-6">
                 {['Unlimited resumes', 'AI mock interviews', '100 AI suggestions / month', 'Job pipeline tracker'].map(f => (
                   <li key={f} className="flex items-center gap-2 text-sm text-on-surface-variant">
                     <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> {f}
@@ -301,7 +301,7 @@ export default function MarketingHome() {
 
             {/* Premium Pro */}
             <div
-              className="group rounded-xl bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
+              className="group rounded-xl bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
               style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}
             >
               <div className="text-2xl mb-3">👑</div>
@@ -309,12 +309,12 @@ export default function MarketingHome() {
                 Premium Pro
               </h3>
               <p className="text-sm text-on-surface-variant mt-1 mb-3">Everything plus expert guidance</p>
-              <div className="flex items-baseline gap-1 mb-6">
+              <div className="flex items-baseline gap-1 mb-4">
                 <span className="text-sm text-on-surface-variant">₹</span>
                 <span className="text-[40px] font-extrabold text-navy-900 leading-none" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>500</span>
                 <span className="text-sm text-on-surface-variant">/mo</span>
               </div>
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-2 mb-6">
                 {['Everything in Premium', 'Unlimited AI suggestions', '1:1 expert sessions', 'Priority support'].map(f => (
                   <li key={f} className="flex items-center gap-2 text-sm text-on-surface-variant">
                     <CheckCircle2 className="h-4 w-4 text-growth-green shrink-0" /> {f}
@@ -331,8 +331,8 @@ export default function MarketingHome() {
             </div>
           </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-on-surface-variant">
+          <div className="mt-5 text-center">
+            <p className="text-xs text-on-surface-variant">
               All plans include a free trial. No credit card required.
             </p>
           </div>
@@ -340,9 +340,9 @@ export default function MarketingHome() {
       </section>
 
       {/* Testimonials */}
-      <section className="bg-surface py-14 sm:py-20">
+      <section className="bg-surface py-10 sm:py-14">
         <div className="mx-auto max-w-4xl px-5 sm:px-8">
-          <AnimatedSection className="text-center mb-10">
+          <AnimatedSection className="text-center mb-8">
             <h2
               className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
               style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
@@ -354,10 +354,10 @@ export default function MarketingHome() {
             </p>
           </AnimatedSection>
 
-          <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
+          <div className="grid gap-5 md:grid-cols-2 max-w-4xl mx-auto">
             {[
               {
-                quote: 'I went from sending out scattered applications to running a structured job search with CareerDock. The resume builder alone saved me hours.',
+                quote: 'I went from sending out scattered applications to running a structured job search with My Career Dock. The resume builder alone saved me hours.',
                 name: 'Sarah K.', role: 'Product Manager, Bangalore', initial: 'S', color: 'bg-blue-600',
               },
               {
@@ -366,8 +366,8 @@ export default function MarketingHome() {
               },
             ].map((t) => (
               <AnimatedSection key={t.name}>
-                <div className="rounded-xl bg-white p-6 hover:-translate-y-1 hover:shadow-xl transition-all duration-300" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
-                  <div className="flex items-center gap-1 mb-3">
+                <div className="rounded-xl bg-white p-5 hover:-translate-y-1 hover:shadow-xl transition-all duration-300" style={{ boxShadow: '0 4px 20px rgba(0,27,61,0.05)' }}>
+                  <div className="flex items-center gap-1 mb-2">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-5 w-5 fill-[#ff9f0a] text-[#ff9f0a]" />
                     ))}
@@ -375,7 +375,7 @@ export default function MarketingHome() {
                   <blockquote className="text-base text-navy-900 leading-relaxed">
                     &ldquo;{t.quote}&rdquo;
                   </blockquote>
-                  <div className="mt-6 flex items-center gap-3">
+                  <div className="mt-4 flex items-center gap-3">
                     <div className={`h-10 w-10 rounded-full ${t.color} flex items-center justify-center text-white text-sm font-bold`}>
                       {t.initial}
                     </div>
@@ -389,16 +389,16 @@ export default function MarketingHome() {
             ))}
           </div>
 
-          <div className="mt-10 text-center">
-            <p className="text-sm text-outline">Join <strong className="text-navy-900">10,000+</strong> professionals who accelerated their careers</p>
+          <div className="mt-8 text-center">
+              <p className="text-sm text-outline">Join <strong className="text-navy-900">10,000+</strong> professionals who accelerated their careers</p>
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="bg-surface-faint py-14 sm:py-20">
+      <section className="bg-surface-faint py-10 sm:py-14">
         <div className="mx-auto max-w-3xl px-5 sm:px-8">
-          <AnimatedSection className="text-center mb-10">
+          <AnimatedSection className="text-center mb-8">
             <h2
               className="text-[32px] sm:text-[40px] font-bold text-navy-900 tracking-tight"
               style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
@@ -415,15 +415,15 @@ export default function MarketingHome() {
               <div key={i} className="border-b border-blue-100 last:border-b-0">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="flex w-full items-center justify-between gap-4 py-5 text-left transition-colors hover:text-blue-600"
+                  className="flex w-full items-center justify-between gap-4 py-4 text-left transition-colors hover:text-blue-600"
                 >
-                  <span className="text-base font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
+                  <span className="text-sm font-semibold text-navy-900" style={{ fontFamily: 'var(--font-hanken-grotesk)' }}>
                     {faq.q}
                   </span>
-                  <ChevronDown className={`h-5 w-5 shrink-0 text-outline transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-4 w-4 shrink-0 text-outline transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`} />
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openFaq === i ? 'max-h-96 pb-5' : 'max-h-0'}`}>
-                  <p className="text-base text-on-surface-variant leading-relaxed">{faq.a}</p>
+                <div className={`overflow-hidden transition-all duration-300 ${openFaq === i ? 'max-h-96 pb-4' : 'max-h-0'}`}>
+                  <p className="text-sm text-on-surface-variant leading-relaxed">{faq.a}</p>
                 </div>
               </div>
             ))}
@@ -432,31 +432,31 @@ export default function MarketingHome() {
       </section>
 
       {/* CTA */}
-      <section className="bg-navy-900 py-14 sm:py-20">
+      <section className="bg-navy-900 py-10 sm:py-14">
         <div className="mx-auto max-w-3xl px-5 sm:px-8 text-center">
           <AnimatedSection>
             <h2
-              className="text-[32px] sm:text-[40px] font-bold text-white tracking-tight"
+              className="text-[28px] sm:text-[36px] font-bold text-white tracking-tight"
               style={{ fontFamily: 'var(--font-hanken-grotesk)' }}
             >
               Ready to transform your career?
             </h2>
-            <p className="mt-3 text-lg text-blue-400 max-w-lg mx-auto">
+            <p className="mt-2 text-base text-blue-400 max-w-lg mx-auto">
               Join thousands of professionals who landed their dream job with our help.
             </p>
-            <div className="mt-7 flex items-center justify-center gap-3 flex-wrap">
+            <div className="mt-5 flex items-center justify-center gap-3 flex-wrap">
               <a
                 href="https://app.mycareerdock.com/auth/signup"
-                className="inline-flex items-center gap-1.5 rounded-lg px-7 py-3.5 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(59,130,246,0.4)]"
+                className="inline-flex items-center gap-1.5 rounded-lg px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(59,130,246,0.4)]"
                 style={{ background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)' }}
               >
                 Create Free Account <ArrowUpRight className="h-4 w-4" />
               </a>
             </div>
-            <div className="mt-8 flex items-center justify-center gap-6 text-sm text-blue-400 flex-wrap">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> No credit card</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Cancel anytime</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Free updates</span>
+            <div className="mt-5 flex items-center justify-center gap-5 text-sm text-blue-400 flex-wrap">
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> No credit card</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> Cancel anytime</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> Free updates</span>
             </div>
           </AnimatedSection>
         </div>
