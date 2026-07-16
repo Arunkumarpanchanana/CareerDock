@@ -22,25 +22,15 @@ export async function POST(request: Request) {
   const limit = rateLimitByIp(request, 10, 60_000)
   if (limit instanceof NextResponse) return limit
 
+  const { error } = await authAsAdmin(request)
+  if (error) return error
+
+  const adminClient = createAdminClient()
+  if (!adminClient) {
+    return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+  }
+
   try {
-    const adminClient = createAdminClient()
-    if (!adminClient) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
-    }
-
-    const authHeader = request.headers.get('Authorization') || ''
-    const token = authHeader.replace('Bearer ', '')
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: { user }, error: userError } = await adminClient.auth.getUser(token)
-    if (userError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await request.json()
     const parsed = adminCreateUserSchema.safeParse(body)
