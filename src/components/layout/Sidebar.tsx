@@ -6,6 +6,7 @@ import {
   Briefcase,
   ChevronLeft,
   CreditCard,
+  FileText,
   Globe,
   LayoutDashboard,
   Lock,
@@ -44,6 +45,7 @@ export function Sidebar() {
     ...(profile?.role === 'admin'
       ? [
           { href: '/admin', label: 'Admin', icon: Shield },
+          { href: '/cms', label: 'Articles (CMS)', icon: FileText },
           { href: '/admin/payments', label: 'Payments', icon: CreditCard },
         ]
       : []),

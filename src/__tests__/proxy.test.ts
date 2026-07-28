@@ -33,10 +33,11 @@ describe('proxy /admin routing', () => {
     expect(res.status).not.toBe(308)
   })
 
-  it('redirects /admin to marketing domain when NOT on app domain', async () => {
+  it('redirects /admin to app domain when on marketing domain', async () => {
     const req = makeRequest('mycareerdock.com', '/admin')
     const res = await proxy(req)
-    expect(res.status).toBe(200)
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toContain('app.mycareerdock.com/admin')
   })
 
   it('redirects marketing paths to marketing domain from app domain', async () => {

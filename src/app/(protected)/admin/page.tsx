@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { Briefcase, Calendar, ExternalLink, TrendingUp, Users } from 'lucide-react'
+import { Briefcase, Calendar, ExternalLink, FileText, TrendingUp, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -45,6 +45,7 @@ export default function AdminDashboard() {
   }
 
   const cards = [
+    { label: 'Manage Articles (CMS)', desc: 'Create, edit, or publish blog & resource articles', href: '/cms', icon: FileText, color: 'border-l-indigo-500' },
     { label: 'Manage Experts', desc: 'Add, edit, or remove expert consultants', href: '/admin/experts', icon: Briefcase, color: 'border-l-green-500' },
     { label: 'Manage Admins', desc: 'Promote or demote admin users', href: '/admin/admins', icon: Users, color: 'border-l-purple-500' },
     { label: 'View Bookings', desc: 'Track all expert session bookings', href: '/admin/bookings', icon: Calendar, color: 'border-l-orange-500' },
@@ -78,7 +79,7 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(({ label, desc, href, icon: Icon, color }) => (
           <button
             key={href}

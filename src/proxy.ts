@@ -6,7 +6,7 @@ const MARKETING_DOMAIN = 'mycareerdock.com'
 const APP_DOMAIN = 'app.mycareerdock.com'
 const MARKETING_PREFIXES = ['/articles', '/offers']
 const APP_ROUTES = [
-  '/career-coach', '/interview', '/jobs', '/skill-gap',
+  '/admin', '/career-coach', '/interview', '/jobs', '/skill-gap',
   '/tracker', '/experts', '/contact', '/upgrade',
   '/profile', '/dashboard', '/resume', '/auth',
 ]
@@ -18,7 +18,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (isMarketingDomain) {
-    if (pathname === '/' || pathname === '/admin' || MARKETING_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))) {
+    if (pathname === '/' || MARKETING_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))) {
       const url = request.nextUrl.clone()
       url.pathname = `/marketing${pathname === '/' ? '' : pathname}`
       return NextResponse.rewrite(url)

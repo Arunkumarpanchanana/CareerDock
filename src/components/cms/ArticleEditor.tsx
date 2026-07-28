@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Article } from '@/types/database'
@@ -74,7 +76,12 @@ export function ArticleEditor({ article }: Props) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{article ? 'Edit Article' : 'New Article'}</h1>
+        <div className="flex items-center gap-3">
+          <Link href="/cms" className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1">
+            <ArrowLeft className="h-4 w-4" /> Back
+          </Link>
+          <h1 className="text-2xl font-bold">{article ? 'Edit Article' : 'New Article'}</h1>
+        </div>
         <div className="flex gap-3">
           <label className="text-sm text-gray-600 flex items-center gap-2">
             <input type="checkbox" checked={published} onChange={e => setPublished(e.target.checked)} />

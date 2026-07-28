@@ -1,12 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
+import { authAsAdmin } from '@/lib/admin-auth'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const { client, error: authError } = await authAsAdmin(request)
+  if (authError) return authError
 
   const formData = await request.formData()
   const file = formData.get('image') as File
@@ -14,9 +11,9 @@ export async function POST(request: Request) {
 
   const ext = file.name.split('.').pop()
   const fileName = `${crypto.randomUUID()}.${ext}`
-  const { error } = await supabase.storage.from('article-images').upload(fileName, file)
+  const { error } = await client.storage.from('article-images').upload(fileName, file)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const { data: { publicUrl } } = supabase.storage.from('article-images').getPublicUrl(fileName)
+  const { data: { publicUrl } } = client.storage.from('article-images').getPublicUrl(fileName)
   return NextResponse.json({ url: publicUrl })
 }

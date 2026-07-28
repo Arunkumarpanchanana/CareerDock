@@ -11,7 +11,7 @@ async function verifyAdminAndGetUser(supabase: AdminClient | Awaited<ReturnType<
   if (!user) return null
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return null
-  return supabase
+  return { client: supabase, user }
 }
 
 export async function authAsAdmin(request: Request) {
@@ -20,12 +20,12 @@ export async function authAsAdmin(request: Request) {
     const authHeader = request.headers.get('Authorization') || ''
     const token = authHeader.replace('Bearer ', '')
     if (token) {
-      const client = await verifyAdminAndGetUser(adminClient, token)
-      if (client) return { client, error: null }
+      const res = await verifyAdminAndGetUser(adminClient, token)
+      if (res) return { client: res.client, user: res.user, error: null }
     }
   }
   const supabase = await createClient()
-  const client = await verifyAdminAndGetUser(supabase)
-  if (client) return { client, error: null }
-  return { client: null as never, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
+  const res = await verifyAdminAndGetUser(supabase)
+  if (res) return { client: res.client, user: res.user, error: null }
+  return { client: null as never, user: null as never, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
 }

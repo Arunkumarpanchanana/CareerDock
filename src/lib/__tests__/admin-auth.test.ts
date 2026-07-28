@@ -62,7 +62,7 @@ describe('authAsAdmin', () => {
     })
     const result = await authAsAdmin(req)
     expect(result.error).toBeDefined()
-    const body = await result.error.json()
+    const body = await result.error!.json()
     expect(body.error).toBe('Forbidden')
   })
 
@@ -98,7 +98,7 @@ describe('authAsAdmin', () => {
     const req = new Request('http://localhost/api/admin/test')
     const result = await authAsAdmin(req)
     expect(result.error).toBeDefined()
-    const body = await result.error.json()
+    const body = await result.error!.json()
     expect(body.error).toBe('Forbidden')
   })
 
@@ -110,7 +110,7 @@ describe('authAsAdmin', () => {
     const req = new Request('http://localhost/api/admin/test')
     const result = await authAsAdmin(req)
     expect(result.error).toBeDefined()
-    const body = await result.error.json()
+    const body = await result.error!.json()
     expect(body.error).toBe('Forbidden')
   })
 
@@ -125,7 +125,7 @@ describe('authAsAdmin', () => {
     })
     const result = await authAsAdmin(req)
     expect(result.error).toBeDefined()
-    const body = await result.error.json()
+    const body = await result.error!.json()
     expect(body.error).toBe('Forbidden')
   })
 
