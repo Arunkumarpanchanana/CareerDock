@@ -46,7 +46,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
     const isMarketingPath = MARKETING_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))
-    if (isMarketingPath || pathname === '/admin') {
+    if (isMarketingPath) {
       return NextResponse.redirect(new URL(pathname, 'https://mycareerdock.com'))
     }
     if (pathname === '/cms' || pathname.startsWith('/cms/')) {
