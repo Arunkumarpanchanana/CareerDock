@@ -11,17 +11,28 @@ export default function AdminDashboard() {
   const [loadingStats, setLoadingStats] = useState(true)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
     const load = async () => {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       const headers: Record<string, string> = {}
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+
+      async function fetchJson(url: string) {
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 10000)
+        try {
+          const res = await fetch(url, { headers, signal: controller.signal })
+          return res.json()
+        } finally {
+          clearTimeout(timer)
+        }
+      }
+
       try {
         const [experts, users, bookings] = await Promise.all([
-          fetch('/api/admin/experts', { headers }).then(r => r.json()),
-          fetch('/api/admin/admins', { headers }).then(r => r.json()),
-          fetch('/api/admin/bookings', { headers }).then(r => r.json()),
+          fetchJson('/api/admin/experts'),
+          fetchJson('/api/admin/admins'),
+          fetchJson('/api/admin/bookings'),
         ])
         const adms = (Array.isArray(users) ? users : []).filter((u: { role: string }) => u.role === 'admin')
         setStats([
