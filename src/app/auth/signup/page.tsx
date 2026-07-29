@@ -145,7 +145,7 @@ function SignupForm() {
         }
       }
 
-      router.push('/dashboard')
+      router.push('/cms')
       router.refresh()
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Something went wrong. Please try again.'

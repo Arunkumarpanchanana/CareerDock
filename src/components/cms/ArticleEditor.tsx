@@ -47,9 +47,7 @@ export function ArticleEditor({ article }: Props) {
       body: formData,
     })
     const data = await res.json()
-    if (data.url) {
-      setImageUrl(data.url)
-    }
+    if (data.url) setImageUrl(data.url)
   }
 
   const handleSave = async () => {

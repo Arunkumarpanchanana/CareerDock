@@ -1,0 +1,13 @@
+import { createClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+import { ArticleEditor } from '@/components/cms/ArticleEditor'
+
+export const dynamic = 'force-dynamic'
+
+export default async function EditArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const supabase = await createClient()
+  const { data } = await supabase.from('articles').select('*').eq('slug', slug).single()
+  if (!data) notFound()
+  return <ArticleEditor article={data} />
+}
