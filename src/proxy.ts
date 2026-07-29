@@ -5,14 +5,15 @@ import type { NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (pathname === '/') {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
+  const isCms = pathname.startsWith('/cms')
+  const isAuthPage = pathname.startsWith('/auth')
+  const isApiRoute = pathname.startsWith('/api')
+
+  if (!isCms && !isAuthPage && !isApiRoute) {
+    return NextResponse.next()
   }
 
   const { supabaseResponse, user } = await updateSession(request)
-
-  const isApiRoute = pathname.startsWith('/api')
-  const isAuthPage = pathname.startsWith('/auth')
 
   if (!user && !isApiRoute && !isAuthPage) {
     const url = new URL('/auth/login', request.url)
@@ -21,7 +22,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && isAuthPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/cms', request.url))
   }
 
   return supabaseResponse
