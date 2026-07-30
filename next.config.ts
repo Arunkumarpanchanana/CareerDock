@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === 'development'
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 
 const cspHeader = [
   "default-src 'self'",
@@ -10,7 +9,7 @@ const cspHeader = [
   "img-src 'self' data: blob:",
   "media-src 'self' blob:",
   "font-src 'self' data: https://fonts.gstatic.com",
-  `connect-src 'self' ${supabaseUrl} https://o4504371152748544.ingest.sentry.io`,
+  "connect-src 'self' https://*.supabase.co https://o4504371152748544.ingest.sentry.io",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
