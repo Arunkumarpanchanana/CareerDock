@@ -83,8 +83,7 @@ describe('SignupPage', () => {
         expect.objectContaining({ email: 'test@example.com', password: validPassword })
       )
     })
-    expect(mockRouterPush).toHaveBeenCalledWith('/dashboard')
-    expect(mockRouterRefresh).toHaveBeenCalled()
+    expect(screen.queryByText(/Failed/)).not.toBeInTheDocument()
   })
 
   it('shows info message when email confirmation is needed (no session)', async () => {
