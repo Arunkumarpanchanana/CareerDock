@@ -41,8 +41,7 @@ export default function LoginPage() {
     }
 
     const params = new URLSearchParams(window.location.search)
-    const isApp = window.location.hostname === 'app.mycareerdock.com'
-    const redirect = params.get('redirect') || (isApp ? '/dashboard' : '/cms')
+    const redirect = params.get('redirect') || '/dashboard'
     window.location.href = redirect
   }
 
