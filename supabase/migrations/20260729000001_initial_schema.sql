@@ -46,13 +46,21 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE plan_prices ENABLE ROW LEVEL SECURITY;
 
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE SQL
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin');
+$$;
+
 CREATE POLICY "Users can view own profile"
     ON profiles FOR SELECT
     USING (auth.uid() = id);
 
 CREATE POLICY "Admins can view all profiles"
     ON profiles FOR SELECT
-    USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (public.is_admin());
 
 CREATE POLICY "Users can update own profile"
     ON profiles FOR UPDATE
@@ -64,19 +72,19 @@ CREATE POLICY "Anyone can read published articles"
 
 CREATE POLICY "Admins can read all articles"
     ON articles FOR SELECT
-    USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (public.is_admin());
 
 CREATE POLICY "Admins can insert articles"
     ON articles FOR INSERT
-    WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+    WITH CHECK (public.is_admin());
 
 CREATE POLICY "Admins can update articles"
     ON articles FOR UPDATE
-    USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (public.is_admin());
 
 CREATE POLICY "Admins can delete articles"
     ON articles FOR DELETE
-    USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (public.is_admin());
 
 CREATE POLICY "Anyone can view active plan prices"
     ON plan_prices FOR SELECT
@@ -84,7 +92,7 @@ CREATE POLICY "Anyone can view active plan prices"
 
 CREATE POLICY "Admins can manage plan prices"
     ON plan_prices FOR ALL
-    USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (public.is_admin());
 
 INSERT INTO plan_prices (tier, price, currency, interval, features) VALUES
     ('free', 0, 'USD', 'month', '["AI Resume Builder", "Basic Templates", "Job Tracker"]'),
