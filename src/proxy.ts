@@ -8,8 +8,9 @@ export async function proxy(request: NextRequest) {
   const isCms = pathname.startsWith('/cms')
   const isAuthPage = pathname.startsWith('/auth')
   const isApiRoute = pathname.startsWith('/api')
+  const isAdmin = pathname.startsWith('/admin')
 
-  if (!isCms && !isAuthPage && !isApiRoute) {
+  if (!isCms && !isAuthPage && !isApiRoute && !isAdmin) {
     return NextResponse.next()
   }
 
