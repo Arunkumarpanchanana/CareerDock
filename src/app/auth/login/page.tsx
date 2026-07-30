@@ -43,8 +43,7 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search)
     const isApp = window.location.hostname === 'app.mycareerdock.com'
     const redirect = params.get('redirect') || (isApp ? '/dashboard' : '/cms')
-    router.push(redirect)
-    router.refresh()
+    window.location.href = redirect
   }
 
   const handleGoogleLogin = async () => {

@@ -146,8 +146,7 @@ function SignupForm() {
       }
 
       const isApp = window.location.hostname === 'app.mycareerdock.com'
-      router.push(isApp ? '/dashboard' : '/cms')
-      router.refresh()
+      window.location.href = isApp ? '/dashboard' : '/cms'
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Something went wrong. Please try again.'
       setError(message)
