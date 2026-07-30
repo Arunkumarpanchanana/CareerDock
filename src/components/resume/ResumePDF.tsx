@@ -150,7 +150,7 @@ export function ResumePDFDocument({
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Experience</Text>
             {data.experience.map((exp, i) => {
-              const bullets = exp.bullets.filter((b) => b.trim())
+              const bullets = (exp.bullets ?? []).filter((b: string) => b.trim())
               return (
                 <View key={i} style={styles.expBlock}>
                   <View style={styles.expHeader}>
@@ -214,7 +214,7 @@ export function ResumePDFDocument({
         {data.skills.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Skills</Text>
-            <Text style={styles.skillsLine}>{data.skills.join(', ')}</Text>
+            <Text style={styles.skillsLine}>{(Array.isArray(data.skills) ? data.skills : []).join(', ')}</Text>
           </View>
         )}
 

@@ -255,8 +255,9 @@ export function ResumeClient({
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-    } catch {
-      setError('Failed to generate PDF. Please try again.')
+    } catch (e) {
+      console.error('PDF generation error:', e)
+      setError(`Failed to generate PDF. Please try again.`)
     }
   }
 
